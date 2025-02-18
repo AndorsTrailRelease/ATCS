@@ -14,11 +14,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,8 +38,7 @@ import com.gpl.rpg.atcontentstudio.ui.WorkspaceSelector;
 public class ATContentStudio {
 
 	public static final String APP_NAME = "Andor's Trail Content Studio";
-	public static final String APP_VERSION = "v0.6.21";
-
+public static final String APP_VERSION = readVersionFromFile();
 	public static final String CHECK_UPDATE_URL = "https://andorstrail.com/static/ATCS_latest";
 	public static final String DOWNLOAD_URL = "https://andorstrail.com/viewtopic.php?f=6&t=4806";
 
@@ -229,6 +224,15 @@ public class ATContentStudio {
 			for (Object key : newDefaults.keySet()) {
 				defaults.put(key, newDefaults.get(key));
 			}
+		}
+	}
+	private static String readVersionFromFile() {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(ATContentStudio.class.getResourceAsStream("/ATCS_latest"))))) {
+			return reader.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return "unknown";
 		}
 	}
 }

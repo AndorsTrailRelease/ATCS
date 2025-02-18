@@ -1,0 +1,56 @@
+name: Release Build
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Get Version
+      id: get_version
+      shell: bash
+      run: |
+        echo "Reading version from file:"
+        cat res/ATCS_latest
+        echo ""
+        VERSION=$(tr -d '[:space:]' < "res/ATCS_latest")
+        echo "Processed version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Environment variable set to: $VERSION"
+
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Build JAR
+      shell: bash
+      run: |
+        cd packaging
+        chmod +x package.sh
+        echo "Building JAR and ZIP for version: ${{ env.VERSION }}"
+        ./package.sh -windows
+        echo "Created artifacts:"
+        ls -la common/ATCS.jar
+        ls -la ATCS_${{ env.VERSION }}.zip
+
+    - name: Install NSIS
+      uses: joncloud/makensis-action@v4
+      with:
+        script-file: packaging/Windows/ATCS_Installer.nsi
+        arguments: /DVERSION="${{ env.VERSION }}"
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: |
+          ./packaging/ATCS_${{ env.VERSION }}.zip
+          ./packaging/ATCS_${{ env.VERSION }}_Setup.exe
