@@ -61,6 +61,8 @@ if not exist %2\%1\.gitignore (
 
     echo .workspace > .gitignore
     echo .project >> .gitignore
+    echo .workspace.json >> .gitignore
+    echo .project.json >> .gitignore
     echo altered/drawable >> .gitignore
     echo altered/drawable/* >> .gitignore
     echo created/drawable >> .gitignore

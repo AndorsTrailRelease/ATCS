@@ -31,7 +31,6 @@ EXTRA_SOURCE_DIRS=(
 
 # --- Libraries to include ---
 LIBRARIES=(
-  "AndorsTrainer_v0.1.5.jar"
   "bsh-2.0b4.jar"
   "jide-oss.jar"
   "json_simple-1.1.jar"

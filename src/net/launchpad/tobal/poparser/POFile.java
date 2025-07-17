@@ -73,7 +73,7 @@ public class POFile
     public boolean checkFlag(String flag, int entryIndex)
     {
         boolean status = false;
-        Vector<String> strings = new Vector<String>();
+        Vector<String> strings;
         strings = entries[entryIndex].getStringsByType(POEntry.StringType.FLAG);
         if (strings != null)
         {

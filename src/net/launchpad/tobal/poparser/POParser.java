@@ -126,7 +126,6 @@ public class POParser
             {
                 String str = rawentry.get(i);
                 tempheader.addLine(POEntry.StringType.HEADER, str);
-                str = new String();
             }
             return tempheader;
         }
@@ -138,7 +137,7 @@ public class POParser
 
     private POEntry[] parseEntries(Vector<Vector<String>> vectors)
     {
-        String line = new String();
+        String line;
         boolean thereIsHeader = false;
 
         // is this header
@@ -228,8 +227,7 @@ public class POParser
                             subStrIndex = 16;
                         }
                     }
-                    String str = new String();
-                    str = line.substring(subStrIndex);
+                    String str = line.substring(subStrIndex);
                     entry.addLine(strType, str);
                 }
                 else if(line.startsWith("msg"))
@@ -253,9 +251,8 @@ public class POParser
                         parserMode = strType;
                         subStrIndex = 7;
                     }
-                    String str = new String();
                     // TODO: is unquoting nessessary?
-                    str = unQuote(line.substring(subStrIndex));
+                    String str = unQuote(line.substring(subStrIndex));
                     entry.addLine(strType, str);
                 }
                 else

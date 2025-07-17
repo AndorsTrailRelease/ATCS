@@ -588,7 +588,7 @@ public class TMXMapWriter
         }
 
         // Iterate while parents are the same
-        int shared = 0;
+        int shared;
         int maxShared = Math.min(fromParents.size(), toParents.size());
         for (shared = 0; shared < maxShared; shared++) {
             String fromParent = fromParents.get(shared);
