@@ -145,20 +145,10 @@ public class StudioFrame extends JFrame {
             lafItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    try {
-                        UIManager.setLookAndFeel(i.getClassName());
-                        ATContentStudio.scaleUIFont();
-                        SwingUtilities.updateComponentTreeUI(ATContentStudio.frame);
-                        ConfigCache.setFavoriteLaFClassName(i.getClassName());
-                    } catch (ClassNotFoundException e1) {
-                        e1.printStackTrace();
-                    } catch (InstantiationException e1) {
-                        e1.printStackTrace();
-                    } catch (IllegalAccessException e1) {
-                        e1.printStackTrace();
-                    } catch (UnsupportedLookAndFeelException e1) {
-                        e1.printStackTrace();
-                    }
+                    String lookAndFeel = i.getClassName();
+                    ATContentStudio.setLookAndFeel(lookAndFeel);
+                    SwingUtilities.updateComponentTreeUI(ATContentStudio.frame);
+                    ConfigCache.setFavoriteLaFClassName(lookAndFeel);
                 }
             });
         }
@@ -230,6 +220,5 @@ public class StudioFrame extends JFrame {
     public void showAbout() {
         editors.showAbout();
     }
-
 
 }

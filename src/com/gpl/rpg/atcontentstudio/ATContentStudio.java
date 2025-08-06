@@ -65,22 +65,8 @@ public class ATContentStudio {
 
         ConfigCache.init();
 
-        try {
-            String laf = ConfigCache.getFavoriteLaFClassName();
-            if (laf == null)
-                laf = UIManager.getSystemLookAndFeelClassName();
-            UIManager.setLookAndFeel(laf);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
-        }
-
-        scaleUIFont();
+        String laf = ConfigCache.getFavoriteLaFClassName();
+        setLookAndFeel(laf);
 
         // Need to keep a strong reference to it, to avoid garbage collection that'll
         // reset this setting.
@@ -116,7 +102,6 @@ public class ATContentStudio {
                             frame.setVisible(true);
                             frame.setDefaultCloseOperation(StudioFrame.DO_NOTHING_ON_CLOSE);
                         }
-
                     });
                     for (File f : ConfigCache.getKnownWorkspaces()) {
                         if (workspaceRoot.equals(f)) {
@@ -132,6 +117,34 @@ public class ATContentStudio {
                 }
             }
         });
+    }
+
+    public static void setLookAndFeel(String laf) {
+        if (laf == null)
+        {
+            System.out.println("No look and feel specified, using system default.");
+            laf = UIManager.getSystemLookAndFeelClassName();
+        }
+        System.out.println("Info: Setting look and feel to: " + laf);
+
+        try {
+            UIManager.setLookAndFeel(laf);
+        } catch (ClassNotFoundException e) {
+            System.err.println("Failed to load system look and feel. ");
+            System.err.println("Installed look and feel classes: ");
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                System.err.println("  " + info.getName() + " (" + info.getClassName() + ")");
+            }
+            System.err.println("Tried to load: " + laf + " but got this error:");
+
+            e.printStackTrace();
+        } catch (InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        var newLaF = UIManager.getLookAndFeel();
+        System.out.println("Using look and feel: " + newLaF.getName() + " (" + newLaF.getClass().getName() + ")");
+
+        scaleUIFont();
     }
 
     private static void checkUpdate() {
@@ -156,13 +169,13 @@ public class ATContentStudio {
                 style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
                 style.append("font-size:" + font.getSize() + "pt;");
                 style.append("background-color: rgb(" + color.getRed() + "," + color.getGreen() + "," + color.getBlue()
-                                     + ");");
+                        + ");");
 
                 JEditorPane ep = new JEditorPane("text/html",
-                                                 "<html><body style=\"" + style + "\">" + "You are not running the latest ATCS version.<br/>"
-                                                         + "You can get the latest version (" + lastLine + ") by clicking the link below.<br/>"
-                                                         + "<a href=\"" + DOWNLOAD_URL + "\">" + DOWNLOAD_URL + "</a><br/>" + "<br/>"
-                                                         + "</body></html>");
+                        "<html><body style=\"" + style + "\">" + "You are not running the latest ATCS version.<br/>"
+                                + "You can get the latest version (" + lastLine + ") by clicking the link below.<br/>"
+                                + "<a href=\"" + DOWNLOAD_URL + "\">" + DOWNLOAD_URL + "</a><br/>" + "<br/>"
+                                + "</body></html>");
 
                 ep.setEditable(false);
                 ep.setBorder(null);
