@@ -106,7 +106,6 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         this.fromMap(json);
 
         initializeData();
-        linkAll();
         save();
     }
     public Project(Workspace w, String name, File source, ResourceSet sourceSet){
