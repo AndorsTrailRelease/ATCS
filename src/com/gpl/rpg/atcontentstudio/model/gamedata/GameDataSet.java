@@ -67,7 +67,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
         items = new GameDataCategory<Item>(this, Item.getStaticDesc());
         itemCategories = new GameDataCategory<ItemCategory>(this, ItemCategory.getStaticDesc());
         npcs = new GameDataCategory<NPC>(this, NPC.getStaticDesc());
-        quests = new GameDataCategory<Quest>(this, Quest.getStaticDesc());
+        quests = new GameDataCategory<>(this, Quest.getStaticDesc());
 
         v.add(actorConditions);
         v.add(dialogues);
@@ -256,82 +256,42 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
 
     public ActorCondition getActorCondition(String id) {
         if (actorConditions == null) return null;
-        for (ActorCondition gde : actorConditions) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return actorConditions.get(id);
     }
 
     public Dialogue getDialogue(String id) {
         if (dialogues == null) return null;
-        for (Dialogue gde : dialogues) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return dialogues.get(id);
     }
 
     public Droplist getDroplist(String id) {
         if (droplists == null) return null;
-        for (Droplist gde : droplists) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return droplists.get(id);
     }
 
     public Item getItem(String id) {
         if (items == null) return null;
-        for (Item gde : items) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return items.get(id);
     }
 
     public ItemCategory getItemCategory(String id) {
         if (itemCategories == null) return null;
-        for (ItemCategory gde : itemCategories) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return itemCategories.get(id);
     }
 
     public NPC getNPC(String id) {
         if (npcs == null) return null;
-        for (NPC gde : npcs) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return npcs.get(id);
     }
 
     public NPC getNPCIgnoreCase(String id) {
         if (npcs == null) return null;
-        for (NPC gde : npcs) {
-            if (id.equalsIgnoreCase(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return npcs.getIgnoreCase(id);
     }
 
     public Quest getQuest(String id) {
         if (quests == null) return null;
-        for (Quest gde : quests) {
-            if (id.equals(gde.id)) {
-                return gde;
-            }
-        }
-        return null;
+        return quests.get(id);
     }
 
     @Override
