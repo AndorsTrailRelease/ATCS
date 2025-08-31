@@ -287,44 +287,23 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     public void linkAll() {
-        for (ProjectTreeNode node : baseContent.gameData.v.getNonEmptyIterable()) {
-            if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node).toList()) {
-                    e.link();
-                }
-            }
-        }
-        for (ProjectTreeNode node : baseContent.gameMaps.tmxMaps) {
-            ((TMXMap) node).link();
-        }
-        for (ProjectTreeNode node : alteredContent.gameData.v.getNonEmptyIterable()) {
-            if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node).toList()) {
-                    e.link();
-                }
-            }
-        }
-        for (ProjectTreeNode node : alteredContent.gameMaps.tmxMaps) {
-            ((TMXMap) node).link();
-        }
-        for (ProjectTreeNode node : createdContent.gameData.v.getNonEmptyIterable()) {
-            if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node).toList()) {
-                    e.link();
-                }
-            }
-        }
-        for (ProjectTreeNode node : createdContent.gameMaps.tmxMaps) {
-            ((TMXMap) node).link();
-        }
+        linkGameData(baseContent);
+        linkGameData(alteredContent);
+        linkGameData(createdContent);
+    }
 
-        for (WorldmapSegment node : createdContent.worldmap) {
+    private void linkGameData(GameSource source) {
+        for (ProjectTreeNode node : source.gameData.v.getNonEmptyIterable()) {
+            if (node instanceof GameDataCategory<?>) {
+                for (GameDataElement e : ((GameDataCategory<?>) node).toList()) {
+                    e.link();
+                }
+            }
+        }
+        for (TMXMap node : source.gameMaps.tmxMaps) {
             node.link();
         }
-        for (WorldmapSegment node : alteredContent.worldmap) {
-            node.link();
-        }
-        for (WorldmapSegment node : baseContent.worldmap) {
+        for (WorldmapSegment node : source.worldmap) {
             node.link();
         }
     }
