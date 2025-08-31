@@ -1,31 +1,114 @@
 package com.gpl.rpg.atcontentstudio.model.gamedata;
 
 import com.gpl.rpg.atcontentstudio.Notification;
-import com.gpl.rpg.atcontentstudio.io.JsonPrettyWriter;
 import com.gpl.rpg.atcontentstudio.model.*;
-import com.gpl.rpg.atcontentstudio.model.GameSource.Type;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
 import com.gpl.rpg.atcontentstudio.utils.FileUtils;
-import org.json.simple.JSONArray;
 
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.io.*;
-import java.util.List;
+import java.io.File;
 import java.util.*;
+import java.util.List;
 
-public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implements ProjectTreeNode, Serializable {
+public class GameDataCategory<E extends JSONElement> implements ProjectTreeNode {
+    //region Data
+    private final ArrayList<String> keyList = new ArrayList<>();
+    private final HashMap<String, E> dataMap = new HashMap<>();
 
-    private static final long serialVersionUID = 5486008219704443733L;
+    //endregion
+
 
     public GameDataSet parent;
     public String name;
 
     public GameDataCategory(GameDataSet parent, String name) {
-        super();
         this.parent = parent;
         this.name = name;
     }
+
+    //region Helpers
+    public E get(String key) {
+        return dataMap.get(key);
+    }
+
+    public E get(int index) {
+        String key = keyList.get(index);
+        return dataMap.get(key);
+    }
+
+    public E getIgnoreCase(String key) {
+        for (String k : keyList) {
+            if (k.equalsIgnoreCase(key)) {
+                return dataMap.get(k);
+            }
+        }
+        return null;
+    }
+
+    public E put(String key, E element) {
+        if (!dataMap.containsKey(key)) {
+            keyList.add(key);
+        }
+        return dataMap.put(key, element);
+    }
+
+    public void add(E quest) {
+        String key = quest.id;
+        put(key, quest);
+    }
+
+    public E remove(String key) {
+        if (dataMap.containsKey(key)) {
+            keyList.remove(key);
+        }
+        return dataMap.remove(key);
+    }
+
+    public E remove(int index) {
+        String key = keyList.get(index);
+        keyList.remove(index);
+        return dataMap.remove(key);
+    }
+
+    public boolean removeGeneric(JSONElement element){
+        return remove((E) element);
+    }
+    public boolean remove(E element) {
+        String key = element.id;
+        int index = getProject().getNodeIndex(element);
+        boolean result = false;
+        if (dataMap.containsKey(key)) {
+            keyList.remove(key);
+            dataMap.remove(key);
+            result = true;
+        }
+        getProject().fireElementRemoved(element, index);
+        return result;
+    }
+
+    public int size() {
+        return dataMap.size();
+    }
+    public int indexOf(String key) {
+        return keyList.indexOf(key);
+    }
+    public int indexOf(E element) {
+        String key = element.id;
+        return keyList.indexOf(key);
+    }
+
+    public ArrayList<E> toList() {
+        ArrayList<E> list = new ArrayList<>();
+        for (String key : keyList) {
+            list.add(dataMap.get(key));
+        }
+        return list;
+    }
+
+    //endregion
+
+    //region copied implementation of ProjectTreeNode
 
     @Override
     public TreeNode getChildAt(int childIndex) {
@@ -44,7 +127,7 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
 
     @Override
     public int getIndex(TreeNode node) {
-        return indexOf(node);
+        return indexOf((E) node);
     }
 
     @Override
@@ -59,7 +142,7 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
 
     @Override
     public Enumeration<E> children() {
-        return Collections.enumeration(this);
+        return Collections.enumeration(toList());
     }
 
     @Override
@@ -87,7 +170,7 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
     @Override
     public void notifyCreated() {
         childrenAdded(new ArrayList<ProjectTreeNode>());
-        for (E node : this) {
+        for (E node : dataMap.values()) {
             node.notifyCreated();
         }
     }
@@ -133,8 +216,13 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
     }
 
     @Override
-    public Type getDataType() {
+    public GameSource.Type getDataType() {
         return parent.getDataType();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return dataMap.isEmpty();
     }
 
     @SuppressWarnings("rawtypes")
@@ -144,7 +232,7 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
             return;
         }
         List<Map> dataToSave = new ArrayList<Map>();
-        for (E element : this) {
+        for (E element : dataMap.values()) {
             if (element.jsonFile.equals(jsonFile)) {
                 dataToSave.add(element.toJson());
             }
@@ -161,7 +249,7 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
 
         String toWrite = FileUtils.toJsonString(dataToSave);
         if(FileUtils.writeStringToFile(toWrite, jsonFile, "JSON file '"+jsonFile.getAbsolutePath()+"'")){
-            for (E element : this) {
+            for (E element : dataMap.values()) {
                 element.state = GameDataElement.State.saved;
             }
         }
@@ -173,7 +261,8 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
         GameDataCategory<? extends JSONElement> impactedCategory = null;
         String impactedFileName = fileName;
         Map<String, Integer> containedIds = new LinkedHashMap<String, Integer>();
-        for (JSONElement node : this) {
+        ArrayList<E> list = toList();
+        for (JSONElement node : list) {
             if (node.getDataType() == GameSource.Type.created && getProject().baseContent.gameData.getGameDataElement(node.getClass(), node.id) != null) {
                 if (getProject().alteredContent.gameData.getGameDataElement(node.getClass(), node.id) != null) {
                     events.add(new SaveEvent(SaveEvent.Type.moveToAltered, node, true, "Element ID matches one already present in the altered game content. Change this ID before saving."));
@@ -202,7 +291,7 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
         for (String key : containedIds.keySet()) {
             if (containedIds.get(key) > 1) {
                 E node = null;
-                for (E n : this) {
+                for (E n : list) {
                     if (key.equals(n.id)) {
                         node = n;
                         break;
@@ -218,19 +307,15 @@ public class GameDataCategory<E extends JSONElement> extends ArrayList<E> implem
         return events;
     }
 
-    public boolean remove(E o) {
-        int index = getProject().getNodeIndex(o);
-        boolean result = super.remove(o);
-        getProject().fireElementRemoved(o, index);
-        return result;
-    }
-
     @Override
     public boolean needsSaving() {
-        for (E node : this) {
+        for (E node : dataMap.values()) {
             if (node.needsSaving()) return true;
         }
         return false;
     }
 
+    //endregion
+
 }
+

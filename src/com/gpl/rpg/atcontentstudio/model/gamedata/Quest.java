@@ -186,5 +186,4 @@ public class Quest extends JSONElement {
         }
         return null;
     }
-
 }

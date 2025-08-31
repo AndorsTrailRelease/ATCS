@@ -106,7 +106,6 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         this.fromMap(json);
 
         initializeData();
-        linkAll();
         save();
     }
     public Project(Workspace w, String name, File source, ResourceSet sourceSet){
@@ -288,44 +287,23 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     public void linkAll() {
-        for (ProjectTreeNode node : baseContent.gameData.v.getNonEmptyIterable()) {
-            if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node)) {
-                    e.link();
-                }
-            }
-        }
-        for (ProjectTreeNode node : baseContent.gameMaps.tmxMaps) {
-            ((TMXMap) node).link();
-        }
-        for (ProjectTreeNode node : alteredContent.gameData.v.getNonEmptyIterable()) {
-            if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node)) {
-                    e.link();
-                }
-            }
-        }
-        for (ProjectTreeNode node : alteredContent.gameMaps.tmxMaps) {
-            ((TMXMap) node).link();
-        }
-        for (ProjectTreeNode node : createdContent.gameData.v.getNonEmptyIterable()) {
-            if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node)) {
-                    e.link();
-                }
-            }
-        }
-        for (ProjectTreeNode node : createdContent.gameMaps.tmxMaps) {
-            ((TMXMap) node).link();
-        }
+        linkGameData(baseContent);
+        linkGameData(alteredContent);
+        linkGameData(createdContent);
+    }
 
-        for (WorldmapSegment node : createdContent.worldmap) {
+    private void linkGameData(GameSource source) {
+        for (ProjectTreeNode node : source.gameData.v.getNonEmptyIterable()) {
+            if (node instanceof GameDataCategory<?>) {
+                for (GameDataElement e : ((GameDataCategory<?>) node).toList()) {
+                    e.link();
+                }
+            }
+        }
+        for (TMXMap node : source.gameMaps.tmxMaps) {
             node.link();
         }
-        for (WorldmapSegment node : alteredContent.worldmap) {
-            node.link();
-        }
-        for (WorldmapSegment node : baseContent.worldmap) {
+        for (WorldmapSegment node : source.worldmap) {
             node.link();
         }
     }
@@ -937,14 +915,14 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
 
     public void moveToCreated(JSONElement target) {
         target.childrenRemoved(new ArrayList<ProjectTreeNode>());
-        ((GameDataCategory<?>) target.getParent()).remove(target);
+        ((GameDataCategory<?>) target.getParent()).removeGeneric(target);
         target.state = GameDataElement.State.created;
         createdContent.gameData.addElement(target);
     }
 
     public void moveToAltered(JSONElement target) {
         target.childrenRemoved(new ArrayList<ProjectTreeNode>());
-        ((GameDataCategory<?>) target.getParent()).remove(target);
+        ((GameDataCategory<?>) target.getParent()).removeGeneric(target);
         target.state = GameDataElement.State.created;
         ((JSONElement) target).jsonFile = new File(baseContent.gameData.getGameDataElement(((JSONElement) target).getClass(), target.id).jsonFile.getAbsolutePath());
         alteredContent.gameData.addElement((JSONElement) target);
@@ -1202,18 +1180,18 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     public List<String> writeDataDeltaForDataType(GameDataCategory<? extends JSONElement> created, GameDataCategory<? extends JSONElement> altered, GameDataCategory<? extends JSONElement> source, Class<? extends JSONElement> gdeClass, File targetFolder) {
         List<String> filenamesToWrite = new LinkedList<String>();
         Map<String, List<Map>> dataToWritePerFilename = new LinkedHashMap<String, List<Map>>();
-        for (JSONElement gde : altered) {
+        for (JSONElement gde : altered.toList()) {
             if (!filenamesToWrite.contains(gde.jsonFile.getName())) {
                 filenamesToWrite.add(gde.jsonFile.getName());
             }
         }
-        for (JSONElement gde : created) {
+        for (JSONElement gde : created.toList()) {
             if (!filenamesToWrite.contains(gde.jsonFile.getName())) {
                 filenamesToWrite.add(gde.jsonFile.getName());
             }
         }
         for (String fName : filenamesToWrite) {
-            for (JSONElement gde : source) {
+            for (JSONElement gde : source.toList()) {
                 if (gde.jsonFile.getName().equals(fName)) {
                     if (dataToWritePerFilename.get(fName) == null) {
                         dataToWritePerFilename.put(fName, new ArrayList<Map>());
@@ -1222,7 +1200,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
                     dataToWritePerFilename.get(fName).add(getGameDataElement(gdeClass, gde.id).toJson());
                 }
             }
-            for (JSONElement gde : created) {
+            for (JSONElement gde : created.toList()) {
                 if (gde.jsonFile.getName().equals(fName)) {
                     if (dataToWritePerFilename.get(fName) == null) {
                         dataToWritePerFilename.put(fName, new ArrayList<Map>());
