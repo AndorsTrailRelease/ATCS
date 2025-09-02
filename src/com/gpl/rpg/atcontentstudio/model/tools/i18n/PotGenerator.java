@@ -19,12 +19,12 @@ public class PotGenerator {
 
         GameSource gsrc = proj.baseContent;
 
-        for (ActorCondition ac : gsrc.gameData.actorConditions) {
+        for (ActorCondition ac : gsrc.gameData.actorConditions.toList()) {
             pushString(stringsResources, resourcesStrings, ac.display_name, getPotContextComment(ac));
             pushString(stringsResources, resourcesStrings, ac.description, getPotContextComment(ac) + ":description");
         }
 
-        for (Dialogue d : gsrc.gameData.dialogues) {
+        for (Dialogue d : gsrc.gameData.dialogues.toList()) {
             pushString(stringsResources, resourcesStrings, d.message, getPotContextComment(d));
             if (d.replies == null) continue;
             for (Dialogue.Reply r : d.replies) {
@@ -34,20 +34,20 @@ public class PotGenerator {
             }
         }
 
-        for (ItemCategory ic : gsrc.gameData.itemCategories) {
+        for (ItemCategory ic : gsrc.gameData.itemCategories.toList()) {
             pushString(stringsResources, resourcesStrings, ic.name, getPotContextComment(ic));
         }
 
-        for (Item i : gsrc.gameData.items) {
+        for (Item i : gsrc.gameData.items.toList()) {
             pushString(stringsResources, resourcesStrings, i.name, getPotContextComment(i));
             pushString(stringsResources, resourcesStrings, i.description, getPotContextComment(i) + ":description");
         }
 
-        for (NPC npc : gsrc.gameData.npcs) {
+        for (NPC npc : gsrc.gameData.npcs.toList()) {
             pushString(stringsResources, resourcesStrings, npc.name, getPotContextComment(npc));
         }
 
-        for (Quest q : gsrc.gameData.quests) {
+        for (Quest q : gsrc.gameData.quests.toList()) {
             if (q.visible_in_log != null && q.visible_in_log != 0) {
                 pushString(stringsResources, resourcesStrings, q.name, getPotContextComment(q));
                 for (QuestStage qs : q.stages) {

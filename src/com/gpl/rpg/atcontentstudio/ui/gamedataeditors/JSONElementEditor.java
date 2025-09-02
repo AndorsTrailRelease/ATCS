@@ -164,7 +164,7 @@ public abstract class JSONElementEditor extends Editor {
                     ATContentStudio.frame.closeEditor(node);
                     node.childrenRemoved(new ArrayList<ProjectTreeNode>());
                     if (node.getParent() instanceof GameDataCategory<?>) {
-                        ((GameDataCategory<?>) node.getParent()).remove(node);
+                        ((GameDataCategory<?>) node.getParent()).removeGeneric(node);
                         node.save();
                         GameDataElement newOne = proj.getGameDataElement(node.getClass(), node.id);
                         if (node instanceof Quest) {
