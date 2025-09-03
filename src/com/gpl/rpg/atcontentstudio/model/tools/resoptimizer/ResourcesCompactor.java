@@ -3,10 +3,7 @@ package com.gpl.rpg.atcontentstudio.model.tools.resoptimizer;
 import com.gpl.rpg.atcontentstudio.io.JsonPrettyWriter;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.Project;
-import com.gpl.rpg.atcontentstudio.model.gamedata.ActorCondition;
-import com.gpl.rpg.atcontentstudio.model.gamedata.GameDataSet;
-import com.gpl.rpg.atcontentstudio.model.gamedata.Item;
-import com.gpl.rpg.atcontentstudio.model.gamedata.NPC;
+import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMapSet;
 import com.gpl.rpg.atcontentstudio.model.sprites.SpriteSheetSet;
@@ -81,12 +78,13 @@ public class ResourcesCompactor {
         File folder = new File(baseFolder.getAbsolutePath() + File.separator + GameDataSet.DEFAULT_REL_PATH_IN_SOURCE);
         if (!folder.exists()) folder.mkdirs();
 
-        for (ActorCondition ac : proj.baseContent.gameData.actorConditions) {
+        ArrayList<ActorCondition> actorConditions = proj.baseContent.gameData.actorConditions.toList();
+        for (ActorCondition ac : actorConditions) {
             if (filesCovered.contains(ac.jsonFile)) continue;
             File currentFile = ac.jsonFile;
             filesCovered.add(currentFile);
             List<Map> dataToSave = new ArrayList<Map>();
-            for (ActorCondition acond : proj.baseContent.gameData.actorConditions) {
+            for (ActorCondition acond : actorConditions) {
                 if (!acond.jsonFile.equals(currentFile)) continue;
                 Map json = acond.toJson();
                 json.put("iconID", convertObjectSprite(acond.icon_id).toStringID());
@@ -96,12 +94,13 @@ public class ResourcesCompactor {
             writeJson(dataToSave, target);
         }
 
-        for (Item it : proj.baseContent.gameData.items) {
+        ArrayList<Item> items = proj.baseContent.gameData.items.toList();
+        for (Item it : items) {
             if (filesCovered.contains(it.jsonFile)) continue;
             File currentFile = it.jsonFile;
             filesCovered.add(currentFile);
             List<Map> dataToSave = new ArrayList<Map>();
-            for (Item item : proj.baseContent.gameData.items) {
+            for (Item item : items) {
                 if (!item.jsonFile.equals(currentFile)) continue;
                 Map json = item.toJson();
                 json.put("iconID", convertObjectSprite(item.icon_id).toStringID());
@@ -112,12 +111,13 @@ public class ResourcesCompactor {
         }
 
 
-        for (NPC np : proj.baseContent.gameData.npcs) {
+        ArrayList<NPC> npcs = proj.baseContent.gameData.npcs.toList();
+        for (NPC np : npcs) {
             if (filesCovered.contains(np.jsonFile)) continue;
             File currentFile = np.jsonFile;
             filesCovered.add(currentFile);
             List<Map> dataToSave = new ArrayList<Map>();
-            for (NPC npc : proj.baseContent.gameData.npcs) {
+            for (NPC npc : npcs) {
                 if (!npc.jsonFile.equals(currentFile)) continue;
                 Map json = npc.toJson();
                 if (proj.getImage(npc.icon_id).getWidth(null) == TILE_WIDTH_IN_PIXELS || proj.getImage(npc.icon_id).getHeight(null) == TILE_HEIGHT_IN_PIXELS) {

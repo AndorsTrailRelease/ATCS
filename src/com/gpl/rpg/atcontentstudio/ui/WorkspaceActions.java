@@ -121,7 +121,7 @@ public class WorkspaceActions {
                         if (element.getParent() instanceof GameDataCategory<?>) {
                             @SuppressWarnings("unchecked")
                             GameDataCategory<JSONElement> category = (GameDataCategory<JSONElement>) element.getParent();
-                            category.remove(element);
+                            category.remove((JSONElement) element);
                             if (impactedCategories.get(category) == null) {
                                 impactedCategories.put(category, new HashSet<File>());
                             }
@@ -189,7 +189,7 @@ public class WorkspaceActions {
                         node.childrenRemoved(new ArrayList<ProjectTreeNode>());
                         if (node instanceof JSONElement) {
                             if (node.getParent() instanceof GameDataCategory<?>) {
-                                ((GameDataCategory<?>) node.getParent()).remove(node);
+                                ((GameDataCategory<?>) node.getParent()).removeGeneric((JSONElement) node);
                                 List<SaveEvent> events = node.attemptSave();
                                 if (events == null || events.isEmpty()) {
                                     node.save();

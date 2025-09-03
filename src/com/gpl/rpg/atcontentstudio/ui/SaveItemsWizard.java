@@ -163,7 +163,7 @@ public class SaveItemsWizard extends JDialog {
                 @Override
                 public void actionPerformed(ActionEvent e) {
 
-                    Map<GameDataCategory<JSONElement>, Set<File>> jsonToSave = new IdentityHashMap<GameDataCategory<JSONElement>, Set<File>>();
+                    Map<GameDataCategory<JSONElement>, Set<File>> jsonToSave = new IdentityHashMap<>();
                     for (SaveEvent event : movedToCreatedList) {
                         if (event.target instanceof JSONElement) {
                             if (!jsonToSave.containsKey(event.target.getParent())) {
