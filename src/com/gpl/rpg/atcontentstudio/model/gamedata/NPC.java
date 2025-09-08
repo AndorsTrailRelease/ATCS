@@ -38,6 +38,7 @@ public class NPC extends JSONElement {
     public Integer attack_damage_min = null;
     public String spawngroup_id = null;
     public String faction_id = null;
+    public Integer spriteFlipChance = null;
     public String dialogue_id = null;
     public String droplist_id = null;
     public Integer attack_cost = null;
@@ -155,6 +156,7 @@ public class NPC extends JSONElement {
         }
         this.spawngroup_id = (String) npcJson.get("spawnGroup");
         this.faction_id = (String) npcJson.get("faction");
+        this.spriteFlipChance = JSONElement.getInteger((Number) npcJson.get("spriteFlipChance"));
         this.dialogue_id = (String) npcJson.get("phraseID");
         this.droplist_id = (String) npcJson.get("droplistID");
         this.attack_cost = JSONElement.getInteger((Number) npcJson.get("attackCost"));
@@ -244,6 +246,7 @@ public class NPC extends JSONElement {
         }
         clone.droplist_id = this.droplist_id;
         clone.faction_id = this.faction_id;
+        clone.spriteFlipChance = this.spriteFlipChance;
         if (this.hit_effect != null) {
             clone.hit_effect = new HitEffect();
             copyHitEffectValues(clone.hit_effect, this.hit_effect, clone);
@@ -302,6 +305,7 @@ public class NPC extends JSONElement {
         writeMinMaxToMap(npcJson, "attackDamage", this.attack_damage_min, attack_damage_max, 0);
         if (this.spawngroup_id != null) npcJson.put("spawnGroup", this.spawngroup_id);
         if (this.faction_id != null) npcJson.put("faction", this.faction_id);
+        if (this.spriteFlipChance != null) npcJson.put("spriteFlipChance", this.spriteFlipChance);
         if (this.dialogue != null) {
             npcJson.put("phraseID", this.dialogue.id);
         } else if (this.dialogue_id != null) {
