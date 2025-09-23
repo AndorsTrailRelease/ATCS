@@ -59,10 +59,10 @@ public class NPCEditor extends JSONElementEditor {
     private JSpinner blockChance;
     private JSpinner dmgRes;
 
-    private CommonEditor.HitEffectPane hitEffectPane = new CommonEditor.HitEffectPane("Effect on every hit: ", TimedActorConditionEffect::new, this, null, null);
-    private CommonEditor.HitRecievedEffectPane hitReceivedEffectPane = new CommonEditor.HitRecievedEffectPane("Effect on every hit received: ", TimedActorConditionEffect::new, this, "NPC",
-                                                                                                              "Attacker");
-    private CommonEditor.DeathEffectPane deathEffectPane = new CommonEditor.DeathEffectPane("Effect when killed: ", TimedActorConditionEffect::new, this, "Killer");
+    private final CommonEditor.HitEffectPane<HitEffect> hitEffectPane = new CommonEditor.HitEffectPane<>("Effect on every hit: ", this, null, null);
+    private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> hitReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every hit received: ", this, "attacked",
+                                                                                                                                         "attacker");
+    private final CommonEditor.DeathEffectPane<DeathEffect> deathEffectPane = new CommonEditor.DeathEffectPane<>("Effect when killed: ", this, "attacker");
 
     private JPanel dialogueGraphPane;
     private DialogueGraphView dialogueGraphView;
@@ -117,7 +117,6 @@ public class NPCEditor extends JSONElementEditor {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void insertFormViewDataField(JPanel pane) {
         final NPC npc = (NPC) target;
@@ -151,23 +150,15 @@ public class NPCEditor extends JSONElementEditor {
         dmgRes = addIntegerField(combatTraitPane, "Damage resistance: ", npc.damage_resistance, false, npc.writable, listener);
 
         HitEffect hitEffect = Objects.requireNonNullElseGet(npc.hit_effect, HitEffect::new);
-        hitEffectPane.createHitEffectPaneContent(listener, npc.writable, hitEffect,
-                                                 new CommonEditor.SourceTimedConditionsListModel(hitEffect),
-                                                 new CommonEditor.TargetTimedConditionsListModel(hitEffect));
+        hitEffectPane.createHitEffectPaneContent(listener, npc.writable, hitEffect);
         combatTraitPane.add(hitEffectPane.effectPane, JideBoxLayout.FIX);
 
-        HitReceivedEffect hitReceivedEffect = Objects.requireNonNullElseGet(npc.hit_received_effect,
-                                                                            HitReceivedEffect::new);
-        hitReceivedEffectPane.createHitReceivedEffectPaneContent(listener, npc.writable, hitReceivedEffect,
-                                                                 new CommonEditor.SourceTimedConditionsListModel(
-                                                                         hitReceivedEffect),
-                                                                 new CommonEditor.TargetTimedConditionsListModel(
-                                                                         hitReceivedEffect));
+        HitReceivedEffect hitReceivedEffect = Objects.requireNonNullElseGet(npc.hit_received_effect, HitReceivedEffect::new);
+        hitReceivedEffectPane.createHitReceivedEffectPaneContent(listener, npc.writable, hitReceivedEffect);
         combatTraitPane.add(hitReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
         DeathEffect deathEffect = Objects.requireNonNullElseGet(npc.death_effect, DeathEffect::new);
-        deathEffectPane.createDeathEffectPaneContent(listener, npc.writable, deathEffect,
-                                                     new CommonEditor.SourceTimedConditionsListModel(deathEffect));
+        deathEffectPane.createDeathEffectPaneContent(listener, npc.writable, deathEffect);
         combatTraitPane.add(deathEffectPane.effectPane, JideBoxLayout.FIX);
 
         pane.add(combatTraitPane, JideBoxLayout.FIX);
