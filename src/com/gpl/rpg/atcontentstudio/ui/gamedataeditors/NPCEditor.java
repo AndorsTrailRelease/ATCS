@@ -59,10 +59,9 @@ public class NPCEditor extends JSONElementEditor {
     private JSpinner blockChance;
     private JSpinner dmgRes;
 
-    private final CommonEditor.HitEffectPane<HitEffect> hitEffectPane = new CommonEditor.HitEffectPane<>("Effect on every hit: ", this, null, null);
-    private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> hitReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every hit received: ", this, "attacked",
-                                                                                                                                         "attacker");
-    private final CommonEditor.DeathEffectPane<DeathEffect> deathEffectPane = new CommonEditor.DeathEffectPane<>("Effect when killed: ", this, "attacker");
+    private final CommonEditor.HitEffectPane<HitEffect> hitEffectPane = new CommonEditor.HitEffectPane<>("Effect on every hit: ", this, null, "player");
+    private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> hitReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every hit received: ", this, "npc", "player");
+    private final CommonEditor.DeathEffectPane<DeathEffect> deathEffectPane = new CommonEditor.DeathEffectPane<>("Effect when killed: ", this, null);
 
     private JPanel dialogueGraphPane;
     private DialogueGraphView dialogueGraphView;
