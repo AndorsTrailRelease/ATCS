@@ -79,6 +79,8 @@ public class ItemEditor extends JSONElementEditor {
     private final CommonEditor.HitEffectPane<HitEffect> hitEffectPane = new CommonEditor.HitEffectPane<>("Effect on every hit: ", this, null, "npc");
     private final CommonEditor.DeathEffectPane<DeathEffect> killEffectPane = new CommonEditor.DeathEffectPane<>(killLabel, this, null);
     private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> hitReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every hit received: ", this, "player", "npc");
+    private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> missEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every miss: ", this, "player", "npc");
+    private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> missReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every miss received: ", this, "player", "npc");
 
     public ItemEditor(Item item) {
         super(item, item.getDesc(), item.getIcon());
@@ -170,16 +172,27 @@ public class ItemEditor extends JSONElementEditor {
         hitReceivedEffectPane.createHitReceivedEffectPaneContent(listener, item.writable, hitReceivedEffect);
         pane.add(hitReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
+        HitReceivedEffect missEffect = Objects.requireNonNullElseGet(item.miss_effect, HitReceivedEffect::new);
+        missEffectPane.createHitEffectPaneContent(listener, item.writable, missEffect);
+        pane.add(missEffectPane.effectPane, JideBoxLayout.FIX);
+
+        HitReceivedEffect missReceivedEffect = Objects.requireNonNullElseGet(item.miss_received_effect, HitReceivedEffect::new);
+        missReceivedEffectPane.createHitReceivedEffectPaneContent(listener, item.writable, missReceivedEffect);
+        pane.add(missReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
         if (item.category == null || item.category.action_type == null || item.category.action_type == ItemCategory.ActionType.none) {
             equipEffectPane.setVisible(false);
             hitEffectPane.effectPane.setVisible(false);
             hitReceivedEffectPane.effectPane.setVisible(false);
+            missEffectPane.effectPane.setVisible(false);
+            missReceivedEffectPane.effectPane.setVisible(false);
             killEffectPane.effectPane.setVisible(false);
         } else if (item.category.action_type == ItemCategory.ActionType.use) {
             equipEffectPane.setVisible(false);
             hitEffectPane.effectPane.setVisible(false);
             hitReceivedEffectPane.effectPane.setVisible(false);
+            missEffectPane.effectPane.setVisible(false);
+            missReceivedEffectPane.effectPane.setVisible(false);
             killEffectPane.effectPane.setVisible(true);
             killEffectPane.effectPane.setTitle(useLabel);
             killEffectPane.effectPane.revalidate();
@@ -188,6 +201,8 @@ public class ItemEditor extends JSONElementEditor {
             equipEffectPane.setVisible(true);
             hitEffectPane.effectPane.setVisible(true);
             hitReceivedEffectPane.effectPane.setVisible(true);
+            missEffectPane.effectPane.setVisible(true);
+            missReceivedEffectPane.effectPane.setVisible(true);
             killEffectPane.effectPane.setVisible(true);
             killEffectPane.effectPane.setTitle(killLabel);
             killEffectPane.effectPane.revalidate();
@@ -284,8 +299,8 @@ public class ItemEditor extends JSONElementEditor {
         @Override
         public void valueChanged(JComponent source, Object value) {
             Item item = (Item) target;
-            boolean updatePrice, updateEquip, updateHit, updateKill, updateHitReceived;
-            updatePrice = updateEquip = updateHit = updateKill = updateHitReceived = false;
+            boolean updatePrice, updateEquip, updateHit, updateMiss, updateKill, updateHitReceived, updateMissReceived;
+            updatePrice = updateEquip = updateHit = updateMiss = updateKill = updateHitReceived = updateMissReceived = false;
             if (source == idField) {
                 //Events caused by cancel an ID edition. Dismiss.
                 if (skipNext) {
@@ -352,10 +367,14 @@ public class ItemEditor extends JSONElementEditor {
                     item.equip_effect = null;
                     hitEffectPane.effectPane.setVisible(false);
                     item.hit_effect = null;
+                    missEffectPane.effectPane.setVisible(false);
+                    item.miss_effect = null;
                     killEffectPane.effectPane.setVisible(false);
                     item.kill_effect = null;
                     hitReceivedEffectPane.effectPane.setVisible(false);
                     item.hit_received_effect = null;
+                    missReceivedEffectPane.effectPane.setVisible(false);
+                    item.miss_received_effect = null;
                     ItemEditor.this.revalidate();
                     ItemEditor.this.repaint();
                 } else if (item.category.action_type == ItemCategory.ActionType.use) {
@@ -363,10 +382,14 @@ public class ItemEditor extends JSONElementEditor {
                     item.equip_effect = null;
                     hitEffectPane.effectPane.setVisible(false);
                     item.hit_effect = null;
+                    missEffectPane.effectPane.setVisible(false);
+                    item.miss_effect = null;
                     killEffectPane.effectPane.setVisible(true);
                     updateKill = true;
                     hitReceivedEffectPane.effectPane.setVisible(false);
                     item.hit_received_effect = null;
+                    missReceivedEffectPane.effectPane.setVisible(false);
+                    item.miss_received_effect = null;
                     updateHitReceived = true;
                     updateEquip = true;
                     killEffectPane.effectPane.setTitle(useLabel);
@@ -375,9 +398,11 @@ public class ItemEditor extends JSONElementEditor {
                 } else if (item.category.action_type == ItemCategory.ActionType.equip) {
                     equipEffectPane.setVisible(true);
                     hitEffectPane.effectPane.setVisible(true);
+                    missEffectPane.effectPane.setVisible(true);
                     killEffectPane.effectPane.setVisible(true);
                     updateKill = true;
                     hitReceivedEffectPane.effectPane.setVisible(true);
+                    missReceivedEffectPane.effectPane.setVisible(true);
                     updateHitReceived = true;
                     updateEquip = true;
                     killEffectPane.effectPane.setTitle(killLabel);
@@ -459,12 +484,18 @@ public class ItemEditor extends JSONElementEditor {
             } else if (hitEffectPane.valueChanged(source, value, item)) {
                 updatePrice = true;
                 updateHit = true;
+            } else if (missEffectPane.valueChanged(source, value, item)) {
+                updatePrice = true;
+                updateMiss = true;
             } else if (killEffectPane.valueChanged(source, value, item)) {
                 updatePrice = true;
                 updateKill = true;
             } else if (hitReceivedEffectPane.valueChanged(source, value, item)) {
                 updatePrice = true;
                 updateHitReceived = true;
+            } else if (missReceivedEffectPane.valueChanged(source, value, item)) {
+                updatePrice = true;
+                updateMissReceived = true;
             }
 
             if (updateEquip) {
@@ -481,6 +512,13 @@ public class ItemEditor extends JSONElementEditor {
                     item.hit_effect = hitEffectPane.effect;
                 }
             }
+            if (updateMiss) {
+                if (missEffectPane.effect.isNull()) {
+                    item.miss_effect = null;
+                } else {
+                    item.miss_effect = missEffectPane.effect;
+                }
+            }
             if (updateKill) {
                 if (killEffectPane.effect.isNull()) {
                     item.kill_effect = null;
@@ -493,6 +531,13 @@ public class ItemEditor extends JSONElementEditor {
                     item.hit_received_effect = null;
                 } else {
                     item.hit_received_effect = hitReceivedEffectPane.effect;
+                }
+            }
+            if (updateMissReceived) {
+                if (missReceivedEffectPane.effect.isNull()) {
+                    item.miss_received_effect = null;
+                } else {
+                    item.miss_received_effect = missReceivedEffectPane.effect;
                 }
             }
             if (updatePrice && !manualPriceBox.isSelected()) {
