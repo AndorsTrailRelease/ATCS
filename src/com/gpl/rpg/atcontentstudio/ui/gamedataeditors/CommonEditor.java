@@ -102,9 +102,10 @@ public class CommonEditor {
             super(title, editor, applyToHint, applyToTargetHint);
         }
 
-        void createHitReceivedEffectPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
+        @Override
+        public void createPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
             effect = e;
-            createHitEffectPaneContent(listener, writable, e);
+            super.createPaneContent(listener, writable, e);
         }
 
         @Override
@@ -168,10 +169,11 @@ public class CommonEditor {
             }
         }
 
-        void createHitEffectPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
+        @Override
+        public void createPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
             effect = e;
             hitTargetConditionPane.conditionsModel = new TargetTimedConditionsListModel(e);
-            createDeathEffectPaneContent(listener, writable, e);
+            super.createPaneContent(listener, writable, e);
         }
 
         @Override
@@ -244,8 +246,7 @@ public class CommonEditor {
                 this.applyToHint = String.format(" (%s)", applyToHint);
             }
         }
-
-        void createDeathEffectPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
+        public void createPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
             effect = e;
             sourceConditionPane.conditionsModel = new SourceTimedConditionsListModel(e);
 

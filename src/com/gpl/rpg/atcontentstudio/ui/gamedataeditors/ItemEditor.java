@@ -161,23 +161,23 @@ public class ItemEditor extends JSONElementEditor {
         }
 
         HitEffect hitEffect = Objects.requireNonNullElseGet(item.hit_effect, HitEffect::new);
-        hitEffectPane.createHitEffectPaneContent(listener, item.writable, hitEffect);
+        hitEffectPane.createPaneContent(listener, item.writable, hitEffect);
         pane.add(hitEffectPane.effectPane, JideBoxLayout.FIX);
 
         DeathEffect killEffect = Objects.requireNonNullElseGet(item.kill_effect, DeathEffect::new);
-        killEffectPane.createDeathEffectPaneContent(listener, item.writable, killEffect);
+        killEffectPane.createPaneContent(listener, item.writable, killEffect);
         pane.add(killEffectPane.effectPane, JideBoxLayout.FIX);
 
         HitReceivedEffect hitReceivedEffect = Objects.requireNonNullElseGet(item.hit_received_effect, HitReceivedEffect::new);
-        hitReceivedEffectPane.createHitReceivedEffectPaneContent(listener, item.writable, hitReceivedEffect);
+        hitReceivedEffectPane.createPaneContent(listener, item.writable, hitReceivedEffect);
         pane.add(hitReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
         HitReceivedEffect missEffect = Objects.requireNonNullElseGet(item.miss_effect, HitReceivedEffect::new);
-        missEffectPane.createHitEffectPaneContent(listener, item.writable, missEffect);
+        missEffectPane.createPaneContent(listener, item.writable, missEffect);
         pane.add(missEffectPane.effectPane, JideBoxLayout.FIX);
 
         HitReceivedEffect missReceivedEffect = Objects.requireNonNullElseGet(item.miss_received_effect, HitReceivedEffect::new);
-        missReceivedEffectPane.createHitReceivedEffectPaneContent(listener, item.writable, missReceivedEffect);
+        missReceivedEffectPane.createPaneContent(listener, item.writable, missReceivedEffect);
         pane.add(missReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
         if (item.category == null || item.category.action_type == null || item.category.action_type == ItemCategory.ActionType.none) {

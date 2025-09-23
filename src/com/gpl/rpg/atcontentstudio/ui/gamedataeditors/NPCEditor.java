@@ -150,15 +150,15 @@ public class NPCEditor extends JSONElementEditor {
         dmgRes = addIntegerField(combatTraitPane, "Damage resistance: ", npc.damage_resistance, false, npc.writable, listener);
 
         HitEffect hitEffect = Objects.requireNonNullElseGet(npc.hit_effect, HitEffect::new);
-        hitEffectPane.createHitEffectPaneContent(listener, npc.writable, hitEffect);
+        hitEffectPane.createPaneContent(listener, npc.writable, hitEffect);
         combatTraitPane.add(hitEffectPane.effectPane, JideBoxLayout.FIX);
 
         HitReceivedEffect hitReceivedEffect = Objects.requireNonNullElseGet(npc.hit_received_effect, HitReceivedEffect::new);
-        hitReceivedEffectPane.createHitReceivedEffectPaneContent(listener, npc.writable, hitReceivedEffect);
+        hitReceivedEffectPane.createPaneContent(listener, npc.writable, hitReceivedEffect);
         combatTraitPane.add(hitReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
         DeathEffect deathEffect = Objects.requireNonNullElseGet(npc.death_effect, DeathEffect::new);
-        deathEffectPane.createDeathEffectPaneContent(listener, npc.writable, deathEffect);
+        deathEffectPane.createPaneContent(listener, npc.writable, deathEffect);
         combatTraitPane.add(deathEffectPane.effectPane, JideBoxLayout.FIX);
 
         pane.add(combatTraitPane, JideBoxLayout.FIX);
