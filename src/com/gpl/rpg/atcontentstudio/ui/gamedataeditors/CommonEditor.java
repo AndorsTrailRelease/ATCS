@@ -26,7 +26,7 @@ public class CommonEditor {
         private static final long serialVersionUID = 7987880146189575234L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 JLabel label = (JLabel) c;
@@ -68,7 +68,7 @@ public class CommonEditor {
         private static final long serialVersionUID = 7987880146189575234L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 JLabel label = (JLabel) c;
@@ -90,7 +90,7 @@ public class CommonEditor {
         }
     }
 
-    public static class HitRecievedEffectPane<EFFECT extends Common.HitReceivedEffect, LIST_MODEL_SOURCE, ELEMENT extends Common.TimedActorConditionEffect, MODEL extends OrderedListenerListModel<LIST_MODEL_SOURCE, ELEMENT>> extends HitEffectPane<EFFECT, LIST_MODEL_SOURCE, ELEMENT, MODEL> {
+    public static class HitReceivedEffectPane<EFFECT extends Common.HitReceivedEffect> extends HitEffectPane<EFFECT> {
         /// this should just be a convenience field, to access it, without casting. DO NOT SET WITHOUT ALSO SETTING THE FIELD IN THE SUPER-CLASS!
         EFFECT effect;
         private JSpinner hitReceivedEffectHPMinTarget;
@@ -98,13 +98,14 @@ public class CommonEditor {
         private JSpinner hitReceivedEffectAPMinTarget;
         private JSpinner hitReceivedEffectAPMaxTarget;
 
-        public HitRecievedEffectPane(String title, Supplier<ELEMENT> sourceNewSupplier, Editor editor, String applyToHint, String applyToTargetHint) {
-            super(title, sourceNewSupplier, editor, applyToHint, applyToTargetHint);
+        public HitReceivedEffectPane(String title, Editor editor, String applyToHint, String applyToTargetHint) {
+            super(title, editor, applyToHint, applyToTargetHint);
         }
 
-        void createHitReceivedEffectPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e, MODEL sourceConditionsModelInput, MODEL targetConditionsModelInput) {
+        @Override
+        public void createPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
             effect = e;
-            createHitEffectPaneContent(listener, writable, e, sourceConditionsModelInput, targetConditionsModelInput);
+            super.createPaneContent(listener, writable, e);
         }
 
         @Override
@@ -144,32 +145,35 @@ public class CommonEditor {
         }
     }
 
-    public static class HitEffectPane<EFFECT extends Common.HitEffect, LIST_MODEL_SOURCE, ELEMENT extends Common.TimedActorConditionEffect, MODEL extends OrderedListenerListModel<LIST_MODEL_SOURCE, ELEMENT>> extends DeathEffectPane<EFFECT, LIST_MODEL_SOURCE, ELEMENT, MODEL> {
+    public static class HitEffectPane<EFFECT extends Common.HitEffect>
+
+            extends DeathEffectPane<EFFECT> {
         /// this should just be a convenience field, to access it, without casting. DO NOT SET WITHOUT ALSO SETTING THE FIELD IN THE SUPER-CLASS!
         public EFFECT effect;
 
         protected final String applyToTargetHint;
-        private JList hitTargetConditionsList;
-        private final ConditionEffectEditorPane<LIST_MODEL_SOURCE, ELEMENT, MODEL> hitTargetConditionPane;
+        private JList<Common.TimedActorConditionEffect> hitTargetConditionsList;
+        private final ConditionEffectEditorPane<Common.HitEffect, TargetTimedConditionsListModel> hitTargetConditionPane;
 
         /*
          * create a new HitEffectPane with the selections (probably passed in from last time)
          */
-        public HitEffectPane(String title, Supplier<ELEMENT> sourceNewSupplier, Editor editor, String applyToHint, String applyToTargetHint) {
-            super(title, sourceNewSupplier, editor, applyToHint);
+        public HitEffectPane(String title, Editor editor, String applyToHint, String applyToTargetHint) {
+            super(title, editor, applyToHint);
             hitTargetConditionPane = new ConditionEffectEditorPane<>(editor);
 
-            if (applyToTargetHint == null || applyToTargetHint == "") {
+            if (applyToTargetHint == null || applyToTargetHint.isEmpty()) {
                 this.applyToTargetHint = "";
             } else {
                 this.applyToTargetHint = String.format(" (%s)", applyToTargetHint);
             }
         }
 
-        void createHitEffectPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e, MODEL sourceConditionsModelInput, MODEL targetConditionsListModel) {
+        @Override
+        public void createPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
             effect = e;
-            hitTargetConditionPane.conditionsModel = targetConditionsListModel;
-            createDeathEffectPaneContent(listener, writable, e, sourceConditionsModelInput);
+            hitTargetConditionPane.conditionsModel = new TargetTimedConditionsListModel(e);
+            super.createPaneContent(listener, writable, e);
         }
 
         @Override
@@ -178,8 +182,8 @@ public class CommonEditor {
 
             String titleTarget = String.format("Actor Conditions applied to the target%s: ", applyToTargetHint);
             CommonEditor.TimedConditionsCellRenderer cellRendererTarget = new CommonEditor.TimedConditionsCellRenderer();
-            BasicLambdaWithArg<ELEMENT> selectedSetTarget = (value) -> hitTargetConditionPane.selectedCondition = value;
-            BasicLambdaWithReturn<ELEMENT> selectedGetTarget = () -> hitTargetConditionPane.selectedCondition;
+            BasicLambdaWithArg<Common.TimedActorConditionEffect> selectedSetTarget = (value) -> hitTargetConditionPane.selectedCondition = value;
+            BasicLambdaWithReturn<Common.TimedActorConditionEffect> selectedGetTarget = () -> hitTargetConditionPane.selectedCondition;
             BasicLambda selectedResetTarget = () -> hitTargetConditionPane.selectedCondition = null;
             BasicLambdaWithArg<JPanel> updatePaneTarget = (editorPane) -> hitTargetConditionPane.updateEffectTimedConditionEditorPane(
                     editorPane, hitTargetConditionPane.selectedCondition, listener);
@@ -212,8 +216,8 @@ public class CommonEditor {
         }
     }
 
-    public static class DeathEffectPane<EFFECT extends Common.DeathEffect, LIST_MODEL_SOURCE, ELEMENT extends Common.TimedActorConditionEffect, MODEL extends OrderedListenerListModel<LIST_MODEL_SOURCE, ELEMENT>> {
-        protected final Supplier<ELEMENT> conditionSupplier;
+    public static class DeathEffectPane<EFFECT extends Common.DeathEffect> {
+        protected final Supplier<Common.TimedActorConditionEffect> conditionSupplier;
         protected final String title;
         protected final String applyToHint;
 
@@ -224,28 +228,27 @@ public class CommonEditor {
         private JSpinner effectHPMax;
         private JSpinner effectAPMin;
         private JSpinner effectAPMax;
-        private JList<ELEMENT> sourceConditionsList;
+        private JList<Common.TimedActorConditionEffect> sourceConditionsList;
 
-        private final ConditionEffectEditorPane<LIST_MODEL_SOURCE, ELEMENT, MODEL> sourceConditionPane;
+        private final ConditionEffectEditorPane<Common.DeathEffect, SourceTimedConditionsListModel> sourceConditionPane;
 
 
         /*
          * create a new DeatchEffectPane with the selections (probably passed in from last time)
          */
-        public DeathEffectPane(String title, Supplier<ELEMENT> conditionSupplier, Editor editor, String applyToHint) {
+        public DeathEffectPane(String title, Editor editor, String applyToHint) {
             this.title = title;
-            this.conditionSupplier = conditionSupplier;
+            this.conditionSupplier = Common.TimedActorConditionEffect::new;
             this.sourceConditionPane = new ConditionEffectEditorPane<>(editor);
-            if (applyToHint == null || applyToHint == "") {
+            if (applyToHint == null || applyToHint.isEmpty()) {
                 this.applyToHint = "";
             } else {
                 this.applyToHint = String.format(" (%s)", applyToHint);
             }
         }
-
-        void createDeathEffectPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e, MODEL sourceConditionsModel) {
+        public void createPaneContent(FieldUpdateListener listener, boolean writable, EFFECT e) {
             effect = e;
-            sourceConditionPane.conditionsModel = sourceConditionsModel;
+            sourceConditionPane.conditionsModel = new SourceTimedConditionsListModel(e);
 
             effectPane = new CollapsiblePanel(title);
             effectPane.setLayout(new JideBoxLayout(effectPane, JideBoxLayout.PAGE_AXIS));
@@ -269,8 +272,8 @@ public class CommonEditor {
         protected void addLists(FieldUpdateListener listener, boolean writable) {
             String titleSource = String.format("Actor Conditions applied to the source%s: ", applyToHint);
             TimedConditionsCellRenderer cellRendererSource = new TimedConditionsCellRenderer();
-            BasicLambdaWithArg<ELEMENT> selectedSetSource = (value) -> sourceConditionPane.selectedCondition = value;
-            BasicLambdaWithReturn<ELEMENT> selectedGetSource = () -> sourceConditionPane.selectedCondition;
+            BasicLambdaWithArg<Common.TimedActorConditionEffect> selectedSetSource = (value) -> sourceConditionPane.selectedCondition = value;
+            BasicLambdaWithReturn<Common.TimedActorConditionEffect> selectedGetSource = () -> sourceConditionPane.selectedCondition;
             BasicLambda selectedResetSource = () -> sourceConditionPane.selectedCondition = null;
             BasicLambdaWithArg<JPanel> updatePaneSource = (editorPane) -> sourceConditionPane.updateEffectTimedConditionEditorPane(
                     editorPane, sourceConditionPane.selectedCondition, listener);
@@ -309,9 +312,9 @@ public class CommonEditor {
         }
     }
 
-    static class ConditionEffectEditorPane<LIST_MODEL_SOURCE, ELEMENT extends Common.TimedActorConditionEffect, MODEL extends OrderedListenerListModel<LIST_MODEL_SOURCE, ELEMENT>> {
+    static class ConditionEffectEditorPane<LIST_MODEL_SOURCE, MODEL extends OrderedListenerListModel<LIST_MODEL_SOURCE, Common.TimedActorConditionEffect> > {
         private final Editor editor;
-        ELEMENT selectedCondition;
+        Common.TimedActorConditionEffect selectedCondition;
 
         MODEL conditionsModel;
         Editor.MyComboBox conditionBox;
@@ -328,7 +331,7 @@ public class CommonEditor {
             this.editor = editor;
         }
 
-        public void updateEffectTimedConditionWidgets(ELEMENT condition) {
+        public void updateEffectTimedConditionWidgets(Common.TimedActorConditionEffect condition) {
             boolean writable = editor.target.writable;
 
             boolean immunity = condition.isImmunity();
@@ -352,7 +355,7 @@ public class CommonEditor {
             conditionForever.setEnabled(!clear && writable);
         }
 
-        public void updateEffectTimedConditionEditorPane(JPanel pane, ELEMENT condition, final FieldUpdateListener listener) {
+        public void updateEffectTimedConditionEditorPane(JPanel pane, Common.TimedActorConditionEffect condition, final FieldUpdateListener listener) {
             pane.removeAll();
             if (conditionBox != null) {
                 editor.removeElementListener(conditionBox);
@@ -495,7 +498,7 @@ public class CommonEditor {
         }
 
         private void setDurationToDefaultIfNone() {
-            if (selectedCondition.duration == null || selectedCondition.duration == ActorCondition.DURATION_NONE) {
+            if (selectedCondition.duration == null || selectedCondition.duration.equals(ActorCondition.DURATION_NONE)) {
                 selectedCondition.duration = 1;
             }
         }
