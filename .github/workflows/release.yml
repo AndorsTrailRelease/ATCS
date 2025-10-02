@@ -60,7 +60,7 @@ jobs:
           if [ -f "./packaging/ATCS_${VERSION}_Setup.exe" ]; then
             FILES="$FILES ./packaging/ATCS_${VERSION}_Setup.exe"
           else
-            run: echo "::warning::exe-installer created by NSIS was not found; only ZIP will be uploaded."
+            echo "::error::exe-installer created by NSIS was not found; only ZIP will be uploaded."
           fi
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
