@@ -49,7 +49,7 @@ jobs:
         uses: joncloud/makensis-action@v4
         with:
           script-file: packaging/Windows/ATCS_Installer.nsi
-          arguments: /DVERSION="${{ env.VERSION }}"
+          arguments: -DVERSION="${{ env.VERSION }}"
         continue-on-error: true
 
       - name: Determine Upload Files
