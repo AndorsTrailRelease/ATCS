@@ -41,6 +41,14 @@ jobs:
           ls -la common/ATCS.jar
           ls -la ATCS_${{ env.VERSION }}.zip
 
+      - name: Upload Release Assets (zip)
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            ./packaging/ATCS_${{ env.VERSION }}.zip
+
       - name: 'Install makensis (apt)'
         run: sudo apt update && sudo apt install -y nsis nsis-pluginapi
         continue-on-error: true
@@ -52,21 +60,10 @@ jobs:
           arguments: -DVERSION="${{ env.VERSION }}"
         continue-on-error: true
 
-      - name: Determine Upload Files
-        id: check_files_to_upload
-        shell: bash
-        run: |
-          FILES="./packaging/ATCS_${VERSION}.zip"
-          if [ -f "./packaging/ATCS_${VERSION}_Setup.exe" ]; then
-            FILES="$FILES ./packaging/ATCS_${VERSION}_Setup.exe"
-          else
-            echo "::error::exe-installer created by NSIS was not found; only ZIP will be uploaded."
-          fi
-          echo "files=$FILES" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Assets
+      - name: Upload Release Assets (exe)
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: ${{ steps.check_files_to_upload.outputs.files }}
+          files: ./packaging/ATCS_${{ env.VERSION }}_Setup.exe
+        continue-on-error: true
