@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -36,12 +36,16 @@ jobs:
           cd packaging
           chmod +x package.sh
           echo "Building JAR and ZIP for version: ${{ env.VERSION }}"
-          ./package.sh -windows
+          ./package.sh
           echo "Created artifacts:"
           ls -la common/ATCS.jar
           ls -la ATCS_${{ env.VERSION }}.zip
 
-      - name: Install NSIS
+      - name: 'Install makensis (apt)'
+        run: sudo apt update && sudo apt install -y nsis nsis-pluginapi
+        continue-on-error: true
+
+      - name: Create Windows-Installer with NSIS
         uses: joncloud/makensis-action@v4
         with:
           script-file: packaging/Windows/ATCS_Installer.nsi
@@ -49,7 +53,7 @@ jobs:
         continue-on-error: true
 
       - name: Determine Upload Files
-        id: upload_files
+        id: check_files_to_upload
         shell: bash
         run: |
           FILES="./packaging/ATCS_${VERSION}.zip"
@@ -65,4 +69,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: ${{ steps.upload_files.outputs.files }}
+          files: ${{ steps.check_files_to_upload.outputs.files }}
