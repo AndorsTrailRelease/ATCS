@@ -79,7 +79,7 @@ public class ItemEditor extends JSONElementEditor {
     private final CommonEditor.HitEffectPane<HitEffect> hitEffectPane = new CommonEditor.HitEffectPane<>("Effect on every hit: ", this, null, "npc");
     private final CommonEditor.DeathEffectPane<DeathEffect> killEffectPane = new CommonEditor.DeathEffectPane<>(killLabel, this, null);
     private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> hitReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every hit received: ", this, "player", "npc");
-    private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> missEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every miss: ", this, "player", "npc");
+    private final CommonEditor.HitEffectPane<HitEffect> missEffectPane = new CommonEditor.HitEffectPane<>("Effect on every miss: ", this, "player", "npc");
     private final CommonEditor.HitReceivedEffectPane<HitReceivedEffect> missReceivedEffectPane = new CommonEditor.HitReceivedEffectPane<>("Effect on every miss received: ", this, "player", "npc");
 
     public ItemEditor(Item item) {
@@ -172,7 +172,7 @@ public class ItemEditor extends JSONElementEditor {
         hitReceivedEffectPane.createPaneContent(listener, item.writable, hitReceivedEffect);
         pane.add(hitReceivedEffectPane.effectPane, JideBoxLayout.FIX);
 
-        HitReceivedEffect missEffect = Objects.requireNonNullElseGet(item.miss_effect, HitReceivedEffect::new);
+        HitEffect missEffect = Objects.requireNonNullElseGet(item.miss_effect, HitEffect::new);
         missEffectPane.createPaneContent(listener, item.writable, missEffect);
         pane.add(missEffectPane.effectPane, JideBoxLayout.FIX);
 

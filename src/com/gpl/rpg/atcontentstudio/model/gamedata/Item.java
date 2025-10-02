@@ -36,7 +36,7 @@ public class Item extends JSONElement {
     public String description = null;
     public HitEffect hit_effect = null;
     public HitReceivedEffect hit_received_effect = null;
-    public HitReceivedEffect miss_effect = null;
+    public HitEffect miss_effect = null;
     public HitReceivedEffect miss_received_effect = null;
     public DeathEffect kill_effect = null;
     public EquipEffect equip_effect = null;
@@ -197,7 +197,7 @@ public class Item extends JSONElement {
 
         Map missEffect = (Map) itemJson.get("missEffect");
         if (missEffect != null) {
-            this.miss_effect = parseHitReceivedEffect(missEffect);
+            this.miss_effect = parseHitEffect(missEffect);
         }
 
         Map missReceivedEffect = (Map) itemJson.get("missReceivedEffect");
@@ -309,8 +309,8 @@ public class Item extends JSONElement {
             copyHitReceivedEffectValues(clone.hit_received_effect, this.hit_received_effect, clone);
         }
         if (this.miss_effect != null) {
-            clone.miss_effect = new HitReceivedEffect();
-            copyHitReceivedEffectValues(clone.miss_effect, this.miss_effect, clone);
+            clone.miss_effect = new HitEffect();
+            copyHitEffectValues(clone.miss_effect, this.miss_effect, clone);
         }
         if (this.miss_received_effect != null) {
             clone.miss_received_effect = new HitReceivedEffect();
@@ -415,7 +415,7 @@ public class Item extends JSONElement {
         }
         writeHitEffectToMap(itemJson, this.hit_effect, "hitEffect");
         writeHitReceivedEffectToMap(itemJson, this.hit_received_effect, "hitReceivedEffect");
-        writeHitReceivedEffectToMap(itemJson, this.miss_effect, "missEffect");
+        writeHitEffectToMap(itemJson, this.miss_effect, "missEffect");
         writeHitReceivedEffectToMap(itemJson, this.miss_received_effect, "missReceivedEffect");
 
         String key;
