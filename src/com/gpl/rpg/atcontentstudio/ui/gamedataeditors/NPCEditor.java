@@ -131,7 +131,7 @@ public class NPCEditor extends JSONElementEditor {
         nameField = addTranslatableTextField(pane, "Display name: ", npc.name, npc.writable, listener);
         spawnGroupField = addTextField(pane, "Spawn group ID: ", npc.spawngroup_id, npc.writable, listener);
         factionField = addTextField(pane, "Faction ID: ", npc.faction_id, npc.writable, listener);
-        spriteFlipChanceField = addIntegerField(pane, "Icon Flip Chance: ", npc.spriteFlipChance, npc.writable, listener);
+        spriteFlipChanceField = addIntegerField(pane, "Icon Flip Chance: ", npc.spriteFlipChance, false, npc.writable, listener);
         experienceField = addIntegerField(pane, "Experience reward: ", npc.getMonsterExperience(), false, false, listener);
         dialogueBox = addDialogueBox(pane, npc.getProject(), "Initial phrase: ", npc.dialogue, npc.writable, listener);
         droplistBox = addDroplistBox(pane, npc.getProject(), "Droplist / Shop inventory: ", npc.droplist, npc.writable, listener);
