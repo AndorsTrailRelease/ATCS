@@ -13,8 +13,8 @@ else
 fi
 
 # --- Configuration ---
-PACKAGING_DIR=$(dirname "$(readlink -f "$0" || greadlink -f "$0" || stat -f "$0")")
-ATCS_SOURCE_DIR=$(dirname "${PACKAGING_DIR}")
+PACKAGING_DIR=$(dirname "$(readlink -f "$0" || greadlink -f "$0" || stat -f "$0")") # Directory of this script
+ATCS_SOURCE_DIR=$(dirname "${PACKAGING_DIR}") # Parent directory of this script, assumed to be ATCS source root
 TEMP_DIR="${PACKAGING_DIR}/tmp"
 JAR_LOCATION="${PACKAGING_DIR}/ATCS.jar" # Output JAR location as per script
 MANIFEST_LOCATION="${PACKAGING_DIR}/Manifest.txt"
