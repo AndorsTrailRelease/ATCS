@@ -13,8 +13,7 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
 
 
@@ -159,7 +158,9 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
             }
 
         } else if (parent.type != GameSource.Type.referenced) {
-            for (File f : baseFolder.listFiles()) {
+            List<File> files = new ArrayList<File>(Arrays.stream(baseFolder.listFiles()).toList());
+            Collections.sort(files,Comparator.comparing(x->x.getName()));
+            for (File f : files) {
                 if (f.getName().startsWith("actorconditions_")) {
                     ActorCondition.fromJson(f, actorConditions);
                 } else if (f.getName().startsWith("conversationlist_")) {

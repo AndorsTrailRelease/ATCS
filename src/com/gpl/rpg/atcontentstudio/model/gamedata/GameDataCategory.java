@@ -170,7 +170,7 @@ public class GameDataCategory<E extends JSONElement> implements ProjectTreeNode 
     @Override
     public void notifyCreated() {
         childrenAdded(new ArrayList<ProjectTreeNode>());
-        for (E node : dataMap.values()) {
+        for (E node : toList()) {
             node.notifyCreated();
         }
     }
