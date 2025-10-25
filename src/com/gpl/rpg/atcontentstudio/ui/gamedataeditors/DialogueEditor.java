@@ -610,6 +610,17 @@ public class DialogueEditor extends JSONElementEditor {
                     requirementObjId = addTextField(pane, "Time type HHMMSS:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Exact time value: ", requirement.required_value, true, writable, listener);
                     break;
+                case skillIncrease:
+                    skillId = null;
+                    try {
+                        skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
+                    } catch (IllegalArgumentException e) {
+                    }
+                    requirementObj = null;
+                    requirementSkill = addEnumValueBox(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener);
+                    requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
+                    requirementValue = addIntegerField(pane, "Level up: ", requirement.required_value, false, writable, listener);
+                    break;
             }
             requirementNegated = addBooleanBasedCheckBox(pane, "Negate this requirement.", requirement.negated, writable, listener);
         }
@@ -843,7 +854,7 @@ public class DialogueEditor extends JSONElementEditor {
             if (req.required_obj.getIcon() != null) {
                 label.setIcon(new ImageIcon(req.required_obj.getIcon()));
             }
-        } else if (req.type == Requirement.RequirementType.skillLevel) {
+        } else if (req.type == Requirement.RequirementType.skillLevel || req.type == Requirement.RequirementType.skillIncrease) {
             label.setIcon(new ImageIcon(DefaultIcons.getSkillIcon()));
         } else if (req.type == Requirement.RequirementType.spentGold) {
             label.setIcon(new ImageIcon(DefaultIcons.getGoldIcon()));
@@ -1008,7 +1019,7 @@ public class DialogueEditor extends JSONElementEditor {
                     selectedRequirement.required_obj.removeBacklink(dialogue);
                     selectedRequirement.required_obj = null;
                 }
-                if (selectedRequirement.type == Requirement.RequirementType.skillLevel) {
+                if (selectedRequirement.type == Requirement.RequirementType.skillLevel || selectedRequirement.type == Requirement.RequirementType.skillIncrease) {
                     selectedRequirement.required_obj_id = value == null ? null : value.toString();
                 }
                 requirementsListModel.itemChanged(selectedRequirement);

@@ -674,6 +674,16 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                     requirementObjId = addTextField(pane, "Time type HHMMSS:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Exact time value: ", requirement.required_value, true, writable, listener);
                     break;
+                case skillIncrease:
+                    skillId = null;
+                    try {
+                        skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
+                    } catch (IllegalArgumentException e) {
+                    }
+                    requirementObj = addEnumValueBox(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener);
+                    requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
+                    requirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
+                    break;
             }
         }
         requirementNegated = addBooleanBasedCheckBox(pane, "Negate this requirement.", requirement.negated, writable, listener);
@@ -1921,7 +1931,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             } else if (source == requirementObj) {
                 if (selectedMapObject instanceof KeyArea) {
                     KeyArea area = (KeyArea) selectedMapObject;
-                    if (area.requirement.type == Requirement.RequirementType.skillLevel) {
+                    if (area.requirement.type == Requirement.RequirementType.skillLevel || area.requirement.type == Requirement.RequirementType.skillIncrease) {
                         area.requirement.required_obj_id = value == null ? null : value.toString();
                     } else {
                         area.requirement.required_obj = (GameDataElement) value;
@@ -1938,7 +1948,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                     }
                 } else if (selectedMapObject instanceof ReplaceArea) {
                     ReplaceArea area = (ReplaceArea) selectedMapObject;
-                    if (area.requirement.type == Requirement.RequirementType.skillLevel) {
+                    if (area.requirement.type == Requirement.RequirementType.skillLevel || area.requirement.type == Requirement.RequirementType.skillIncrease) {
                         area.requirement.required_obj_id = value == null ? null : value.toString();
                     } else {
                         area.requirement.required_obj = (GameDataElement) value;

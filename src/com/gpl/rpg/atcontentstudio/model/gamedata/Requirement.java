@@ -64,7 +64,8 @@ public class Requirement extends JSONElement {
         date,
         dateEquals,
         time,
-        timeEquals
+        timeEquals,
+        skillIncrease
     }
 
     public enum SkillID {
@@ -166,6 +167,7 @@ public class Requirement extends JSONElement {
             case dateEquals:
             case time:
             case timeEquals:
+            case skillIncrease:
                 break;
         }
         if (this.required_obj != null) this.required_obj.addBacklink((GameDataElement) this.parent);
