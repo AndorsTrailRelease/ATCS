@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class GameDataSet implements ProjectTreeNode, Serializable {
@@ -158,7 +159,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
             }
 
         } else if (parent.type != GameSource.Type.referenced) {
-            List<File> files = new ArrayList<File>(Arrays.stream(baseFolder.listFiles()).toList());
+            List<File> files = new ArrayList<File>(Arrays.stream(baseFolder.listFiles()).collect(Collectors.toList()));
             Collections.sort(files,Comparator.comparing(x->x.getName()));
             for (File f : files) {
                 if (f.getName().startsWith("actorconditions_")) {
