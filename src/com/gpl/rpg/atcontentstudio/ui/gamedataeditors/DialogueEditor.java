@@ -312,11 +312,22 @@ public class DialogueEditor extends JSONElementEditor {
                     break;
                 case alignmentChange:
                 case alignmentSet:
+                case alignmentDiv:
+                case alignmentMult:
                     rewardMap = null;
                     rewardObjId = addTextField(pane, "Faction: ", reward.reward_obj_id, writable, listener);
                     rewardObjIdCombo = null;
                     rewardObj = null;
                     rewardValue = addIntegerField(pane, "Value: ", reward.reward_value, true, writable, listener);
+                    break;
+                case alignmentToReg1:
+                case alignmentFromReg1:
+                case alignmentAdd:
+                case alignmentSub:
+                    rewardMap = null;
+                    rewardObjId = addTextField(pane, "Faction: ", reward.reward_obj_id, writable, listener);
+                    rewardObjIdCombo = null;
+                    rewardObj = null;
                     break;
                 case createTimer:
                     rewardMap = null;
@@ -696,6 +707,30 @@ public class DialogueEditor extends JSONElementEditor {
                     break;
                 case alignmentSet:
                     label.setText("Set alignment for faction " + rewardObjDesc + " : " + reward.reward_value);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentToReg1:
+                    label.setText("Stash alignment for faction " + rewardObjDesc + " to reg1    Formula:  reg1 := " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentFromReg1:
+                    label.setText("Load alignment for faction " + rewardObjDesc + " from reg1    Formula:  " + rewardObjDesc + " := reg1");
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentAdd:
+                    label.setText("Add alignment for faction " + rewardObjDesc + " to value in reg1    Formula:  reg1 := reg1 + " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentSub:
+                    label.setText("Subtract alignment for faction " + rewardObjDesc + " from value in reg1    Formula:  reg1 := reg1 - " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentDiv:
+                    label.setText("Divide value in reg1 by alignment for faction " + rewardObjDesc + " (multiplied by constant value before if not 0)    Formula:  reg1 := reg1 / " + rewardObjDesc + "  OR  reg1 := value * reg1 / " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentMult:
+                    label.setText("Multiply alignment for faction " + rewardObjDesc + " by value in reg1 (or by constant value if not 0)    Formula:  reg1 := value * " + rewardObjDesc + "  OR  reg1 := reg1 * "+ rewardObjDesc);
                     label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
                     break;
                 case createTimer:

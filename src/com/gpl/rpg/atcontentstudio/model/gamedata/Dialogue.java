@@ -57,6 +57,12 @@ public class Dialogue extends JSONElement {
             actorConditionImmunity,
             alignmentChange,
             alignmentSet,
+            alignmentToReg1,
+            alignmentFromReg1,
+            alignmentAdd,
+            alignmentSub,
+            alignmentDiv,
+            alignmentMult,
             giveItem,
             createTimer,
             spawnAll,
@@ -251,6 +257,12 @@ public class Dialogue extends JSONElement {
                             break;
                         case alignmentChange:
                         case alignmentSet:
+                        case alignmentToReg1:
+                        case alignmentFromReg1:
+                        case alignmentAdd:
+                        case alignmentSub:
+                        case alignmentDiv:
+                        case alignmentMult:
                             //Nothing to do (yet ?).
                             break;
                         case createTimer:
