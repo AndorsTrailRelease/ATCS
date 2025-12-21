@@ -232,7 +232,7 @@ public class GameDataCategory<E extends JSONElement> implements ProjectTreeNode 
             return;
         }
         List<Map> dataToSave = new ArrayList<Map>();
-        for (E element : dataMap.values()) {
+        for (E element : toList()) {
             if (element.jsonFile.equals(jsonFile)) {
                 dataToSave.add(element.toJson());
             }
