@@ -58,6 +58,8 @@ public class Dialogue extends JSONElement {
             alignmentChange,
             alignmentSet,
             alignmentToReg1,
+            alignmentToReg2,
+            alignmentToReg3,
             alignmentFromReg1,
             alignmentAdd,
             alignmentSub,
@@ -258,6 +260,8 @@ public class Dialogue extends JSONElement {
                         case alignmentChange:
                         case alignmentSet:
                         case alignmentToReg1:
+                        case alignmentToReg2:
+                        case alignmentToReg3:
                         case alignmentFromReg1:
                         case alignmentAdd:
                         case alignmentSub:

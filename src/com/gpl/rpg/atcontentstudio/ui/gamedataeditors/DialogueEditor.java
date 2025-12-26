@@ -321,6 +321,8 @@ public class DialogueEditor extends JSONElementEditor {
                     rewardValue = addIntegerField(pane, "Value: ", reward.reward_value, true, writable, listener);
                     break;
                 case alignmentToReg1:
+                case alignmentToReg2:
+                case alignmentToReg3:
                 case alignmentFromReg1:
                 case alignmentAdd:
                 case alignmentSub:
@@ -711,6 +713,14 @@ public class DialogueEditor extends JSONElementEditor {
                     break;
                 case alignmentToReg1:
                     label.setText("Stash alignment for faction " + rewardObjDesc + " to reg1    Formula:  reg1 := " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentToReg2:
+                    label.setText("Stash alignment for faction " + rewardObjDesc + " to reg2    Formula:  reg2 := " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
+                    break;
+                case alignmentToReg3:
+                    label.setText("Stash alignment for faction " + rewardObjDesc + " to reg3    Formula:  reg3 := " + rewardObjDesc);
                     label.setIcon(new ImageIcon(DefaultIcons.getAlignmentIcon()));
                     break;
                 case alignmentFromReg1:
