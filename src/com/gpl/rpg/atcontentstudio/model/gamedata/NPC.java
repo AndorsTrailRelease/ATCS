@@ -71,7 +71,8 @@ public class NPC extends JSONElement {
         none,
         helpOthers,
         protectSpawn,
-        wholeMap
+        wholeMap,
+        flee
     }
 
     @Override
