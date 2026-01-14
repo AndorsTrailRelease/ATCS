@@ -46,11 +46,13 @@ public class ATContentStudio {
     // Need to keep a strong reference to it, to avoid garbage collection that'll
     // reset these loggers.
     public static final List<Logger> configuredLoggers = new LinkedList<Logger>();
+    public static String[] ARGS;
 
     /**
      * @param args
      */
     public static void main(String[] args) {
+        ARGS = args;
         String fontScaling = System.getProperty(FONT_SCALE_ENV_VAR_NAME);
         Float fontScale;
         if (fontScaling != null) {

@@ -156,6 +156,15 @@ public class StudioFrame extends JFrame {
         viewMenu.add(new JSeparator());
         viewMenu.add(new JMenuItem(actions.showAbout));
         getJMenuBar().add(viewMenu);
+
+        if (!"".equals(ATContentStudio.ARGS[0])) {
+            JButton exportButton = new JButton("Export");
+            exportButton.addActionListener(actions.exportProject);
+            exportButton.setBorderPainted(false);
+            exportButton.setFocusPainted(false);
+            exportButton.setContentAreaFilled(false);
+            getJMenuBar().add(exportButton);
+        }
     }
 
     public void openEditor(JSONElement node) {
