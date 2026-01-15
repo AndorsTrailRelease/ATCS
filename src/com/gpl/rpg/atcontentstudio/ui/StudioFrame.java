@@ -157,7 +157,7 @@ public class StudioFrame extends JFrame {
         viewMenu.add(new JMenuItem(actions.showAbout));
         getJMenuBar().add(viewMenu);
 
-        if (!"".equals(ATContentStudio.ARGS[0])) {
+        if (ATContentStudio.ARGS != null && ATContentStudio.ARGS.length > 0 && !"".equals(ATContentStudio.ARGS[0])) {
             JButton exportButton = new JButton("Export");
             exportButton.addActionListener(actions.exportProject);
             exportButton.setBorderPainted(false);

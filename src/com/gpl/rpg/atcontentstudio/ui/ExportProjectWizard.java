@@ -117,6 +117,7 @@ public class ExportProjectWizard extends JDialog {
         buttonPane.add(cancelButton, JideBoxLayout.FIX);
         okButton = new JButton("Ok");
         buttonPane.add(okButton, JideBoxLayout.FIX);
+        SwingUtilities.invokeLater(() -> okButton.requestFocusInWindow());
 
         pane.add(new JPanel(), JideBoxLayout.VARY);
 
