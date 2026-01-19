@@ -73,7 +73,8 @@ public class Dialogue extends JSONElement {
             activateMapObjectGroup,
             deactivateMapObjectGroup,
             changeMapFilter,
-            mapchange
+            mapchange,
+            changeIcon
         }
     }
 
@@ -267,6 +268,7 @@ public class Dialogue extends JSONElement {
                         case alignmentSub:
                         case alignmentDiv:
                         case alignmentMult:
+                        case changeIcon:
                             //Nothing to do (yet ?).
                             break;
                         case createTimer:

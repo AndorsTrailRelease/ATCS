@@ -371,6 +371,13 @@ public class DialogueEditor extends JSONElementEditor {
                     rewardObj = null;
                     rewardValue = null;
                     break;
+                case changeIcon:
+                    rewardMap = null;
+                    rewardObjId = null;
+                    rewardObjIdCombo = null;
+                    rewardObj = null;
+                    rewardValue = addIntegerField(pane, "Icon number: ", reward.reward_value, false, writable, listener);
+                    break;
 
             }
         }
@@ -790,6 +797,10 @@ public class DialogueEditor extends JSONElementEditor {
                 case mapchange:
                     label.setText("Teleport to " + rewardObjDesc + " on map " + reward.map_name);
                     label.setIcon(new ImageIcon(DefaultIcons.getMapchangeIcon()));
+                    break;
+                case changeIcon:
+                    label.setText("Change Icon to " + reward.reward_value + " " + rewardObjDesc);
+                    if (reward.reward_obj != null) label.setIcon(new ImageIcon(DefaultIcons.getNPCIcon()));
                     break;
             }
         } else {
