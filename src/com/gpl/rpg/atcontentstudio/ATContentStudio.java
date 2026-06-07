@@ -159,7 +159,7 @@ public class ATContentStudio {
             while ((inputLine = in.readLine()) != null) {
                 lastLine = inputLine;
             }
-            if (lastLine != null && !lastLine.equals(APP_VERSION)) {
+            if (lastLine != null && APP_VERSION.compareTo(lastLine) < 0) {
 
                 // for copying style
                 JLabel label = new JLabel();
