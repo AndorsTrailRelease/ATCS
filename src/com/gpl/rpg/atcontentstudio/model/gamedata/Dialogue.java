@@ -76,9 +76,6 @@ public class Dialogue extends JSONElement {
             mapchange,
             changeIcon
         }
-
-        public List<Requirement> requirements = null;
-
     }
 
     public static class Reply {
@@ -208,27 +205,6 @@ public class Dialogue extends JSONElement {
                 if (rewardJson.get("value") != null)
                     reward.reward_value = JSONElement.getInteger((Number) rewardJson.get("value"));
                 if (rewardJson.get("mapName") != null) reward.map_name = (String) rewardJson.get("mapName");
-
-                List requirementsJson = (List) rewardJson.get("requires");
-                if (requirementsJson != null && !requirementsJson.isEmpty()) {
-                    reward.requirements = new ArrayList<Requirement>();
-                    for (Object requirementJsonObj : requirementsJson) {
-                        Map requirementJson = (Map) requirementJsonObj;
-                        Requirement requirement = new Requirement();
-                        requirement.jsonFile = this.jsonFile;
-                        requirement.parent = this;
-                        if (requirementJson.get("requireType") != null)
-                            requirement.type = RequirementType.valueOf((String) requirementJson.get("requireType"));
-                        requirement.required_obj_id = (String) requirementJson.get("requireID");
-                        if (requirementJson.get("value") != null)
-                            requirement.required_value = JSONElement.getInteger(Integer.parseInt(requirementJson.get("value").toString()));
-                        if (requirementJson.get("negate") != null)
-                            requirement.negated = (Boolean) requirementJson.get("negate");
-                        requirement.state = State.parsed;
-                        reward.requirements.add(requirement);
-                    }
-                }
-
                 this.rewards.add(reward);
             }
         }

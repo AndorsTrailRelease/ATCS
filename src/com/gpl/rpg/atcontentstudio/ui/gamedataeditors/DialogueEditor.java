@@ -464,7 +464,7 @@ public class DialogueEditor extends JSONElementEditor {
         pane.add(repliesParamsPane, JideBoxLayout.FIX);
 
         ReplyRequirementsCellRenderer cellRendererRequirements = new ReplyRequirementsCellRenderer();
-        String titleRequirements = "Requirements the player must fulfill to select this: ";
+        String titleRequirements = "Requirements the player must fulfill to select this reply: ";
         requirementsListModel = new ReplyRequirementsListModel(reply);
         UiUtils.CollapsibleItemListCreation itemsPane = UiUtils.getCollapsibleItemList(
                 listener,
