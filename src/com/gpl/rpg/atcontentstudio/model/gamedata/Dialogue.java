@@ -206,7 +206,7 @@ public class Dialogue extends JSONElement {
                     reward.type = Reward.RewardType.valueOf((String) rewardJson.get("rewardType"));
                 if (rewardJson.get("rewardID") != null) reward.reward_obj_id = (String) rewardJson.get("rewardID");
                 if (rewardJson.get("value") != null)
-                    reward.reward_value = JSONElement.getInteger((Number) rewardJson.get("value"));
+                    reward.reward_value = JSONElement.getInteger(Integer.parseInt(rewardJson.get("value").toString()));
                 if (rewardJson.get("mapName") != null) reward.map_name = (String) rewardJson.get("mapName");
 
                 List requirementsJson = (List) rewardJson.get("requires");
@@ -365,6 +365,12 @@ public class Dialogue extends JSONElement {
                 rclone.map_name = r.map_name;
                 if (rclone.map != null) {
                     rclone.map.addBacklink(clone);
+                }
+                if (r.requirements != null) {
+                    rclone.requirements = new ArrayList<Requirement>();
+                    for (Requirement req : r.requirements) {
+                        rclone.requirements.add((Requirement) req.clone(clone));
+                    }
                 }
                 clone.rewards.add(rclone);
             }

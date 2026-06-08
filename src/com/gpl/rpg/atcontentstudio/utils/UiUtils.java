@@ -87,12 +87,10 @@ public class UiUtils {
         editorPane.setLayout(new JideBoxLayout(editorPane, JideBoxLayout.PAGE_AXIS));
         itemsPane.add(editorPane, JideBoxLayout.FIX);
 
-        return new CollapsibleItemListCreation<E>() {
-            {
-                collapsiblePanel = itemsPane;
-                list = list;
-            }
-        };
+        CollapsibleItemListCreation<E> result = new CollapsibleItemListCreation<>();
+        result.collapsiblePanel = itemsPane;
+        result.list = list;
+        return result;
     }
 
     private static <S, E, M extends OrderedListenerListModel<S, E>> void addRemoveAndAddButtons(FieldUpdateListener listener, M itemsListModel, BasicLambda selectedItemReset, BasicLambdaWithReturn<E> selectedItem, Supplier<E> newValueSupplier, JButton createBtn, JList<E> itemsList, JPanel listButtonsPane, JButton deleteBtn) {

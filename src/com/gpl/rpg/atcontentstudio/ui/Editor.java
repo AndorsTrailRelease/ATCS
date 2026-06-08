@@ -836,6 +836,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             colPane.collapse();
         }
         pane.add(colPane, JideBoxLayout.FIX);
+        shrinkList(list);
         return list;
     }
 
@@ -1126,5 +1127,12 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         }
         hitTargetConditionsModel.itemChanged(selectedHitEffectTargetCondition);
     }
+
+    /** Shrink the list to show content only */
+    public void shrinkList(JList list) {
+        if (list == null) return;
+        list.setVisibleRowCount(Math.min(8, list.getModel().getSize())+1);
+    }
+
 
 }
