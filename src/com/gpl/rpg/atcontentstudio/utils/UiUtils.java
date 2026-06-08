@@ -99,6 +99,7 @@ public class UiUtils {
             itemsListModel.addItem(tempItem);
             itemsList.setSelectedValue(tempItem, true);
             listener.valueChanged(new JLabel(), null); //Item changed, but we took care of it, just do the usual notification and JSON update stuff.
+            resizeListToFit(itemsList);
         });
         listButtonsPane.add(createBtn, JideBoxLayout.FIX);
 
@@ -163,6 +164,11 @@ public class UiUtils {
                 }
             }
         });
+    }
+
+    public static void resizeListToFit(JList<?> list) {
+        if (list == null) return;
+        list.setVisibleRowCount(Math.min(8, list.getModel().getSize())+1);
     }
 
 }

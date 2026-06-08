@@ -426,6 +426,11 @@ public class Dialogue extends JSONElement {
                         r.reward_obj = newOne;
                         if (newOne != null) newOne.addBacklink(this);
                     }
+                    if (r.requirements != null) {
+                        for (Requirement req : r.requirements) {
+                            req.elementChanged(oldOne, newOne);
+                        }
+                    }
                     if (oldOne instanceof QuestStage) {
                         if (r.reward_obj != null && r.reward_obj.equals(oldOne.parent) && r.reward_value != null && r.reward_value.equals(((QuestStage) oldOne).progress)) {
                             oldOne.removeBacklink((GameDataElement) this);
@@ -496,6 +501,24 @@ public class Dialogue extends JSONElement {
                 if (reward.map != null) {
                     rewardJson.put("mapName", reward.map.id);
                 } else if (reward.map_name != null) rewardJson.put("mapName", reward.map_name);
+                if (reward.requirements != null ) {
+                    List requirementsJson = new ArrayList();
+                    rewardJson.put("requires", requirementsJson);
+                    for (Requirement requirement : reward.requirements) {
+                        Map requirementJson = new LinkedHashMap();
+                        requirementsJson.add(requirementJson);
+                        if (requirement.type != null) requirementJson.put("requireType", requirement.type.toString());
+                        if (requirement.required_obj != null) {
+                            requirementJson.put("requireID", requirement.required_obj.id);
+                        } else if (requirement.required_obj_id != null) {
+                            requirementJson.put("requireID", requirement.required_obj_id);
+                        }
+                        if (requirement.required_value != null) {
+                            requirementJson.put("value", requirement.required_value);
+                        }
+                        if (requirement.negated != null) requirementJson.put("negate", requirement.negated);
+                    }
+                }
             }
         }
         return dialogueJson;

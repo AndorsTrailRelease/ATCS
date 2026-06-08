@@ -8,6 +8,7 @@ import com.gpl.rpg.atcontentstudio.model.ProjectElementListener;
 import com.gpl.rpg.atcontentstudio.model.Workspace;
 import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
+import com.gpl.rpg.atcontentstudio.utils.UiUtils;
 import com.gpl.rpg.atcontentstudio.utils.WeblateIntegration;
 import com.jidesoft.swing.ComboBoxSearchable;
 import com.jidesoft.swing.JideBoxLayout;
@@ -836,7 +837,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             colPane.collapse();
         }
         pane.add(colPane, JideBoxLayout.FIX);
-        shrinkList(list);
+        UiUtils.resizeListToFit(list);
         return list;
     }
 
@@ -1126,12 +1127,6 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             selectedHitEffectTargetCondition.condition_id = null;
         }
         hitTargetConditionsModel.itemChanged(selectedHitEffectTargetCondition);
-    }
-
-    /** Shrink the list to show content only */
-    public void shrinkList(JList list) {
-        if (list == null) return;
-        list.setVisibleRowCount(Math.min(8, list.getModel().getSize())+1);
     }
 
 

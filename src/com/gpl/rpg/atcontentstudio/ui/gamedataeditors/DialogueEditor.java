@@ -172,7 +172,7 @@ public class DialogueEditor extends JSONElementEditor {
             rewardsPane.collapsiblePanel.collapse();
         }
         pane.add(rewardsPane.collapsiblePanel, JideBoxLayout.FIX);
-        shrinkList(rewardsPane.list);
+        UiUtils.resizeListToFit(rewardsPane.list);
 
         RepliesCellRenderer cellRendererReplies = new RepliesCellRenderer();
         String titleReplies = "Replies / Next Phrase: ";
@@ -202,7 +202,7 @@ public class DialogueEditor extends JSONElementEditor {
         }
 
         pane.add(repliesPane.collapsiblePanel, JideBoxLayout.FIX);
-        shrinkList(repliesPane.list);
+        UiUtils.resizeListToFit(repliesPane.list);
 
     }
 
@@ -243,7 +243,7 @@ public class DialogueEditor extends JSONElementEditor {
 
             CollapsiblePanel reqPane = itemsPane.collapsiblePanel;
             rewardRequirementsList = itemsPane.list;
-            shrinkList(rewardRequirementsList);
+            UiUtils.resizeListToFit(rewardRequirementsList);
             if (reward.requirements == null || reward.requirements.isEmpty()) {
                 reqPane.collapse();
             }
@@ -335,20 +335,20 @@ public class DialogueEditor extends JSONElementEditor {
                     rewardConditionTimed.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            listener.valueChanged(rewardConditionTimed, new Boolean(rewardConditionTimed.isSelected()));
+                            listener.valueChanged(rewardConditionTimed, rewardConditionTimed.isSelected());
                         }
                     });
                     rewardConditionForever.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            listener.valueChanged(rewardConditionForever, new Boolean(rewardConditionForever.isSelected()));
+                            listener.valueChanged(rewardConditionForever, rewardConditionForever.isSelected());
                         }
                     });
                     if (!immunity) {
                         rewardConditionClear.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                listener.valueChanged(rewardConditionClear, new Boolean(rewardConditionClear.isSelected()));
+                                listener.valueChanged(rewardConditionClear, rewardConditionClear.isSelected());
                             }
                         });
                     }
@@ -698,7 +698,7 @@ public class DialogueEditor extends JSONElementEditor {
         );
         CollapsiblePanel requirementsPane = itemsPane.collapsiblePanel;
         requirementsList = itemsPane.list;
-        shrinkList(requirementsList);
+        UiUtils.resizeListToFit(requirementsList);
 
         if (reply.requirements == null || reply.requirements.isEmpty()) {
             requirementsPane.collapse();
@@ -1050,7 +1050,7 @@ public class DialogueEditor extends JSONElementEditor {
             label.setText("New, undefined reward");
         }
         if (reward.requirements != null && !reward.requirements.isEmpty()) {
-            label.setText("[Reqs]" + label.getText());
+            label.setText("[Reqs] " + label.getText());
         }
 
     }
@@ -1301,7 +1301,9 @@ public class DialogueEditor extends JSONElementEditor {
                     selectedReply.next_phrase_id = null;
                 }
                 repliesListModel.itemChanged(selectedReply);
-            } else if (source == requirementTypeCombo) {
+            }
+            // Reply Requirement stuff...
+            else if (source == requirementTypeCombo) {
                 selectedRequirement.changeType((Requirement.RequirementType) requirementTypeCombo.getSelectedItem());
                 updateRequirementParamsEditorPane(requirementParamsPane, selectedRequirement, this);
                 requirementsListModel.itemChanged(selectedRequirement);
@@ -1349,6 +1351,57 @@ public class DialogueEditor extends JSONElementEditor {
                 requirementsListModel.itemChanged(selectedRequirement);
             } else if (source == requirementNegated) {
                 selectedRequirement.negated = (Boolean) value;
+            }
+
+            // Reward Requirement stuff...  this is ugly and should be combined with reply reqs somehow
+            else if (source == rewardRequirementTypeCombo) {
+                selectedRewardRequirement.changeType((Requirement.RequirementType) rewardRequirementTypeCombo.getSelectedItem());
+                updateRewardRequirementParamsEditorPane(rewardRequirementParamsPane, selectedRewardRequirement, this);
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementObj) {
+                if (selectedRewardRequirement.required_obj != null) {
+                    selectedRewardRequirement.required_obj.removeBacklink(dialogue);
+                }
+                selectedRewardRequirement.required_obj = (GameDataElement) value;
+                if (selectedRewardRequirement.required_obj != null) {
+                    selectedRewardRequirement.required_obj_id = selectedRewardRequirement.required_obj.id;
+                    selectedRewardRequirement.required_obj.addBacklink(dialogue);
+                } else {
+                    selectedRewardRequirement.required_obj_id = null;
+                }
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementSkill) {
+                if (selectedRewardRequirement.required_obj != null) {
+                    selectedRewardRequirement.required_obj.removeBacklink(dialogue);
+                    selectedRewardRequirement.required_obj = null;
+                }
+                if (selectedRewardRequirement.type == Requirement.RequirementType.skillLevel || selectedRewardRequirement.type == Requirement.RequirementType.skillIncrease) {
+                    selectedRewardRequirement.required_obj_id = value == null ? null : value.toString();
+                }
+                requirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementObjId) {
+                selectedRewardRequirement.required_obj_id = (String) value;
+                selectedRewardRequirement.required_obj = null;
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementValue) {
+                //Backlink removal to quest stages when selecting another quest are handled in the addQuestStageBox() method. Too complex too handle here
+                Quest quest = null;
+                QuestStage stage;
+                if (rewardRequirementValue instanceof JComboBox<?>) {
+                    quest = ((Quest) selectedRewardRequirement.required_obj);
+                    if (quest != null && selectedRewardRequirement.required_value != null) {
+                        stage = quest.getStage(selectedRewardRequirement.required_value);
+                        if (stage != null) stage.removeBacklink(dialogue);
+                    }
+                }
+                selectedRewardRequirement.required_value = (Integer) value;
+                if (quest != null) {
+                    stage = quest.getStage(selectedRewardRequirement.required_value);
+                    if (stage != null) stage.addBacklink(dialogue);
+                }
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementNegated) {
+                selectedRewardRequirement.negated = (Boolean) value;
             }
 
             if (dialogue.state != GameDataElement.State.modified) {
