@@ -359,7 +359,7 @@ public class NPC extends JSONElement {
         }
         double experience = (((avgAttackHP * 3) + avgDefenseHP) * EXP_FACTOR_SCALING) + attackConditionBonus;
 
-        return new Double(Math.ceil(experience)).intValue();
+        return (int) Math.ceil(experience);
     }
 
 
