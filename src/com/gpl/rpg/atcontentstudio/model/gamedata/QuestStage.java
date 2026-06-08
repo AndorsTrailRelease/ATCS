@@ -22,10 +22,10 @@ public class QuestStage extends JSONElement {
 
     public QuestStage clone(Quest cloneParent) {
         QuestStage clone = new QuestStage(cloneParent);
-        clone.progress = progress != null ? new Integer(progress) : null;
-        clone.log_text = log_text != null ? new String(log_text) : null;
-        clone.exp_reward = exp_reward != null ? new Integer(exp_reward) : null;
-        clone.finishes_quest = finishes_quest != null ? new Integer(finishes_quest) : null;
+        clone.progress = progress;
+        clone.log_text = log_text;
+        clone.exp_reward = exp_reward;
+        clone.finishes_quest = finishes_quest;
         clone.id = this.id;
         return clone;
     }

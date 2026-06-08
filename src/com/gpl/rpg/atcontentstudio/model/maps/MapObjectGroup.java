@@ -21,7 +21,7 @@ public class MapObjectGroup {
         this.visible = layer.isVisible();
         this.parentMap = map;
         if (layer.getProperties().get("active") != null) {
-            active = new Boolean(((String) layer.getProperties().get("active")));
+            active = Boolean.valueOf((String) layer.getProperties().get("active"));
         } else {
             active = true;
         }

@@ -26,7 +26,6 @@ public class POParser
     /**
      * Creates a POParser object. Use getPOFile() method,
      * to access parsed data.
-     * @param file, File object of the PO file
      */
     public POParser()
     {
@@ -120,7 +119,7 @@ public class POParser
 
         // is this header?
         Vector<String> rawentry = vectors.get(0);
-        if(new Integer(rawentry.get(0)) == 0 && rawentry.contains("msgid \"\""))
+        if(Integer.parseInt(rawentry.get(0)) == 0 && rawentry.contains("msgid \"\""))
         {
             for(int i = 1; i < rawentry.size(); i++)
             {
@@ -142,7 +141,7 @@ public class POParser
 
         // is this header
         Vector<String> rawentry = vectors.get(0);
-        if(new Integer(rawentry.get(0)) == 0 && rawentry.contains("msgid \"\""))
+        if(Integer.parseInt(rawentry.get(0)) == 0 && rawentry.contains("msgid \"\""))
         {
             thereIsHeader = true;
         }
