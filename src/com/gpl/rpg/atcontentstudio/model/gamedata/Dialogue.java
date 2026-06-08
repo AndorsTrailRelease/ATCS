@@ -125,6 +125,8 @@ public class Dialogue extends JSONElement {
                 if (dialogue.getDataType() == GameSource.Type.created || dialogue.getDataType() == GameSource.Type.altered) {
                     dialogue.writable = true;
                 }
+                // Parse now so link() doesn't re-open and rescan the full source file per dialogue.
+                dialogue.parse(dialogueJson);
                 category.add(dialogue);
             }
         } catch (FileNotFoundException e) {
