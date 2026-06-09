@@ -86,8 +86,18 @@ public class Workspace implements ProjectTreeNode, Serializable, JsonSerializabl
 
     @Override
     public void fromMap(Map map) {
-        if(serialVersionUID != (long) map.get("serialVersionUID")){
-            throw new SerializationException("wrong seriaVersionUID");
+        // Make this robust
+        Object serialVersion = map.get("serialVersionUID");
+        long loadedSerialVersion;
+        if (serialVersion instanceof Number) {
+            loadedSerialVersion = ((Number) serialVersion).longValue();
+        } else if (serialVersion != null) {
+            loadedSerialVersion = Long.parseLong(serialVersion.toString());
+        } else {
+            throw new SerializationException("missing serialVersionUID");
+        }
+        if (serialVersionUID != loadedSerialVersion){
+            throw new SerializationException("wrong serialVersionUID");
         }
 
         preferences.fromMap((Map) map.get("preferences"));
@@ -136,7 +146,7 @@ public class Workspace implements ProjectTreeNode, Serializable, JsonSerializabl
     }
 
     private static Workspace loadWorkspaceFromJson(File workspaceRoot, File settingsFile) {
-        Workspace w = w = new Workspace(workspaceRoot);
+        Workspace w = new Workspace(workspaceRoot);
         Map json = FileUtils.mapFromJsonFile(settingsFile);
         if (json!= null) {
             w.fromMap(json);
@@ -387,14 +397,16 @@ public class Workspace implements ProjectTreeNode, Serializable, JsonSerializabl
     }
 
     private static boolean delete(File f) {
-        boolean b = true;
         if (Files.isSymbolicLink(f.toPath())) {
-            b &= f.delete();
+            return f.delete();
         } else if (f.isDirectory()) {
-            for (File c : f.listFiles())
+            boolean b = true;
+            for (File c : Objects.requireNonNull(f.listFiles()))
                 b &= delete(c);
+            return b & f.delete();
+        } else {
+            return f.delete();
         }
-        return b & f.delete();
     }
 
     @Override

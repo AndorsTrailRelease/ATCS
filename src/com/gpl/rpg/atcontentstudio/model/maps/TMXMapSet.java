@@ -18,6 +18,8 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TMXMapSet implements ProjectTreeNode {
 
@@ -29,6 +31,7 @@ public class TMXMapSet implements ProjectTreeNode {
     public static final String DEBUG_SUFFIX = "_debug";
     public static final String RESOURCE_PREFIX = "@xml/";
     public static final String FILENAME_SUFFIX = ".tmx";
+    public static final String FILENAME_REGEX = "^(.+)\\.tmx$";
 
     public File mapFolder = null;
     public List<TMXMap> tmxMaps;
@@ -39,7 +42,7 @@ public class TMXMapSet implements ProjectTreeNode {
         this.parent = source;
         if (source.type == GameSource.Type.source) {
             this.mapFolder = new File(source.baseFolder, DEFAULT_REL_PATH_IN_SOURCE);
-        } else if (source.type == GameSource.Type.created | source.type == GameSource.Type.altered) {
+        } else if (source.type == GameSource.Type.created || source.type == GameSource.Type.altered) {
             this.mapFolder = new File(source.baseFolder, DEFAULT_REL_PATH_IN_PROJECT);
             if (!this.mapFolder.exists()) {
                 this.mapFolder.mkdirs();
@@ -84,37 +87,39 @@ public class TMXMapSet implements ProjectTreeNode {
             final Path folderPath = Paths.get(mapFolder.getAbsolutePath());
             Thread watcher = new Thread("Map folder watcher for " + getProject().name + "/" + source.type) {
                 public void run() {
-                    WatchService watchService;
-
-                    while (getProject().open) {
-                        try {
-                            watchService = FileSystems.getDefault().newWatchService();
-                            /*WatchKey watchKey = */
-                            folderPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
-                            WatchKey wk;
-                            validService:
-                            while (getProject().open) {
-                                wk = watchService.poll(10, TimeUnit.SECONDS);
-                                if (wk != null) {
-                                    for (WatchEvent<?> event : wk.pollEvents()) {
-                                        Path changed = (Path) event.context();
-                                        String name = changed.getFileName().toString();
-                                        String id = name.substring(0, name.length() - 4);
-                                        TMXMap map = getMap(id);
-                                        if (map != null) {
-                                            map.mapChangedOnDisk();
-                                        }
-                                    }
-                                    if (!wk.reset()) {
-                                        watchService.close();
-                                        break validService;
+                    WatchService watchService = null;
+                    Pattern tmxFilenamePattern = Pattern.compile(FILENAME_REGEX, Pattern.CASE_INSENSITIVE);
+                    try {
+                        watchService = FileSystems.getDefault().newWatchService();
+                        folderPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
+                        while (getProject().open) {
+                            WatchKey wk = watchService.poll(10, TimeUnit.SECONDS);
+                            if (wk != null) {
+                                for (WatchEvent<?> event : wk.pollEvents()) {
+                                    Path changed = (Path) event.context();
+                                    String name = changed.getFileName().toString();
+                                    Matcher matcher = tmxFilenamePattern.matcher(name); // use regex to make sure we only match .tmx files, and also avoid out-of-bounds for too-short filenames
+                                    if (!matcher.matches()) continue;
+                                    String id = matcher.group(1);
+                                    TMXMap map = getMap(id);
+                                    if (map != null) {
+                                        map.mapChangedOnDisk();
                                     }
                                 }
+                                if (!wk.reset()) {
+                                    break;
+                                }
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                        }
+                    } catch (IOException | InterruptedException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (watchService != null) {
+                            try {
+                                watchService.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

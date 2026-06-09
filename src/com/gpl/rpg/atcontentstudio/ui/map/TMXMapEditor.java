@@ -1372,6 +1372,11 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             final Graphics2D g2d = (Graphics2D) g.create();
             final Rectangle clip = g2d.getClipBounds();
 
+            // Bail out if we get called on a null map (usually a synchronization issue)
+            if (map == null || map.tmxMap == null) {
+                g2d.dispose();
+                return;
+            }
 
             // Draw a gray background
             g2d.setPaint(new Color(100, 100, 100));
@@ -1577,11 +1582,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                         if (confirm == JOptionPane.CANCEL_OPTION) return;
                     }
                     reload.setEnabled(false);
-                    (new Thread() {
-                        public void run() {
-                            map.reload();
-                        }
-                    }).start();
+                    map.reload(); // This is fast enough to be synchronous, and that avoids async issues with paintComponent()
                 }
             });
             if (map.getDataType() == GameSource.Type.altered) {
@@ -2234,6 +2235,10 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         public void paintComponent(Graphics g) {
             final Graphics2D g2d = (Graphics2D) g.create();
             final Rectangle clip = g2d.getClipBounds();
+            if (map == null || map.tmxMap == null) {
+                g2d.dispose();
+                return;
+            }
 
             // Draw a gray background
             g2d.setPaint(new Color(100, 100, 100));
