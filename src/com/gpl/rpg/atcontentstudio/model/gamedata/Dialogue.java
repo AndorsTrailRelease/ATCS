@@ -322,6 +322,11 @@ public class Dialogue extends JSONElement {
                     }
                     if (reward.reward_obj != null) reward.reward_obj.addBacklink(this);
                     if (reward.map != null) reward.map.addBacklink(this);
+                    if (reward.requirements != null) {
+                        for (Requirement requirement : reward.requirements) {
+                            requirement.link();
+                        }
+                    }
                 }
             }
         }
