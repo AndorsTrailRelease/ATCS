@@ -67,6 +67,7 @@ public class Droplist extends JSONElement {
                 if (droplist.getDataType() == GameSource.Type.created || droplist.getDataType() == GameSource.Type.altered) {
                     droplist.writable = true;
                 }
+                droplist.parse(droplistJson);
                 category.add(droplist);
             }
         } catch (FileNotFoundException e) {

@@ -125,6 +125,8 @@ public class Dialogue extends JSONElement {
                 if (dialogue.getDataType() == GameSource.Type.created || dialogue.getDataType() == GameSource.Type.altered) {
                     dialogue.writable = true;
                 }
+                // Parse now so link() doesn't re-open and rescan the full source file per dialogue.
+                dialogue.parse(dialogueJson);
                 category.add(dialogue);
             }
         } catch (FileNotFoundException e) {
@@ -320,6 +322,11 @@ public class Dialogue extends JSONElement {
                     }
                     if (reward.reward_obj != null) reward.reward_obj.addBacklink(this);
                     if (reward.map != null) reward.map.addBacklink(this);
+                    if (reward.requirements != null) {
+                        for (Requirement requirement : reward.requirements) {
+                            requirement.link();
+                        }
+                    }
                 }
             }
         }

@@ -136,9 +136,7 @@ public class ObjectGroup extends MapLayer
         return clone;
     }
 
-    /**
-     * @deprecated
-     */
+    @Deprecated
     public MapLayer createDiff(MapLayer ml) {
         return null;
     }

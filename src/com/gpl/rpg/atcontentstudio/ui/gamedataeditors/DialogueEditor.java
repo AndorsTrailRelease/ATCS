@@ -1378,7 +1378,7 @@ public class DialogueEditor extends JSONElementEditor {
                 if (selectedRewardRequirement.type == Requirement.RequirementType.skillLevel || selectedRewardRequirement.type == Requirement.RequirementType.skillIncrease) {
                     selectedRewardRequirement.required_obj_id = value == null ? null : value.toString();
                 }
-                requirementsListModel.itemChanged(selectedRewardRequirement);
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
             } else if (source == rewardRequirementObjId) {
                 selectedRewardRequirement.required_obj_id = (String) value;
                 selectedRewardRequirement.required_obj = null;
