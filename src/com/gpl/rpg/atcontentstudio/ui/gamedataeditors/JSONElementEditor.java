@@ -40,7 +40,7 @@ public abstract class JSONElementEditor extends Editor {
         this.icon = new ImageIcon(icon);
 
         setLayout(new BorderLayout());
-        editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);

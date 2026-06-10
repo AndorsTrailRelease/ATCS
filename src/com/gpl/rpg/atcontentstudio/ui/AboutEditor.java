@@ -144,7 +144,7 @@ public class AboutEditor extends Editor {
         };
 
         setLayout(new BorderLayout());
-        JideTabbedPane editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        JideTabbedPane editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);

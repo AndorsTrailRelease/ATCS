@@ -126,7 +126,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         map.addMapChangedOnDiskListener(this);
 
         setLayout(new BorderLayout());
-        editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);

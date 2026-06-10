@@ -68,7 +68,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         this.icon = new ImageIcon(worldmap.getIcon());
         setLayout(new BorderLayout());
 
-        JideTabbedPane editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        JideTabbedPane editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);
@@ -434,7 +434,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
 
     private void buildMapPropsPane(JPanel mapPropsPane, final WorldmapSegment worldmap) {
-        JideTabbedPane tabPane = new JideTabbedPane(JideTabbedPane.TOP);
+        JideTabbedPane tabPane = new DraggableJideTabbedPane(JideTabbedPane.TOP);
 
         JPanel mapListPane = new JPanel();
         mapListPane.setLayout(new JideBoxLayout(mapListPane, JideBoxLayout.PAGE_AXIS));
