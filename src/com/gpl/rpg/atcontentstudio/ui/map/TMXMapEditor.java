@@ -1289,7 +1289,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
 
         private static final long serialVersionUID = 2845032142029325865L;
 
-
+        private java.awt.image.BufferedImage offscreen;
         public tiled.core.MapObject highlighted = null;
         private MapRenderer renderer;
         private FieldUpdateListener listener;
@@ -1429,9 +1429,16 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             invalidate();
         }
 
+        // Modified paintComponent() to render to an offscreen buffer, rather than depending on the java graphics2d
+        // rendering path, which doesn't support low-level bitmap access on Linux
         public void paintComponent(Graphics g) {
             final Graphics2D g2d = (Graphics2D) g.create();
-            final Rectangle clip = g2d.getClipBounds();
+            Rectangle clip = g2d.getClipBounds();
+
+            // If clip is null (can happen), fall back to the component bounds
+            if (clip == null) {
+                clip = new Rectangle(0, 0, Math.max(1, getWidth()), Math.max(1, getHeight()));
+            }
 
             // Bail out if we get called on a null map (usually a synchronization issue)
             if (map == null || map.tmxMap == null) {
@@ -1439,38 +1446,63 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 return;
             }
 
-            // Draw a gray background
-            g2d.setPaint(new Color(100, 100, 100));
-            g2d.fill(clip);
+            final int cw = Math.max(1, clip.width);
+            final int ch = Math.max(1, clip.height);
 
-            // Draw each tile map layer
+            // create/reuse offscreen buffer sized to the clip region
+            if (offscreen == null || offscreen.getWidth() != cw || offscreen.getHeight() != ch) {
+                offscreen = new java.awt.image.BufferedImage(cw, ch, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            }
+
+            Graphics2D offG = offscreen.createGraphics();
+            // copy rendering hints (optional, to match onscreen quality)
+            offG.setRenderingHints(g2d.getRenderingHints());
+
+            // ensure offscreen Graphics has an explicit clip so downstream code using getClipBounds() won't get null
+            offG.setClip(0, 0, cw, ch);
+
+            // fill background (paint relative to clip)
+            offG.setPaint(new Color(100, 100, 100));
+            offG.fillRect(0, 0, cw, ch);
+
+            // translate so absolute painting code will draw into offscreen(0..cw,0..ch)
+            offG.translate(-clip.x, -clip.y);
+
+            // Draw each tile map layer into offscreen
             for (tiled.core.MapLayer layer : ((TMXMap) target).tmxMap) {
                 if (layer instanceof tiled.core.TileLayer && layer.isVisible()) {
-                    renderer.paintTileLayer(g2d, (tiled.core.TileLayer) layer);
+                    renderer.paintTileLayer(offG, (tiled.core.TileLayer) layer);
                 }
             }
 
-            if (map.colorFilter != null) {
-                MapColorFilters.applyColorfilter(map.colorFilter, g2d);
-            }
-
-
-            // Draw each map object layer
+            // Draw each map object layer into offscreen
             boolean paintSelected = false;
             for (tiled.core.MapLayer layer : ((TMXMap) target).tmxMap) {
                 if (layer instanceof tiled.core.ObjectGroup && layer.isVisible()) {
-                    paintSelected |= paintObjectGroup(g2d, (tiled.core.ObjectGroup) layer);
+                    paintSelected |= paintObjectGroup(offG, (tiled.core.ObjectGroup) layer);
                 }
             }
 
-
-            if (paintSelected) {
-                //TODO make this less ugly..... visually speaking.
-                g2d.setColor(new Color(190, 20, 20));
-                g2d.drawRect(selectedMapObject.x + selectedMapObject.w - 16, selectedMapObject.y + selectedMapObject.h - 16, 15, 15);
-                g2d.drawRect(selectedMapObject.x + selectedMapObject.w - 12, selectedMapObject.y + selectedMapObject.h - 12, 11, 11);
-                drawObject(selectedMapObject, g2d, new Color(190, 20, 20));
+            if (paintSelected && selectedMapObject != null) {
+                // selection overlays (draw into offscreen)
+                offG.setColor(new Color(190, 20, 20));
+                offG.drawRect(selectedMapObject.x + selectedMapObject.w - 16, selectedMapObject.y + selectedMapObject.h - 16, 15, 15);
+                offG.drawRect(selectedMapObject.x + selectedMapObject.w - 12, selectedMapObject.y + selectedMapObject.h - 12, 11, 11);
+                drawObject(selectedMapObject, offG, new Color(190, 20, 20));
             }
+
+            offG.dispose();
+
+            // Apply color filter to offscreen image using the matrix helper (avoids native raster access)
+            if (map.colorFilter != null && map.colorFilter != TMXMap.ColorFilter.none) {
+                float[] matrix = MapColorFilters.buildMatrixForFilter(map.colorFilter);
+                if (matrix != null) {
+                    MapColorFilters.applyMatrixToImage(matrix, offscreen);
+                }
+            }
+
+            // Blit offscreen to the real Graphics2D at the clip location
+            g2d.drawImage(offscreen, clip.x, clip.y, null);
 
             g2d.dispose();
         }
