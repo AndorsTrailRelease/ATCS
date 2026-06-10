@@ -142,8 +142,8 @@ public class StudioFrame extends JFrame {
 
         JMenu viewMenu = new JMenu("View");
         viewMenu.setMnemonic(KeyEvent.VK_V);
-        JMenu changeLaF = new JMenu("Theme");
-        changeLaF.setMnemonic(KeyEvent.VK_T);
+        JMenu changeLaF = new JMenu("Look & Feel");
+        changeLaF.setMnemonic(KeyEvent.VK_L);
         int j = 1;
         for (final LookAndFeelInfo i : UIManager.getInstalledLookAndFeels()) {
             JMenuItem lafItem = null;
