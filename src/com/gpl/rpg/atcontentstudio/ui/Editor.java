@@ -829,9 +829,12 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             }
         });
         list.setCellRenderer(new GDERenderer(true, false));
+        JScrollPane scroller = new JScrollPane(list);
+        NestedScrollListener.install(scroller);
+
         CollapsiblePanel colPane = new CollapsiblePanel(title);
         colPane.setLayout(new JideBoxLayout(colPane, JideBoxLayout.PAGE_AXIS));
-        colPane.add(new JScrollPane(list), JideBoxLayout.FIX);
+        colPane.add(scroller, JideBoxLayout.FIX);
         colPane.add(new JPanel(), JideBoxLayout.FIX);
         if (gde.getBacklinks() == null || gde.getBacklinks().isEmpty()) {
             colPane.collapse();

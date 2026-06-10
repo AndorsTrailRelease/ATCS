@@ -12,6 +12,7 @@ import com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet;
 import com.gpl.rpg.atcontentstudio.ui.*;
 import com.gpl.rpg.atcontentstudio.utils.DesktopIntegration;
 import com.gpl.rpg.atcontentstudio.utils.FileUtils;
+import com.gpl.rpg.atcontentstudio.utils.UiUtils;
 import com.jidesoft.swing.JideBoxLayout;
 import com.jidesoft.swing.JideTabbedPane;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -49,6 +50,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
     private LayerListModel layerListModel;
     @SuppressWarnings("rawtypes")
     private JList layerList;
+    private CollapsiblePanel layersPane;
     private tiled.core.MapLayer selectedLayer;
     private JButton addTileLayer;
     private JButton addObjectGroup;
@@ -133,7 +135,8 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         JScrollPane tmxScroller = new JScrollPane(getTmxEditorPane(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         JScrollPane xmlScroller = new JScrollPane(getXmlEditorPane(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         //JScrollPane replScroller = new JScrollPane(getReplacementSimulatorPane(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        xmlScroller.getVerticalScrollBar().setUnitIncrement(16);
+        tmxScroller.getVerticalScrollBar().setUnitIncrement(12);
+        xmlScroller.getVerticalScrollBar().setUnitIncrement(12);
         editorTabsHolder.add("TMX", tmxScroller);
         editorTabsHolder.add("XML", xmlScroller);
         //editorTabsHolder.add("Replacements", replScroller);
@@ -154,90 +157,18 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         addLabelField(pane, "TMX File: ", ((TMXMap) target).tmxFile.getAbsolutePath());
         createButtonPane(pane, map.getProject(), map, listener);
         outsideBox = addIntegerBasedCheckBox(pane, "Map is outdoors", map.outside, map.writable, listener);
+        outsideBox.setMnemonic(KeyEvent.VK_O);
         colorFilterBox = addEnumValueBox(pane, "Color Filter", TMXMap.ColorFilter.values(), map.colorFilter, map.writable, listener);
 
-        JSplitPane layersViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        layerListModel = new LayerListModel(map);
-        layerList = new JList(layerListModel);
-        layerList.setCellRenderer(new LayerListRenderer());
-        layerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane layerListScroller = new JScrollPane(layerList);
-        layerListScroller.getVerticalScrollBar().setUnitIncrement(16);
-        layerList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                selectedLayer = (tiled.core.MapLayer) layerList.getSelectedValue();
-                selectedMapObject = null;
-                if (selectedLayer != null && map.writable) {
-                    deleteLayer.setEnabled(true);
-                } else {
-                    deleteLayer.setEnabled(false);
-                }
-                updateLayerDetailsPane(layerDetailsPane, selectedLayer, listener);
-                listener.valueChanged(layerList, selectedLayer);
-            }
-        });
-        JPanel layersListPane = new JPanel();
-        layersListPane.setLayout(new JideBoxLayout(layersListPane, JideBoxLayout.PAGE_AXIS, 6));
-        layersListPane.add(layerListScroller, JideBoxLayout.VARY);
-        addTileLayer = new JButton(new ImageIcon(DefaultIcons.getCreateTileLayerIcon()));
-        addTileLayer.setToolTipText("Create new tile layer (graphics layer).");
-        addTileLayer.setEnabled(map.writable);
-        addTileLayer.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tiled.core.TileLayer layer = new tiled.core.TileLayer(map.tmxMap.getWidth(), map.tmxMap.getHeight());
-                layerListModel.addObject(layer);
-                map.state = GameDataElement.State.modified;
-                map.childrenChanged(new ArrayList<ProjectTreeNode>());
-                ATContentStudio.frame.editorChanged(TMXMapEditor.this);
-                targetUpdated();
-            }
-        });
-        addObjectGroup = new JButton(new ImageIcon(DefaultIcons.getCreateObjectGroupIcon()));
-        addObjectGroup.setToolTipText("Create new object group.");
-        addObjectGroup.setEnabled(map.writable);
-        addObjectGroup.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                layerListModel.addObject(new tiled.core.ObjectGroup());
-                map.state = GameDataElement.State.modified;
-                map.childrenChanged(new ArrayList<ProjectTreeNode>());
-                ATContentStudio.frame.editorChanged(TMXMapEditor.this);
-                targetUpdated();
-            }
-        });
-        deleteLayer = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
-        deleteLayer.setToolTipText("Delete selected layer/group.");
-        deleteLayer.setEnabled(false);
-        deleteLayer.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                layerListModel.removeObject(selectedLayer);
-                map.state = GameDataElement.State.modified;
-                map.childrenChanged(new ArrayList<ProjectTreeNode>());
-                ATContentStudio.frame.editorChanged(TMXMapEditor.this);
-                targetUpdated();
-            }
-        });
-        JPanel layersButtonsPane = new JPanel();
-        layersButtonsPane.setLayout(new JideBoxLayout(layersButtonsPane, JideBoxLayout.LINE_AXIS, 6));
-        layersButtonsPane.add(addTileLayer, JideBoxLayout.FIX);
-        layersButtonsPane.add(addObjectGroup, JideBoxLayout.FIX);
-        layersButtonsPane.add(new JPanel(), JideBoxLayout.VARY);
-        layersButtonsPane.add(deleteLayer, JideBoxLayout.FIX);
-        layersListPane.add(layersButtonsPane, JideBoxLayout.FIX);
-        layersViewSplitPane.setLeftComponent(layersListPane);
-        layerDetailsPane = new JPanel();
-        layerDetailsPane.setLayout(new JideBoxLayout(layerDetailsPane, JideBoxLayout.PAGE_AXIS, 6));
-        layersViewSplitPane.setRightComponent(layerDetailsPane);
-        pane.add(layersViewSplitPane, JideBoxLayout.FIX);
+        addLayersPanel(pane, map, listener);
 
+        // Set up the main map (TMX) viewer
         tmxViewer = new TMXViewer(((TMXMap) target), listener);
         JScrollPane tmxScroller = new JScrollPane(tmxViewer);
-        tmxScroller.getVerticalScrollBar().setUnitIncrement(16);
-        tmxScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        tmxScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        NestedScrollListener.install(tmxScroller);
+        tmxScroller.getVerticalScrollBar().setUnitIncrement(8);
+        tmxScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        tmxScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         pane.add(tmxScroller, JideBoxLayout.FIX);
 
         addTMXMapSpritesheetsList(pane, ((TMXMap) target));
@@ -275,10 +206,12 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             groupActiveForNewGame = addBooleanBasedCheckBox(groupDetailPane, "Active for new game", objGroup.active, map.writable, listener);
             groupObjectsListModel = new MapObjectsListModel(objGroup);
             groupObjectsList = new JList(groupObjectsListModel);
+            groupObjectsList.setVisibleRowCount(8);
             groupObjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             groupObjectsList.setCellRenderer(new GroupObjectsRenderer());
             JScrollPane groupObjectsScroller = new JScrollPane(groupObjectsList);
-            groupObjectsScroller.getVerticalScrollBar().setUnitIncrement(16);
+            NestedScrollListener.install(groupObjectsScroller);
+            groupObjectsScroller.getVerticalScrollBar().setUnitIncrement(12);
             groupDetailPane.add(groupObjectsScroller, JideBoxLayout.VARY);
             groupObjectsList.addListSelectionListener(new ListSelectionListener() {
 
@@ -434,6 +367,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             mapObjectSettingsPane = new JPanel();
             mapObjectSettingsPane.setLayout(new JideBoxLayout(mapObjectSettingsPane, JideBoxLayout.PAGE_AXIS, 6));
             JScrollPane mapObjectSettingsScroller = new JScrollPane(mapObjectSettingsPane);
+            NestedScrollListener.install(mapObjectSettingsScroller);
             mapObjectSettingsScroller.getVerticalScrollBar().setUnitIncrement(16);
             objectGroupDetailsSplitter.setRightComponent(mapObjectSettingsScroller);
             pane.add(objectGroupDetailsSplitter, JideBoxLayout.VARY);
@@ -457,8 +391,11 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             pane.add(requirementParamsPane, JideBoxLayout.FIX);
             updateRequirementParamsPane(requirementParamsPane, ((KeyArea) selected).requirement, listener);
         } else if (selected instanceof MapChange) {
+            // Area ID field
             areaField = addTextField(pane, "Area ID: ", ((MapChange) selected).name, ((TMXMap) target).writable, listener);
+            // Target Map field (combobox)
             mapBox = addMapBox(pane, ((TMXMap) target).getProject(), "Target map: ", ((MapChange) selected).map, ((TMXMap) target).writable, listener);
+            // Target map area field (combobox)
             targetAreaCombo = new JComboBox();
             if (((MapChange) selected).map != null) {
                 ((MapChange) selected).map.link();
@@ -467,10 +404,31 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             targetAreaCombo.setEditable(false);
             targetAreaCombo.setEnabled(((TMXMap) target).writable);
             targetAreaCombo.setSelectedItem(((MapChange) selected).place_id);
+
+            // Repopulate the combobox when it is clicked, so we catch the latest available areaIDs from the other map
+            targetAreaCombo.addPopupMenuListener(new PopupMenuListener() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    if (((MapChange) selected).map != null) {
+                        targetAreaCombo.setModel(new DefaultComboBoxModel((((MapChange) selected).map.getMapchangesNames().toArray())));
+                        targetAreaCombo.setSelectedItem(((MapChange) selected).place_id);
+                    } else {
+                        targetAreaCombo.setModel(new DefaultComboBoxModel(new String[]{}));
+                    }
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent popupMenuEvent) {}
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent popupMenuEvent) {}
+            });
+
             JPanel tACPane = new JPanel();
             tACPane.setLayout(new JideBoxLayout(tACPane, JideBoxLayout.LINE_AXIS, 6));
             tACPane.add(new JLabel("Target mapchange area ID: "), JideBoxLayout.FIX);
             tACPane.add(targetAreaCombo, JideBoxLayout.VARY);
+            // Clear target area button
             JButton nullifyTargetArea = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
             tACPane.add(nullifyTargetArea, JideBoxLayout.FIX);
             nullifyTargetArea.addActionListener(new ActionListener() {
@@ -980,6 +938,103 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         }
     }
 
+    public void addLayersPanel(JPanel pane, TMXMap map, FieldUpdateListener listener) {
+        // Layers detail view box - Split pane with layer list on right, layer details on left
+        JSplitPane layersViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+
+        // Set up left side (layer list and buttons below)
+        layerListModel = new LayerListModel(map);
+        layerList = new JList(layerListModel);
+        layerList.setCellRenderer(new LayerListRenderer());
+        layerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane layerListScroller = new JScrollPane(layerList);
+        NestedScrollListener.install(layerListScroller);
+        layerListScroller.getVerticalScrollBar().setUnitIncrement(8);
+
+        // Force the list height so right-side details pane will have enough space.
+        // TODO: Figure out how to get it to resize based on right-side content when a layer is selected
+        layerList.setVisibleRowCount(15);  // Fixed at 15 to match right side
+        layerList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                selectedLayer = (tiled.core.MapLayer) layerList.getSelectedValue();
+                selectedMapObject = null;
+                if (selectedLayer != null && map.writable) {
+                    deleteLayer.setEnabled(true);
+                } else {
+                    deleteLayer.setEnabled(false);
+                }
+                updateLayerDetailsPane(layerDetailsPane, selectedLayer, listener);
+                listener.valueChanged(layerList, selectedLayer);
+            }
+        });
+        JPanel layersListPane = new JPanel();
+        layersListPane.setLayout(new JideBoxLayout(layersListPane, JideBoxLayout.PAGE_AXIS, 6));
+        layersListPane.add(layerListScroller, JideBoxLayout.VARY);
+        addTileLayer = new JButton(new ImageIcon(DefaultIcons.getCreateTileLayerIcon()));
+        addTileLayer.setToolTipText("Create new tile layer (graphics layer).");
+        addTileLayer.setEnabled(map.writable);
+        addTileLayer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tiled.core.TileLayer layer = new tiled.core.TileLayer(map.tmxMap.getWidth(), map.tmxMap.getHeight());
+                layerListModel.addObject(layer);
+                map.state = GameDataElement.State.modified;
+                map.childrenChanged(new ArrayList<ProjectTreeNode>());
+                ATContentStudio.frame.editorChanged(TMXMapEditor.this);
+                targetUpdated();
+            }
+        });
+        addObjectGroup = new JButton(new ImageIcon(DefaultIcons.getCreateObjectGroupIcon()));
+        addObjectGroup.setToolTipText("Create new object group.");
+        addObjectGroup.setEnabled(map.writable);
+        addObjectGroup.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                layerListModel.addObject(new tiled.core.ObjectGroup());
+                map.state = GameDataElement.State.modified;
+                map.childrenChanged(new ArrayList<ProjectTreeNode>());
+                ATContentStudio.frame.editorChanged(TMXMapEditor.this);
+                targetUpdated();
+            }
+        });
+        deleteLayer = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
+        deleteLayer.setToolTipText("Delete selected layer/group.");
+        deleteLayer.setEnabled(false);
+        deleteLayer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                layerListModel.removeObject(selectedLayer);
+                map.state = GameDataElement.State.modified;
+                map.childrenChanged(new ArrayList<ProjectTreeNode>());
+                ATContentStudio.frame.editorChanged(TMXMapEditor.this);
+                targetUpdated();
+            }
+        });
+        JPanel layersButtonsPane = new JPanel();
+        layersButtonsPane.setLayout(new JideBoxLayout(layersButtonsPane, JideBoxLayout.LINE_AXIS, 6));
+        layersButtonsPane.add(addTileLayer, JideBoxLayout.FIX);
+        layersButtonsPane.add(addObjectGroup, JideBoxLayout.FIX);
+        layersButtonsPane.add(new JPanel(), JideBoxLayout.VARY);
+        layersButtonsPane.add(deleteLayer, JideBoxLayout.FIX);
+        layersListPane.add(layersButtonsPane, JideBoxLayout.FIX);
+        layersViewSplitPane.setLeftComponent(layersListPane);
+
+        // Set up right side (layer details)
+        layerDetailsPane = new JPanel();
+        layerDetailsPane.setLayout(new JideBoxLayout(layerDetailsPane, JideBoxLayout.PAGE_AXIS, 6));
+        layersViewSplitPane.setRightComponent(layerDetailsPane);
+
+        // Add the split pane to the main pane as a collapsible panel
+        layersPane = new CollapsiblePanel("Map Layers and Objects");
+        layersPane.setLayout(new JideBoxLayout(layersPane, JideBoxLayout.PAGE_AXIS));
+        layersPane.add(layersViewSplitPane, JideBoxLayout.FIX);
+        layersPane.add(new JPanel(), JideBoxLayout.FIX);
+        layersPane.collapse();
+        pane.add(layersPane, JideBoxLayout.FIX);
+
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static JList addTMXMapSpritesheetsList(JPanel pane, TMXMap tmxMap) {
         final JList list = new JList(new TMXMapSpritesheetsListModel(tmxMap));
@@ -1003,8 +1058,14 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         });
         list.setCellRenderer(new SpritesheetCellRenderer(true));
         JScrollPane scroller = new JScrollPane(list);
-        scroller.setBorder(BorderFactory.createTitledBorder("Spritesheets used in this map."));
-        pane.add(scroller, JideBoxLayout.FIX);
+        NestedScrollListener.install(scroller);
+
+        CollapsiblePanel colPane = new CollapsiblePanel("Spritesheets used in this map");
+        colPane.setLayout(new JideBoxLayout(colPane, JideBoxLayout.PAGE_AXIS));
+        colPane.add(scroller, JideBoxLayout.FIX);
+        colPane.add(new JPanel(), JideBoxLayout.FIX);
+        pane.add(colPane, JideBoxLayout.FIX);
+        UiUtils.resizeListToFit(list);
         return list;
     }
 
@@ -1540,6 +1601,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
     protected void selectMapObject(MapObject obj) {
         for (MapObjectGroup group : ((TMXMap) target).groups) {
             if (group.mapObjects.contains(obj)) {
+                layersPane.expand();
                 layerList.setSelectedValue(group.tmxGroup, true);
                 groupObjectsList.setSelectedValue(obj, true);
             }
@@ -1549,7 +1611,9 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
     public JButton createButtonPane(JPanel pane, final Project proj, final TMXMap map, final FieldUpdateListener listener) {
         JPanel savePane = new JPanel();
         savePane.setLayout(new JideBoxLayout(savePane, JideBoxLayout.LINE_AXIS, 6));
+        // Open tmx in external editor button (I think)
         final JButton gdeIcon = new JButton(new ImageIcon(DefaultIcons.getTiledIconImage()));
+        gdeIcon.setEnabled(map.writable);
         savePane.add(gdeIcon, JideBoxLayout.FIX);
         if (map.writable) {
             gdeIcon.addActionListener(new ActionListener() {
@@ -1568,7 +1632,10 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                     DesktopIntegration.openTmxMap(map.tmxFile);
                 }
             });
+
+            // Reload Button
             reload = new JButton("Reload");
+            reload.setMnemonic(KeyEvent.VK_R);
             reload.setEnabled(map.changedOnDisk);
             savePane.add(reload, JideBoxLayout.FIX);
             reload.addActionListener(new ActionListener() {
@@ -1590,7 +1657,10 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             } else if (map.getDataType() == GameSource.Type.created) {
                 savePane.add(message = new JLabel(CREATED_MESSAGE), JideBoxLayout.FIX);
             }
+
+            // Save Button
             JButton save = new JButton(SAVE);
+            save.setMnemonic(KeyEvent.VK_S);
             save.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {

@@ -27,7 +27,7 @@ public class WorkspaceActions {
     ProjectTreeNode selectedNode = null;
     TreePath[] selectedPaths = null;
 
-    public ATCSAction createProject = new ATCSAction("Create project...", "Opens the project creation wizard") {
+    public ATCSAction createProject = new ATCSAction("Create Project...", "Opens the project creation wizard") {
         public void actionPerformed(ActionEvent e) {
             new ProjectCreationWizard().setVisible(true);
         }
@@ -35,7 +35,7 @@ public class WorkspaceActions {
     };
 
 
-    public ATCSAction closeProject = new ATCSAction("Close project", "Closes the project, unloading all resources from memory") {
+    public ATCSAction closeProject = new ATCSAction("Close Project", "Closes the project, unloading all resources from memory") {
         public void actionPerformed(ActionEvent e) {
             if (!(selectedNode instanceof Project)) return;
             Workspace.closeProject((Project) selectedNode);
@@ -49,7 +49,7 @@ public class WorkspaceActions {
     };
 
 
-    public ATCSAction openProject = new ATCSAction("Open project", "Opens the project, loading all necessary resources in memory") {
+    public ATCSAction openProject = new ATCSAction("Open Project", "Opens the project, loading all necessary resources in memory") {
         public void actionPerformed(ActionEvent e) {
             if (!(selectedNode instanceof ClosedProject)) return;
             Workspace.openProject((ClosedProject) selectedNode);
@@ -61,7 +61,7 @@ public class WorkspaceActions {
 
     };
 
-    public ATCSAction deleteProject = new ATCSAction("Delete project", "Deletes the project, and all created/altered data, from disk") {
+    public ATCSAction deleteProject = new ATCSAction("Delete Project", "Deletes the project, and all created/altered data, from disk") {
         public void actionPerformed(ActionEvent e) {
             if (selectedNode instanceof Project) {
                 if (JOptionPane.showConfirmDialog(ATContentStudio.frame, "Are you sure you wish to delete this project ?\nAll files created for it will be deleted too...", "Delete this project ?",

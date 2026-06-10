@@ -1,5 +1,8 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
+import static java.awt.event.KeyEvent.VK_B;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+
 import com.gpl.rpg.atcontentstudio.ConfigCache;
 
 import javax.imageio.ImageIO;
@@ -114,6 +117,7 @@ public class WorkspaceSelector extends JFrame {
         dialogPane.add(logoLabel, BorderLayout.NORTH);
         dialogPane.add(new JLabel("Workspace : "), BorderLayout.WEST);
         dialogPane.add(combo, BorderLayout.CENTER);
+        browse.setMnemonic(VK_B);
         dialogPane.add(browse, BorderLayout.EAST);
 
         JPanel buttonPane = new JPanel();
@@ -135,6 +139,18 @@ public class WorkspaceSelector extends JFrame {
         buttonPane.add(ok, c);
 
         dialogPane.add(buttonPane, BorderLayout.SOUTH);
+
+        // Set up keyboard shortcuts (Enter/Escape)
+        rootPane.setDefaultButton(ok);
+
+        KeyStroke esc = KeyStroke.getKeyStroke(VK_ESCAPE, 0);
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(esc, "cancel");
+        rootPane.getActionMap().put("cancel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cancel.doClick();
+            }
+        });
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setContentPane(dialogPane);

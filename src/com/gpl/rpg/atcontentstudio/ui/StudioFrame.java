@@ -108,39 +108,52 @@ public class StudioFrame extends JFrame {
 
     private void buildMenu() {
         JMenu fileMenu = new JMenu("File");
-        fileMenu.add(new JMenuItem(actions.createProject));
-        fileMenu.add(new JMenuItem(actions.openProject));
-        fileMenu.add(new JMenuItem(actions.closeProject));
-        fileMenu.add(new JMenuItem(actions.deleteProject));
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        fileMenu.add(new JMenuItem(actions.createProject)).setMnemonic(KeyEvent.VK_P);
+        fileMenu.add(new JMenuItem(actions.openProject)).setMnemonic(KeyEvent.VK_O);
+        fileMenu.add(new JMenuItem(actions.closeProject)).setMnemonic(KeyEvent.VK_C);
+        fileMenu.add(new JMenuItem(actions.deleteProject)).setMnemonic(KeyEvent.VK_D);
         fileMenu.add(new JSeparator());
-        fileMenu.add(new JMenuItem(actions.editWorkspaceSettings));
+        fileMenu.add(new JMenuItem(actions.editWorkspaceSettings)).setMnemonic(KeyEvent.VK_E);
         fileMenu.add(new JSeparator());
-        fileMenu.add(new JMenuItem(actions.exitATCS));
+        fileMenu.add(new JMenuItem(actions.exitATCS)).setMnemonic(KeyEvent.VK_X);
         getJMenuBar().add(fileMenu);
 
         JMenu projectMenu = new JMenu("Project");
-        projectMenu.add(new JMenuItem(actions.saveElement));
-        projectMenu.add(new JMenuItem(actions.deleteSelected));
+        projectMenu.setMnemonic(KeyEvent.VK_P);
+        projectMenu.add(new JMenuItem(actions.saveElement)).setMnemonic(KeyEvent.VK_S);
+        projectMenu.add(new JMenuItem(actions.deleteSelected)).setMnemonic(KeyEvent.VK_R);
         projectMenu.add(new JSeparator());
-        projectMenu.add(new JMenuItem(actions.createGDE));
-        projectMenu.add(new JMenuItem(actions.importJSON));
-        projectMenu.add(new JMenuItem(actions.createMap));
-        projectMenu.add(new JMenuItem(actions.createWorldmap));
+        projectMenu.add(new JMenuItem(actions.createGDE)).setMnemonic(KeyEvent.VK_J);
+        projectMenu.add(new JMenuItem(actions.importJSON)).setMnemonic(KeyEvent.VK_I);
+        projectMenu.add(new JMenuItem(actions.createMap)).setMnemonic(KeyEvent.VK_M);
+        projectMenu.add(new JMenuItem(actions.createWorldmap)).setMnemonic(KeyEvent.VK_W);
         getJMenuBar().add(projectMenu);
 
         JMenu toolsMenu = new JMenu("Tools");
-        toolsMenu.add(new JMenuItem(actions.compareItems));
-        toolsMenu.add(new JMenuItem(actions.compareNPCs));
+        toolsMenu.setMnemonic(KeyEvent.VK_T);
+        toolsMenu.add(new JMenuItem(actions.compareItems)).setMnemonic(KeyEvent.VK_I);
+        toolsMenu.add(new JMenuItem(actions.compareNPCs)).setMnemonic(KeyEvent.VK_N);
         toolsMenu.add(new JSeparator());
-        toolsMenu.add(new JMenuItem(actions.runBeanShell));
+        toolsMenu.add(new JMenuItem(actions.runBeanShell)).setMnemonic(KeyEvent.VK_B);
         toolsMenu.add(new JSeparator());
-        toolsMenu.add(new JMenuItem(actions.exportProject));
+        toolsMenu.add(new JMenuItem(actions.exportProject)).setMnemonic(KeyEvent.VK_E);
         getJMenuBar().add(toolsMenu);
 
         JMenu viewMenu = new JMenu("View");
-        JMenu changeLaF = new JMenu("Change Look and Feel");
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+        JMenu changeLaF = new JMenu("Theme");
+        changeLaF.setMnemonic(KeyEvent.VK_T);
+        int j = 1;
         for (final LookAndFeelInfo i : UIManager.getInstalledLookAndFeels()) {
-            final JMenuItem lafItem = new JMenuItem("Switch to " + i.getName());
+            JMenuItem lafItem = null;
+            if( j <= 9) {
+                lafItem = new JMenuItem(j + ": " + i.getName());
+                lafItem.setMnemonic(KeyEvent.VK_0 + j);
+            } else {
+                lafItem = new JMenuItem(i.getName());
+            }
+
             changeLaF.add(lafItem);
             lafItem.addActionListener(new ActionListener() {
                 @Override
@@ -151,6 +164,7 @@ public class StudioFrame extends JFrame {
                     ConfigCache.setFavoriteLaFClassName(lookAndFeel);
                 }
             });
+            j++;
         }
         viewMenu.add(changeLaF);
         viewMenu.add(new JSeparator());
