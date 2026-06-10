@@ -25,9 +25,19 @@ public class CollapsiblePanel extends JPanel {
     MouseListener mouseListener = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
-            toggleVisibility();
+            if (SwingUtilities.isLeftMouseButton(e) && isTitleClick(e)) {
+                toggleVisibility();
+            }
         }
     };
+
+    private boolean isTitleClick(MouseEvent e) {
+        Insets insets = border.getBorderInsets(this);
+        FontMetrics fm = getFontMetrics(getFont());
+        // Top inset tracks the titled-border header band in all current LAFs.
+        int titleBandHeight = Math.max(insets.top, fm.getHeight() + 6);
+        return e.getY() >= 0 && e.getY() <= titleBandHeight;
+    }
 
     ComponentListener contentComponentListener = new ComponentAdapter() {
         @Override
