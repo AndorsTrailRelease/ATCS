@@ -154,12 +154,14 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         pane.setScrollableWidth(ScrollablePanel.ScrollableSizeHint.FIT);
         pane.setLayout(new JideBoxLayout(pane, JideBoxLayout.PAGE_AXIS, 6));
 
+        // Set up top Section - Map name and alter/delete/filter controls
         addLabelField(pane, "TMX File: ", ((TMXMap) target).tmxFile.getAbsolutePath());
         createButtonPane(pane, map.getProject(), map, listener);
         outsideBox = addIntegerBasedCheckBox(pane, "Map is outdoors", map.outside, map.writable, listener);
         outsideBox.setMnemonic(KeyEvent.VK_O);
         colorFilterBox = addEnumValueBox(pane, "Color Filter", TMXMap.ColorFilter.values(), map.colorFilter, map.writable, listener);
 
+        // Set up the Layers panel
         addLayersPanel(pane, map, listener);
 
         // Set up the main map (TMX) viewer
@@ -171,6 +173,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         tmxScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         pane.add(tmxScroller, JideBoxLayout.FIX);
 
+        // Set up lower panels
         addTMXMapSpritesheetsList(pane, ((TMXMap) target));
 
         addBacklinksList(pane, map);
@@ -1057,15 +1060,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             }
         });
         list.setCellRenderer(new SpritesheetCellRenderer(true));
-        JScrollPane scroller = new JScrollPane(list);
-        NestedScrollListener.install(scroller);
-
-        CollapsiblePanel colPane = new CollapsiblePanel("Spritesheets used in this map");
-        colPane.setLayout(new JideBoxLayout(colPane, JideBoxLayout.PAGE_AXIS));
-        colPane.add(scroller, JideBoxLayout.FIX);
-        colPane.add(new JPanel(), JideBoxLayout.FIX);
-        pane.add(colPane, JideBoxLayout.FIX);
-        UiUtils.resizeListToFit(list);
+        pane.add(new CollapsibleScrollList("Spritesheets used in this map", list));
         return list;
     }
 

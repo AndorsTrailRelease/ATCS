@@ -168,7 +168,7 @@ public class UiUtils {
 
     public static void resizeListToFit(JList<?> list) {
         if (list == null) return;
-        list.setVisibleRowCount(Math.min(8, list.getModel().getSize())+1);
+        list.setVisibleRowCount(Math.min(8, list.getModel().getSize()));
     }
 
 }

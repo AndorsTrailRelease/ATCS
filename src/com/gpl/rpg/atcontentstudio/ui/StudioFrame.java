@@ -168,7 +168,7 @@ public class StudioFrame extends JFrame {
         }
         viewMenu.add(changeLaF);
         viewMenu.add(new JSeparator());
-        viewMenu.add(new JMenuItem(actions.showAbout));
+        viewMenu.add(new JMenuItem(actions.showAbout)).setMnemonic(KeyEvent.VK_A);
         getJMenuBar().add(viewMenu);
 
         if (ATContentStudio.ARGS != null && ATContentStudio.ARGS.length > 0 && !"".equals(ATContentStudio.ARGS[0])) {
