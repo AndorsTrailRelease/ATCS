@@ -1,8 +1,7 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-# Editor-based HTTP Client requests
-/httpRequests/
-# Datasource local storage ignored files
-/dataSources/
-/dataSources.local.xml
+# Ignore everything in the .idea directory...
+*
+# except the following files and directories... (prefix with "!" to negate the ignore rule)
+!artifacts/   # IntelliJ IDEA artifacts
+!codeStyles/  # Code style settings
+!modules.xml  # Module settings
+!misc.xml     # Miscellaneous settings (including JDK configuration)
