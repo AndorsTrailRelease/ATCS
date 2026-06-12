@@ -371,7 +371,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             mapObjectSettingsPane.setLayout(new JideBoxLayout(mapObjectSettingsPane, JideBoxLayout.PAGE_AXIS, 6));
             JScrollPane mapObjectSettingsScroller = new JScrollPane(mapObjectSettingsPane);
             NestedScrollListener.install(mapObjectSettingsScroller);
-            mapObjectSettingsScroller.getVerticalScrollBar().setUnitIncrement(16);
+            mapObjectSettingsScroller.getVerticalScrollBar().setUnitIncrement(12);
             objectGroupDetailsSplitter.setRightComponent(mapObjectSettingsScroller);
             pane.add(objectGroupDetailsSplitter, JideBoxLayout.VARY);
         }
@@ -382,7 +382,6 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void updateMapObjectSettingsPane(JPanel pane, final MapObject selected, final FieldUpdateListener listener) {
         pane.removeAll();
-        boolean needVary = true;
         if (selected instanceof ContainerArea) {
             droplistBox = addDroplistBox(pane, ((TMXMap) target).getProject(), "Droplist: ", ((ContainerArea) selected).droplist, ((TMXMap) target).writable, listener);
         } else if (selected instanceof KeyArea) {
@@ -449,20 +448,23 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             });
             pane.add(tACPane, JideBoxLayout.FIX);
         } else if (selected instanceof ReplaceArea) {
+            // Area ID field
             areaField = addTextField(pane, "Area ID: ", ((ReplaceArea) selected).name, ((TMXMap) target).writable, listener);
+            // Requirement Type combobox
             requirementTypeCombo = addEnumValueBox(pane, "Requirement type: ", Requirement.RequirementType.values(), ((ReplaceArea) selected).requirement.type, ((TMXMap) target).writable, listener);
+            // Set pane for variable requirement parameters (populated by updateRequirementParamsPane())
             requirementParamsPane = new JPanel();
             requirementParamsPane.setLayout(new JideBoxLayout(requirementParamsPane, JideBoxLayout.PAGE_AXIS, 6));
             pane.add(requirementParamsPane, JideBoxLayout.FIX);
             updateRequirementParamsPane(requirementParamsPane, ((ReplaceArea) selected).requirement, listener);
 
-            CollapsiblePanel replacementListPane = new CollapsiblePanel("Replacements");
-            replacementListPane.setLayout(new JideBoxLayout(replacementListPane, JideBoxLayout.PAGE_AXIS));
+            // The replacement list box itself (collapsable list)
             replacementsListModel = new ReplacementsListModel((ReplaceArea) selected);
             replacementsList = new JList(replacementsListModel);
             replacementsList.setCellRenderer(new ReplacementsListRenderer((ReplaceArea) selected));
-            replacementListPane.add(new JScrollPane(replacementsList), JideBoxLayout.VARY);
+            CollapsibleScrollList replacementListPane = new CollapsibleScrollList("Replacements", replacementsList);
 
+            // Button panel under the list - Add and Delete buttons
             JPanel replacementListButtonsPane = new JPanel();
             replacementListButtonsPane.setLayout(new JideBoxLayout(replacementListButtonsPane, JideBoxLayout.LINE_AXIS));
             addReplacement = new JButton(new ImageIcon(DefaultIcons.getCreateIcon()));
@@ -484,13 +486,14 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 }
             });
             replacementListButtonsPane.add(new JPanel(), JideBoxLayout.VARY);
+
             replacementListPane.add(replacementListButtonsPane, JideBoxLayout.FIX);
 
+            // This gets the "Replace X by Y" boxes after a replacement is selected in the list
             replacementEditPane = new JPanel();
             replacementListPane.add(replacementEditPane, JideBoxLayout.FIX);
 
-            pane.add(new JScrollPane(replacementListPane), JideBoxLayout.VARY);
-
+            pane.add(replacementListPane, JideBoxLayout.FIX);
 
             replacementsList.addListSelectionListener(new ListSelectionListener() {
                 @Override
@@ -500,7 +503,6 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                     deleteReplacement.setEnabled(((TMXMap) target).writable);
                 }
             });
-
 
         } else if (selected instanceof RestArea) {
             areaField = addTextField(pane, "Area ID: ", ((RestArea) selected).name, ((TMXMap) target).writable, listener);
@@ -516,6 +518,8 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             respawnSpeedField = addIntegerField(pane, "Respawn-Speed of NPCs: ", ((SpawnArea) selected).respawnSpeed, false, ((TMXMap) target).writable, listener);
             spawnActiveForNewGame = addBooleanBasedCheckBox(pane, "Active in a new game: ", ((SpawnArea) selected).active, ((TMXMap) target).writable, listener);
             spawnIgnoreAreas = addBooleanBasedCheckBox(pane, "Monsters can walk on other game objects: ", ((SpawnArea) selected).ignoreAreas, ((TMXMap) target).writable, listener);
+
+            // List box with the NPCs
             npcListModel = new SpawnGroupNpcListModel((SpawnArea) selected);
             npcList = new JList(npcListModel);
             npcList.setCellRenderer(new GDERenderer(true, ((TMXMap) target).writable));
@@ -538,12 +542,9 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                     }
                 }
             });
-            JScrollPane npcListScroller = new JScrollPane(npcList);
-            npcListScroller.getVerticalScrollBar().setUnitIncrement(16);
-            pane.add(npcListScroller, JideBoxLayout.VARY);
-            needVary = false;
+            CollapsibleScrollList npcListScroller = new CollapsibleScrollList("NPCs in spawn group", npcList);
+            pane.add(npcListScroller, JideBoxLayout.FIX);
         }
-        if (needVary) pane.add(new JPanel(), JideBoxLayout.VARY);
         pane.revalidate();
         pane.repaint();
     }

@@ -41,6 +41,9 @@ public class CollapsibleScrollList extends CollapsiblePanel {
         super(title);
         this.list = list;
         this.scroller = new JScrollPane(list);
+        this.scroller.getVerticalScrollBar().setUnitIncrement(12);
+
+        // Add scrollwheel handler
         NestedScrollListener.install(scroller);
         attachResizeListener(list.getModel());
         list.addPropertyChangeListener("model", evt -> {
@@ -55,6 +58,7 @@ public class CollapsibleScrollList extends CollapsiblePanel {
 
         setLayout(new JideBoxLayout(this, JideBoxLayout.PAGE_AXIS));
         add(scroller, JideBoxLayout.FIX);
+
         add(new JPanel(), JideBoxLayout.FIX);  // We need to add a blank jpanel so it collapses property for some reason
         resizeList();
 
@@ -76,13 +80,22 @@ public class CollapsibleScrollList extends CollapsiblePanel {
     }
 
     private void resizeList() {
-        SwingUtilities.invokeLater(() -> {
-            list.setVisibleRowCount(Math.min(8, list.getModel().getSize()));
-            list.revalidate();
-            scroller.revalidate();
+        // Run it in the event dispatch thread.  If we're already in it, do it now
+        Runnable r = () -> {
+            int newRowCount = Math.min(8, list.getModel().getSize());
+            if (list.getVisibleRowCount() != newRowCount) {
+                list.setVisibleRowCount(newRowCount);
+            }
+
             revalidate();
             repaint();
-        });
+        };
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            r.run();
+        } else {
+            SwingUtilities.invokeLater(r);
+        }
     }
 
     public JList<?> getList() {
