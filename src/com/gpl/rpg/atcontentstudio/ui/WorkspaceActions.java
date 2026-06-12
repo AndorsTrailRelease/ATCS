@@ -113,6 +113,21 @@ public class WorkspaceActions {
         public void actionPerformed(ActionEvent e) {
             if (multiMode) {
                 if (elementsToDelete == null) return;
+
+                int confirm = JOptionPane.showOptionDialog(
+                        ATContentStudio.frame,
+                        "Are you sure you want to delete " + elementsToDelete.size() + " selected elements?\n\nAny changes or new content in these elements will be lost.",
+                        "Confirm delete",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        new String[]{"Cancel", "Delete"},
+                        "Cancel"
+                );
+                if (confirm != 1) return;
+
+                //ATContentStudio.frame.projectTree.clearSelection();
+
                 final Map<GameDataCategory<JSONElement>, Set<File>> impactedCategories = new IdentityHashMap<GameDataCategory<JSONElement>, Set<File>>();
                 for (GameDataElement element : elementsToDelete) {
                     ATContentStudio.frame.closeEditor(element);
@@ -180,9 +195,41 @@ public class WorkspaceActions {
                     }
                 }.start();
             } else {
-                if (!(selectedNode instanceof GameDataElement)) return;
+                if (selectedNode == null || !(selectedNode instanceof GameDataElement)) return;
                 final GameDataElement node = ((GameDataElement) selectedNode);
+
+                String message;
+                String title;
+                String[] options;
+                if(node.getDataType() == GameSource.Type.altered) {
+                    message = "Are you sure you want to revert '" + node.getDesc() + "' to the original version?\n\nAny changes you have made will be lost.";
+                    title = "Confirm revert";
+                    options = new String[]{"Cancel", "Revert"};
+
+
+                } else {
+                    message = "Are you sure you want to delete '" + node.getDesc() + "'?";
+                    title = "Confirm delete";
+                    options = new String[]{"Cancel", "Delete"};
+                }
+
+                int confirm = JOptionPane.showOptionDialog(
+                        ATContentStudio.frame,
+                        message,
+                        title,
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        "Cancel"
+                );
+                if (confirm != 1) return;
+
+                // We've got permission, and we've got a copy in node, so clear the selection
+                ATContentStudio.frame.projectTree.clearSelection();
+
                 ATContentStudio.frame.closeEditor(node);
+
                 new Thread() {
                     @Override
                     public void run() {
@@ -241,8 +288,8 @@ public class WorkspaceActions {
 
         public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
             elementsToDelete = null;
+            multiMode = false;
             if (selectedPaths != null && selectedPaths.length > 1) {
-                multiMode = false;
                 elementsToDelete = new ArrayList<GameDataElement>();
                 for (TreePath selected : selectedPaths) {
                     if (selected.getLastPathComponent() instanceof GameDataElement && ((GameDataElement) selected.getLastPathComponent()).writable) {
@@ -253,7 +300,6 @@ public class WorkspaceActions {
                 putValue(Action.NAME, "Delete all selected elements");
                 setEnabled(multiMode);
             } else if (selectedNode instanceof GameDataElement && ((GameDataElement) selectedNode).writable) {
-                multiMode = false;
                 if (selectedNode.getDataType() == GameSource.Type.created) {
                     putValue(Action.NAME, "Delete this element");
                     setEnabled(true);

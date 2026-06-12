@@ -254,6 +254,10 @@ public class ProjectsTree extends JPanel {
         }
     }
 
+    public void clearSelection() {
+        projectsTree.clearSelection();
+    }
+
     public class ProjectsTreeModel implements TreeModel {
 
         public ProjectsTreeModel() {

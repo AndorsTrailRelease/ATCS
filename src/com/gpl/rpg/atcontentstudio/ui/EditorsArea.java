@@ -1,5 +1,6 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
+import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.model.ProjectTreeNode;
 import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
@@ -65,6 +66,17 @@ public class EditorsArea extends JPanel {
 
             @Override
             public void addPropertyChangeListener(PropertyChangeListener listener) {
+            }
+        });
+
+        tabHolder.addChangeListener(e -> {
+            if(ATContentStudio.frame == null) return; // Not initialized yet
+            Component selected = tabHolder.getSelectedComponent();
+            if (selected instanceof Editor) {
+                Object target = ((Editor) selected).target;
+                if (target instanceof ProjectTreeNode) {
+                    ATContentStudio.frame.selectInTree((ProjectTreeNode) target);
+                }
             }
         });
         add(tabHolder, BorderLayout.CENTER);
