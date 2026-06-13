@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.FontUIResource;
+import java.lang.management.ManagementFactory;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -21,6 +22,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.http.HttpTimeoutException;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -30,6 +32,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ATContentStudio {
+
+    private static final String WORKSPACE_ARGUMENT = "--workspace";
 
     public static final String APP_NAME = "Andor's Trail Content Studio";
     public static final String APP_VERSION = readVersionFromFile();
@@ -52,7 +56,8 @@ public class ATContentStudio {
      * @param args
      */
     public static void main(String[] args) {
-        ARGS = args;
+        StartupArguments startupArguments = StartupArguments.parse(args);
+        ARGS = startupArguments.appArgs;
         String fontScaling = System.getProperty(FONT_SCALE_ENV_VAR_NAME);
         Float fontScale;
         if (fontScaling != null) {
@@ -76,49 +81,190 @@ public class ATContentStudio {
         l.setLevel(Level.OFF);
         configuredLoggers.add(l);
 
+        File startupWorkspace = startupArguments.workspaceRoot != null
+                ? startupArguments.workspaceRoot
+                : getStartupWorkspace();
+        if (startupWorkspace != null) {
+            loadWorkspaceInCurrentProcess(startupWorkspace);
+        } else {
+            showWorkspaceSelector();
+        }
+    }
+
+    private static File getStartupWorkspace() {
+        File latestWorkspace = ConfigCache.getLatestWorkspace();
+        if (Workspace.isValidWorkspaceRoot(latestWorkspace)) {
+            return latestWorkspace.getAbsoluteFile();
+        }
+
+        return null;
+    }
+
+    private static void showWorkspaceSelector() {
         final WorkspaceSelector wsSelect = new WorkspaceSelector();
         wsSelect.pack();
         Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension wdim = wsSelect.getSize();
         wsSelect.setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
-        wsSelect.setVisible(true);
-
         wsSelect.addWindowListener(new WindowAdapter() {
             @Override
             public synchronized void windowClosed(WindowEvent e) {
                 if (wsSelect.selected != null && !STARTED) {
-                    ATContentStudio.STARTED = true;
-                    final File workspaceRoot = new File(wsSelect.selected);
-                    WorkerDialog.showTaskMessage("Loading your workspace...", null, new Runnable() {
-                        public void run() {
-                            Workspace.setActive(workspaceRoot);
-                            if (Workspace.activeWorkspace.settings.useInternet.getCurrentValue()
-                                    && Workspace.activeWorkspace.settings.checkUpdates.getCurrentValue()) {
-                                new Thread() {
-                                    public void run() {
-                                        checkUpdate();
-                                    }
-                                }.start();
-                            }
-                            frame = new StudioFrame(APP_NAME + " " + APP_VERSION);
-                            frame.setVisible(true);
-                            frame.setDefaultCloseOperation(StudioFrame.DO_NOTHING_ON_CLOSE);
-                        }
-                    });
-                    for (File f : ConfigCache.getKnownWorkspaces()) {
-                        if (workspaceRoot.equals(f)) {
-                            if (!workspaceRoot.equals(ConfigCache.getLatestWorkspace())) {
-                                ConfigCache.setLatestWorkspace(f);
-                            }
-                            return;
-                        }
-                    }
-                    ConfigCache.addWorkspace(workspaceRoot);
-                    ConfigCache.setLatestWorkspace(workspaceRoot);
-
+                    loadWorkspaceInCurrentProcess(new File(wsSelect.selected));
                 }
             }
         });
+        wsSelect.setVisible(true);
+    }
+
+    private static void loadWorkspaceInCurrentProcess(File workspaceRoot) {
+        if (workspaceRoot == null) {
+            return;
+        }
+
+        final File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
+        WorkspaceInstanceLock.AcquireResult lockResult = WorkspaceInstanceLock.acquireForCurrentProcess(normalizedWorkspaceRoot);
+        if (lockResult.isLockedByAnotherProcess()) {
+            showWorkspaceAlreadyOpenMessage(normalizedWorkspaceRoot);
+            if (!STARTED) {
+                showWorkspaceSelector();
+            }
+            return;
+        }
+        if (!lockResult.isAcquired()) {
+            showWorkspaceLockError(normalizedWorkspaceRoot, lockResult.getErrorMessage());
+            if (!STARTED) {
+                showWorkspaceSelector();
+            }
+            return;
+        }
+
+        rememberWorkspace(normalizedWorkspaceRoot);
+        STARTED = true;
+        WorkerDialog.showTaskMessage("Loading your workspace...", null, () -> {
+            Workspace.setActive(normalizedWorkspaceRoot);
+            if (Workspace.activeWorkspace.settings.useInternet.getCurrentValue()
+                    && Workspace.activeWorkspace.settings.checkUpdates.getCurrentValue()) {
+                new Thread(ATContentStudio::checkUpdate).start();
+            }
+
+            frame = new StudioFrame(buildFrameTitle(normalizedWorkspaceRoot));
+            frame.setDefaultCloseOperation(StudioFrame.DO_NOTHING_ON_CLOSE);
+            frame.setVisible(true);
+        });
+    }
+
+    public static String buildFrameTitle(File workspaceRoot) {
+        return APP_NAME + " " + APP_VERSION + " [" + getWorkspaceDisplayPath(workspaceRoot) + "]";
+    }
+
+    public static String getWorkspaceDisplayPath(File workspaceRoot) {
+        if (workspaceRoot == null) {
+            return "";
+        }
+
+        File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
+        String home = System.getProperty("user.home");
+        if (home != null && !home.isEmpty()) {
+            try {
+                Path homePath = new File(home).getAbsoluteFile().toPath().normalize();
+                Path workspacePath = normalizedWorkspaceRoot.toPath().normalize();
+                if (workspacePath.startsWith(homePath)) {
+                    Path relativePath = homePath.relativize(workspacePath);
+                    if (relativePath.getNameCount() == 0) {
+                        return "~";
+                    }
+                    return "~" + File.separator + relativePath;
+                }
+            } catch (RuntimeException ignored) {
+            }
+        }
+
+        return normalizedWorkspaceRoot.getAbsolutePath();
+    }
+
+    public static void launchWorkspaceProcess(File workspaceRoot) throws IOException {
+        if (workspaceRoot == null) {
+            throw new IllegalArgumentException("workspaceRoot must not be null");
+        }
+
+        File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
+        if (WorkspaceInstanceLock.isLockedByAnotherProcess(normalizedWorkspaceRoot)) {
+            showWorkspaceAlreadyOpenMessage(normalizedWorkspaceRoot);
+            return;
+        }
+        rememberWorkspace(normalizedWorkspaceRoot);
+
+        List<String> command = new ArrayList<>();
+        command.add(new File(new File(System.getProperty("java.home"), "bin"), "java").getAbsolutePath());
+        command.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
+        command.add("-cp");
+        command.add(System.getProperty("java.class.path"));
+        command.add(ATContentStudio.class.getName());
+        command.add(WORKSPACE_ARGUMENT);
+        command.add(normalizedWorkspaceRoot.getAbsolutePath());
+        if (ARGS != null) {
+            command.addAll(Arrays.asList(ARGS));
+        }
+
+        new ProcessBuilder(command).start();
+    }
+
+    private static void showWorkspaceAlreadyOpenMessage(File workspaceRoot) {
+        String message = "This workspace is already open in another ATCS instance.\n\nPath: " + workspaceRoot.getAbsolutePath();
+        Notification.addWarn(message);
+        JOptionPane.showMessageDialog(frame, message, "Workspace already open", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private static void showWorkspaceLockError(File workspaceRoot, String errorMessage) {
+        String message = "Unable to lock workspace:\n" + workspaceRoot.getAbsolutePath();
+        if (errorMessage != null && !errorMessage.isEmpty()) {
+            message += "\n\n" + errorMessage;
+        }
+        Notification.addError(message);
+        JOptionPane.showMessageDialog(frame, message, "Workspace lock error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static void rememberWorkspace(File workspaceRoot) {
+        for (File knownWorkspace : ConfigCache.getKnownWorkspaces()) {
+            if (workspaceRoot.equals(knownWorkspace)) {
+                if (!workspaceRoot.equals(ConfigCache.getLatestWorkspace())) {
+                    ConfigCache.setLatestWorkspace(knownWorkspace);
+                }
+                return;
+            }
+        }
+
+        ConfigCache.addWorkspace(workspaceRoot);
+        ConfigCache.setLatestWorkspace(workspaceRoot);
+    }
+
+    private static final class StartupArguments {
+        private final File workspaceRoot;
+        private final String[] appArgs;
+
+        private StartupArguments(File workspaceRoot, String[] appArgs) {
+            this.workspaceRoot = workspaceRoot;
+            this.appArgs = appArgs;
+        }
+
+        private static StartupArguments parse(String[] args) {
+            File workspaceRoot = null;
+            List<String> appArgs = new ArrayList<>();
+
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if (WORKSPACE_ARGUMENT.equals(arg) && i + 1 < args.length) {
+                    workspaceRoot = new File(args[++i]);
+                } else if (arg.startsWith(WORKSPACE_ARGUMENT + "=")) {
+                    workspaceRoot = new File(arg.substring((WORKSPACE_ARGUMENT + "=").length()));
+                } else {
+                    appArgs.add(arg);
+                }
+            }
+
+            return new StartupArguments(workspaceRoot, appArgs.toArray(new String[0]));
+        }
     }
 
     public static void setLookAndFeel(String laf) {

@@ -13,16 +13,21 @@ import com.gpl.rpg.atcontentstudio.model.tools.writermode.WriterModeData;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class StudioFrame extends JFrame {
 
     private static final long serialVersionUID = -3391514100319186661L;
-
 
     final ProjectsTree projectTree;
     final EditorsArea editors;
@@ -61,15 +66,30 @@ public class StudioFrame extends JFrame {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                Workspace.activeWorkspace.preferences.windowSize = StudioFrame.this.getSize();
+                if (isInNormalWindowState()) {
+                    Workspace.activeWorkspace.preferences.windowSize = StudioFrame.this.getSize();
+                }
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                if (isInNormalWindowState()) {
+                    Workspace.activeWorkspace.preferences.windowLocation = StudioFrame.this.getLocation();
+                }
             }
         });
 
         pack();
+        restoreNormalWindowState();
         if (Workspace.activeWorkspace.preferences.windowSize != null) {
             setSize(Workspace.activeWorkspace.preferences.windowSize);
         } else {
             setSize(800, 600);
+        }
+        if (isSavedLocationUsable(Workspace.activeWorkspace.preferences.windowLocation)) {
+            setLocation(Workspace.activeWorkspace.preferences.windowLocation);
+        } else {
+            setLocationRelativeTo(null);
         }
 
         if (Workspace.activeWorkspace.preferences.splittersPositions.get(topDown.getName()) != null) {
@@ -99,6 +119,11 @@ public class StudioFrame extends JFrame {
 
         addWindowListener(new WindowAdapter() {
             @Override
+            public void windowOpened(WindowEvent e) {
+                SwingUtilities.invokeLater(() -> restoreNormalWindowState());
+            }
+
+            @Override
             public void windowClosing(WindowEvent e) {
                 Workspace.saveActive();
                 actions.exitATCS.actionPerformed(null);
@@ -106,9 +131,37 @@ public class StudioFrame extends JFrame {
         });
     }
 
+    private boolean isInNormalWindowState() {
+        return (getExtendedState() & Frame.MAXIMIZED_BOTH) == 0;
+    }
+
+    private void restoreNormalWindowState() {
+        setExtendedState(getExtendedState() & ~Frame.MAXIMIZED_BOTH & ~Frame.ICONIFIED);
+    }
+
+    private boolean isSavedLocationUsable(Point savedLocation) {
+        if (savedLocation == null) {
+            return false;
+        }
+
+        Rectangle savedBounds = new Rectangle(savedLocation, getSize());
+        for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+            Rectangle screenBounds = device.getDefaultConfiguration().getBounds();
+            if (screenBounds.intersects(savedBounds)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void buildMenu() {
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
+        fileMenu.add(new JMenuItem(actions.newWorkspace)).setMnemonic(KeyEvent.VK_N);
+        fileMenu.add(new JMenuItem(actions.openWorkspace)).setMnemonic(KeyEvent.VK_W);
+        fileMenu.add(createRecentWorkspacesMenu()).setMnemonic(KeyEvent.VK_R);
+        fileMenu.add(new JSeparator());
         fileMenu.add(new JMenuItem(actions.createProject)).setMnemonic(KeyEvent.VK_P);
         fileMenu.add(new JMenuItem(actions.openProject)).setMnemonic(KeyEvent.VK_O);
         fileMenu.add(new JMenuItem(actions.closeProject)).setMnemonic(KeyEvent.VK_C);
@@ -179,6 +232,86 @@ public class StudioFrame extends JFrame {
             exportButton.setFocusPainted(false);
             exportButton.setContentAreaFilled(false);
             getJMenuBar().add(exportButton);
+        }
+    }
+
+    private JMenu createRecentWorkspacesMenu() {
+        final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
+        recentWorkspacesMenu.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected(MenuEvent e) {
+                populateRecentWorkspacesMenu(recentWorkspacesMenu);
+            }
+
+            @Override
+            public void menuDeselected(MenuEvent e) {
+            }
+
+            @Override
+            public void menuCanceled(MenuEvent e) {
+            }
+        });
+        populateRecentWorkspacesMenu(recentWorkspacesMenu);
+        return recentWorkspacesMenu;
+    }
+
+    private void populateRecentWorkspacesMenu(JMenu recentWorkspacesMenu) {
+        recentWorkspacesMenu.removeAll();
+
+        List<File> recentWorkspaces = getRecentWorkspaceChoices();
+        if (recentWorkspaces.isEmpty()) {
+            JMenuItem emptyItem = new JMenuItem("No other workspaces");
+            emptyItem.setEnabled(false);
+            recentWorkspacesMenu.add(emptyItem);
+            return;
+        }
+
+        for (File workspaceRoot : recentWorkspaces) {
+            JMenuItem workspaceItem = new JMenuItem(formatWorkspaceMenuLabel(workspaceRoot));
+            workspaceItem.setToolTipText(workspaceRoot.getAbsolutePath());
+            workspaceItem.addActionListener(e -> actions.launchWorkspace(workspaceRoot, "Open Workspace"));
+            recentWorkspacesMenu.add(workspaceItem);
+        }
+    }
+
+    private String formatWorkspaceMenuLabel(File workspaceRoot) {
+        String workspaceName = workspaceRoot.getName();
+        if (workspaceName == null || workspaceName.isEmpty()) {
+            workspaceName = workspaceRoot.getAbsolutePath();
+        }
+        return ATContentStudio.getWorkspaceDisplayPath(workspaceRoot);
+    }
+
+    private List<File> getRecentWorkspaceChoices() {
+        List<File> recentWorkspaces = new ArrayList<>();
+        Set<String> seenPaths = new LinkedHashSet<>();
+
+        addRecentWorkspaceChoice(recentWorkspaces, seenPaths, ConfigCache.getLatestWorkspace());
+
+        List<File> knownWorkspaces = ConfigCache.getKnownWorkspaces();
+        for (int i = knownWorkspaces.size() - 1; i >= 0; i--) {
+            addRecentWorkspaceChoice(recentWorkspaces, seenPaths, knownWorkspaces.get(i));
+        }
+
+        return recentWorkspaces;
+    }
+
+    private void addRecentWorkspaceChoice(List<File> recentWorkspaces, Set<String> seenPaths, File workspaceRoot) {
+        if (workspaceRoot == null) {
+            return;
+        }
+
+        File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
+        if (!Workspace.isValidWorkspaceRoot(normalizedWorkspaceRoot)) {
+            return;
+        }
+        if (Workspace.activeWorkspace != null && normalizedWorkspaceRoot.equals(Workspace.activeWorkspace.baseFolder.getAbsoluteFile())) {
+            return;
+        }
+
+        String workspacePath = normalizedWorkspaceRoot.getAbsolutePath();
+        if (seenPaths.add(workspacePath)) {
+            recentWorkspaces.add(normalizedWorkspaceRoot);
         }
     }
 

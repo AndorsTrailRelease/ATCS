@@ -19,6 +19,7 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -26,6 +27,91 @@ public class WorkspaceActions {
 
     ProjectTreeNode selectedNode = null;
     TreePath[] selectedPaths = null;
+
+    private File getWorkspaceChooserDirectory() {
+        if (Workspace.activeWorkspace != null && Workspace.activeWorkspace.baseFolder != null) {
+            File parent = Workspace.activeWorkspace.baseFolder.getParentFile();
+            return parent != null ? parent : Workspace.activeWorkspace.baseFolder;
+        }
+
+        String home = System.getProperty("user.home");
+        return home != null ? new File(home) : new File(".");
+    }
+
+    public void launchWorkspace(File workspaceRoot, String dialogTitle) {
+        if (workspaceRoot == null) return;
+
+        try {
+            ATContentStudio.launchWorkspaceProcess(workspaceRoot);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(
+                    ATContentStudio.frame,
+                    "Unable to launch a new ATCS process for the selected workspace.\n" + ex.getMessage(),
+                    dialogTitle,
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    public ATCSAction newWorkspace = new ATCSAction("New Workspace...", "Creates a new workspace and opens it") {
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser chooser = new JFileChooser(getWorkspaceChooserDirectory());
+            chooser.setDialogTitle("New Workspace");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setMultiSelectionEnabled(false);
+            chooser.setAcceptAllFileFilterUsed(false);
+
+            int result = chooser.showSaveDialog(ATContentStudio.frame);
+            if (result != JFileChooser.APPROVE_OPTION) return;
+
+            File workspaceRoot = chooser.getSelectedFile();
+            if (workspaceRoot == null) return;
+            if (workspaceRoot.exists() && !workspaceRoot.isDirectory()) {
+                JOptionPane.showMessageDialog(
+                        ATContentStudio.frame,
+                        "The selected path exists but is not a directory.",
+                        "New Workspace",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            launchWorkspace(workspaceRoot, "New Workspace");
+        }
+
+        public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
+            setEnabled(true);
+        }
+    };
+
+    public ATCSAction openWorkspace = new ATCSAction("Open Workspace...", "Opens another existing workspace") {
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser chooser = new JFileChooser(getWorkspaceChooserDirectory());
+            chooser.setDialogTitle("Open Workspace");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setMultiSelectionEnabled(false);
+            chooser.setAcceptAllFileFilterUsed(false);
+
+            int result = chooser.showOpenDialog(ATContentStudio.frame);
+            if (result != JFileChooser.APPROVE_OPTION) return;
+
+            File workspaceRoot = chooser.getSelectedFile();
+            if (workspaceRoot == null) return;
+            if (!Workspace.isValidWorkspaceRoot(workspaceRoot)) {
+                JOptionPane.showMessageDialog(
+                        ATContentStudio.frame,
+                        "The selected folder is not a valid workspace.\nExpected to find '" + Workspace.WS_SETTINGS_FILE_JSON + "' or '" + Workspace.WS_SETTINGS_FILE + "' inside it.",
+                        "Open Workspace",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            launchWorkspace(workspaceRoot, "Open Workspace");
+        }
+
+        public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
+            setEnabled(true);
+        }
+    };
 
     public ATCSAction createProject = new ATCSAction("Create Project...", "Opens the project creation wizard") {
         public void actionPerformed(ActionEvent e) {
@@ -449,6 +535,8 @@ public class WorkspaceActions {
     List<ATCSAction> actions = new ArrayList<WorkspaceActions.ATCSAction>();
 
     public WorkspaceActions() {
+        actions.add(newWorkspace);
+        actions.add(openWorkspace);
         actions.add(createProject);
         actions.add(closeProject);
         actions.add(openProject);

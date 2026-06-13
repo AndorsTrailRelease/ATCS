@@ -43,7 +43,12 @@ public class WorkspaceSelector extends JFrame {
             combo.addItem(path);
         }
         if (ConfigCache.getLatestWorkspace() != null) {
-            combo.setSelectedItem(wsPaths.get(workspaces.indexOf(ConfigCache.getLatestWorkspace())));
+            int latestWorkspaceIndex = workspaces.indexOf(ConfigCache.getLatestWorkspace());
+            if (latestWorkspaceIndex >= 0) {
+                combo.setSelectedItem(wsPaths.get(latestWorkspaceIndex));
+            } else {
+                combo.setSelectedItem(ConfigCache.getLatestWorkspace().getAbsolutePath());
+            }
         }
         combo.addActionListener(new ActionListener() {
             @Override
@@ -55,7 +60,7 @@ public class WorkspaceSelector extends JFrame {
         });
 
 
-        ok.setEnabled(ConfigCache.getLatestWorkspace() != null);
+        ok.setEnabled(combo.getSelectedItem() != null);
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

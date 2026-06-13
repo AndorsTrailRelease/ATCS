@@ -21,12 +21,10 @@ public class WorkerDialog extends JDialog {
         idler.start();
         this.getContentPane().add(idler, JideBoxLayout.FIX);
         this.pack();
-        Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension wdim = this.getSize();
         idler.setPreferredSize(new Dimension(wdim.width, 10));
         this.pack();
-        wdim = this.getSize();
-        this.setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
+        this.setLocationRelativeTo(parent);
         this.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
     }
 
