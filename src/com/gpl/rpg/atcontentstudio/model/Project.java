@@ -1052,19 +1052,12 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         WorkerDialog.showTaskMessage("Exporting project " + name + "...", ATContentStudio.frame, true, new Runnable() {
             @Override
             public void run() {
-                Notification.addInfo("Exporting project \"" + name + "\" as " + target.getAbsolutePath());
-
-                File tmpDir;
                 try {
-                    tmpDir = exportProjectToTmpDir();
-                    FileUtils.writeToZip(tmpDir, target);
-                    FileUtils.deleteDir(tmpDir);
+                    exportProjectAsZipPackageSync(target);
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
+                    Notification.addError("Error exporting project \"" + name + "\" as " + target.getAbsolutePath() + " : " + e.getMessage());
                     e.printStackTrace();
                 }
-
-                Notification.addSuccess("Project \"" + name + "\" exported as " + target.getAbsolutePath());
             }
 
 
@@ -1075,24 +1068,44 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         WorkerDialog.showTaskMessage("Exporting project " + name + "...", ATContentStudio.frame, true, new Runnable() {
             @Override
             public void run() {
-                Notification.addInfo("Exporting project \"" + name + "\" into " + target.getAbsolutePath());
-
-                File tmpDir;
                 try {
-                    tmpDir = exportProjectToTmpDir();
-                    FileUtils.copyOver(tmpDir, target);
-                    FileUtils.deleteDir(tmpDir);
+                    exportProjectOverGameSourceSync(target);
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
+                    Notification.addError("Error exporting project \"" + name + "\" into " + target.getAbsolutePath() + " : " + e.getMessage());
                     e.printStackTrace();
                 }
-
-                Notification.addSuccess("Project \"" + name + "\" exported into " + target.getAbsolutePath());
             }
 
 
         });
     }
+
+    public void exportProjectAsZipPackageSync(File target) throws IOException {
+        Notification.addInfo("Exporting project \"" + name + "\" as " + target.getAbsolutePath());
+
+        File tmpDir = exportProjectToTmpDir();
+        try {
+            FileUtils.writeToZip(tmpDir, target);
+        } finally {
+            FileUtils.deleteDir(tmpDir);
+        }
+
+        Notification.addSuccess("Project \"" + name + "\" exported as " + target.getAbsolutePath());
+    }
+
+    public void exportProjectOverGameSourceSync(File target) throws IOException {
+        Notification.addInfo("Exporting project \"" + name + "\" into " + target.getAbsolutePath());
+
+        File tmpDir = exportProjectToTmpDir();
+        try {
+            FileUtils.copyOver(tmpDir, target);
+        } finally {
+            FileUtils.deleteDir(tmpDir);
+        }
+
+        Notification.addSuccess("Project \"" + name + "\" exported into " + target.getAbsolutePath());
+    }
+
 
     public File exportProjectToTmpDir() throws IOException {
         File tmpDir = new File(baseFolder, "tmp");

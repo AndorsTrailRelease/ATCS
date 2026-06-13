@@ -324,6 +324,33 @@ public class Workspace implements ProjectTreeNode, Serializable, JsonSerializabl
                 });
     }
 
+    public Project loadProjectByName(String projectName) {
+        if (projectName == null) {
+            return null;
+        }
+
+        for (ProjectTreeNode node : projects) {
+            if (node instanceof Project) {
+                Project project = (Project) node;
+                if (projectName.equals(project.name)) {
+                    return project;
+                }
+            } else if (node instanceof ClosedProject) {
+                ClosedProject closedProject = (ClosedProject) node;
+                if (projectName.equals(closedProject.name)) {
+                    File projectRoot = new File(baseFolder, closedProject.name);
+                    return Project.fromFolder(this, projectRoot);
+                }
+            }
+        }
+
+        if (projectsName.contains(projectName)) {
+            return Project.fromFolder(this, new File(baseFolder, projectName));
+        }
+
+        return null;
+    }
+
     public void refreshTransients() {
         this.settings = new WorkspaceSettings(this);
         this.projects = new ArrayList<ProjectTreeNode>();

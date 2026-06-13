@@ -62,8 +62,9 @@ public class ExportProjectWizard extends JDialog {
         overSources.addActionListener(updateListener);
 
         target = new JComboBox<String>();
-        if  (ATContentStudio.ARGS != null && ATContentStudio.ARGS.length > 0 && !"".equals(ATContentStudio.ARGS[0])) {
-            target.addItem(ATContentStudio.ARGS[0]);
+        String defaultExportTarget = ATContentStudio.getDefaultExportTarget();
+        if (defaultExportTarget != null && !defaultExportTarget.trim().isEmpty()) {
+            target.addItem(defaultExportTarget);
         }
         target.setEditable(true);
         target.addActionListener(updateListener);

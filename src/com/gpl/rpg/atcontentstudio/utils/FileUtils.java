@@ -1,5 +1,6 @@
 package com.gpl.rpg.atcontentstudio.utils;
 
+import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.io.JsonPrettyWriter;
 import com.gpl.rpg.atcontentstudio.io.JsonSerializable;
@@ -113,51 +114,26 @@ public class FileUtils {
         }
     }
 
-    public static void copyFile(File sourceLocation, File targetLocation) {
-        try {
-            InputStream in = new FileInputStream(sourceLocation);
-            OutputStream out = new FileOutputStream(targetLocation);
-
-            // Copy the bits from instream to outstream
+    public static void copyFile(File sourceLocation, File targetLocation) throws IOException {
+        ATContentStudio.logHeadlessDetail("Copying file: " + sourceLocation.getAbsolutePath() + " -> " + targetLocation.getAbsolutePath());
+        try (InputStream in = new FileInputStream(sourceLocation);
+             OutputStream out = new FileOutputStream(targetLocation)) {
             byte[] buf = new byte[1024];
             int len;
-            try {
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-            } finally {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                }
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                }
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
             }
-        } catch (FileNotFoundException e1) {
-            // TODO Auto-generated catch block
         }
     }
 
     private static final int BUFFER = 2048;
 
-    public static void writeToZip(File folder, File target) {
-        try {
-            FileOutputStream dest = new FileOutputStream(target);
-            ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+    public static void writeToZip(File folder, File target) throws IOException {
+        try (FileOutputStream dest = new FileOutputStream(target);
+             ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest))) {
             zipDir(folder, "", out);
             out.flush();
-            out.close();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
-
     }
 
     /**
@@ -166,16 +142,21 @@ public class FileUtils {
      * @param sourceFolder
      * @param targetFolder
      */
-    public static void copyOver(File sourceFolder, File targetFolder) {
-        if (!sourceFolder.isDirectory() || !targetFolder.isDirectory()) return;
+    public static void copyOver(File sourceFolder, File targetFolder) throws IOException {
+        if (!sourceFolder.isDirectory()) {
+            throw new IOException("Source folder is not a directory: " + sourceFolder.getAbsolutePath());
+        }
+        if (!targetFolder.isDirectory()) {
+            throw new IOException("Target folder is not a directory: " + targetFolder.getAbsolutePath());
+        }
         for (File f : sourceFolder.listFiles()) {
             if (Files.isSymbolicLink(f.toPath())) {
                 //Skip symlinks
                 continue;
             } else if (f.isDirectory()) {
                 File dest = new File(targetFolder, f.getName());
-                if (!dest.exists()) {
-                    dest.mkdir();
+                if (!dest.exists() && !dest.mkdir()) {
+                    throw new IOException("Unable to create target folder: " + dest.getAbsolutePath());
                 }
                 copyOver(f, dest);
             } else {
@@ -184,7 +165,7 @@ public class FileUtils {
         }
     }
 
-    private static void zipDir(File dir, String prefix, ZipOutputStream zos) {
+    private static void zipDir(File dir, String prefix, ZipOutputStream zos) throws IOException {
         if (prefix != "") {
             prefix = prefix + File.separator;
         }
@@ -192,33 +173,20 @@ public class FileUtils {
             if (f.isDirectory()) {
                 zipDir(f, prefix + f.getName(), zos);
             } else {
-                FileInputStream fis;
-                try {
-                    fis = new FileInputStream(f);
-                    BufferedInputStream origin = new BufferedInputStream(fis, BUFFER);
+                try (FileInputStream fis = new FileInputStream(f);
+                     BufferedInputStream origin = new BufferedInputStream(fis, BUFFER)) {
                     ZipEntry entry = new ZipEntry(prefix + f.getName());
+                    ATContentStudio.logHeadlessDetail("Archiving file: " + entry.getName());
+                    zos.putNextEntry(entry);
                     try {
-                        zos.putNextEntry(entry);
                         int count;
                         byte data[] = new byte[BUFFER];
                         while ((count = origin.read(data, 0, BUFFER)) != -1) {
                             zos.write(data, 0, count);
-                            zos.flush();
                         }
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
                     } finally {
-                        try {
-                            origin.close();
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
+                        zos.closeEntry();
                     }
-                } catch (FileNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
                 }
             }
         }

@@ -1,9 +1,13 @@
 package com.gpl.rpg.atcontentstudio;
 
+import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.Workspace;
 import com.gpl.rpg.atcontentstudio.ui.StudioFrame;
 import com.gpl.rpg.atcontentstudio.ui.WorkerDialog;
 import com.gpl.rpg.atcontentstudio.ui.WorkspaceSelector;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import prefuse.data.expression.parser.ExpressionParser;
 
 import javax.swing.*;
@@ -18,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -34,6 +39,16 @@ import java.util.logging.Logger;
 public class ATContentStudio {
 
     private static final String WORKSPACE_ARGUMENT = "--workspace";
+    private static final String SHORT_WORKSPACE_ARGUMENT = "-w";
+    private static final String PROJECT_ARGUMENT = "--project";
+    private static final String SHORT_PROJECT_ARGUMENT = "-p";
+    private static final String EXPORT_TARGET_ARGUMENT = "--export-target";
+    private static final String SHORT_EXPORT_TARGET_ARGUMENT = "-t";
+    private static final String SHORT_QUIET_ARGUMENT = "-q";
+    private static final String QUIET_ARGUMENT = "--quiet";
+    private static final String SKIP_LOCK_CHECK_ARGUMENT = "--skip-lock-check";
+    private static final String HELP_ARGUMENT = "--help";
+    private static final String SHORT_HELP_ARGUMENT = "-h";
 
     public static final String APP_NAME = "Andor's Trail Content Studio";
     public static final String APP_VERSION = readVersionFromFile();
@@ -50,14 +65,44 @@ public class ATContentStudio {
     // Need to keep a strong reference to it, to avoid garbage collection that'll
     // reset these loggers.
     public static final List<Logger> configuredLoggers = new LinkedList<Logger>();
-    public static String[] ARGS;
+    private static String startupExportTarget;
+    private static boolean quietMode;
+    private static boolean headlessExportMode;
+    private static boolean skipLockCheck;
 
     /**
      * @param args
      */
     public static void main(String[] args) {
-        StartupArguments startupArguments = StartupArguments.parse(args);
-        ARGS = startupArguments.appArgs;
+        StartupArguments startupArguments = new StartupArguments();
+        CommandLine commandLine = new CommandLine(startupArguments);
+        try {
+            commandLine.parseArgs(args);
+        } catch (CommandLine.ParameterException e) {
+            System.err.println("Argument error: " + e.getMessage());
+            printCommandLineUsage(System.err);
+            System.exit(2);
+            return;
+        }
+
+        startupExportTarget = startupArguments.getDefaultExportTarget();
+        quietMode = startupArguments.quiet;
+        headlessExportMode = startupArguments.isHeadlessExportRequested();
+        skipLockCheck = startupArguments.skipLockCheck;
+
+        if (startupArguments.help) {
+            printCommandLineUsage(System.out);
+            System.exit(0);
+            return;
+        }
+
+        if (startupArguments.isHeadlessExportRequested()) {
+            System.setProperty("java.awt.headless", "true");
+            int exitCode = runHeadlessProjectExport(startupArguments);
+            System.exit(exitCode);
+            return;
+        }
+
         String fontScaling = System.getProperty(FONT_SCALE_ENV_VAR_NAME);
         Float fontScale;
         if (fontScaling != null) {
@@ -89,6 +134,169 @@ public class ATContentStudio {
         } else {
             showWorkspaceSelector();
         }
+    }
+
+    public static String getDefaultExportTarget() {
+        if (!isBlank(startupExportTarget)) {
+            return startupExportTarget;
+        }
+        return null;
+    }
+
+    public static boolean hasDefaultExportTarget() {
+        return !isBlank(getDefaultExportTarget());
+    }
+
+    private static int runHeadlessProjectExport(StartupArguments startupArguments) {
+        if (startupArguments.workspaceRoot == null) {
+            return failCommandLineExport("The --workspace argument is required when using --project.", null, true);
+        }
+        if (isBlank(startupArguments.projectName)) {
+            return failCommandLineExport("The --project argument must not be empty.", null, true);
+        }
+        if (isBlank(startupArguments.exportTarget)) {
+            return failCommandLineExport("The --export-target argument is required when using --project.", null, true);
+        }
+
+        File workspaceRoot = startupArguments.workspaceRoot.getAbsoluteFile();
+        if (!Workspace.isValidWorkspaceRoot(workspaceRoot)) {
+            return failCommandLineExport(
+                    "The selected workspace is not valid: " + workspaceRoot.getAbsolutePath(),
+                    null,
+                    false
+            );
+        }
+
+        ConfigCache.init();
+
+        if (!skipLockCheck) {
+            WorkspaceInstanceLock.AcquireResult lockResult = WorkspaceInstanceLock.acquireForCurrentProcess(workspaceRoot);
+            if (lockResult.isLockedByAnotherProcess()) {
+                return failCommandLineExport(
+                        "This workspace is already open in another ATCS instance: " + workspaceRoot.getAbsolutePath(),
+                        null,
+                        false
+                );
+            }
+            if (!lockResult.isAcquired()) {
+                return failCommandLineExport(
+                        "Unable to lock workspace: " + workspaceRoot.getAbsolutePath() + (isBlank(lockResult.getErrorMessage()) ? "" : "\n" + lockResult.getErrorMessage()),
+                        null,
+                        false
+                );
+            }
+        }
+
+        try {
+            rememberWorkspace(workspaceRoot);
+            logInfo("Loading workspace: " + workspaceRoot.getAbsolutePath());
+            if (skipLockCheck) {
+                logInfo("Skipping workspace lock check.");
+            }
+            Workspace.setActive(workspaceRoot);
+
+            logInfo("Loading project: " + startupArguments.projectName);
+            Project project = Workspace.activeWorkspace.loadProjectByName(startupArguments.projectName);
+            if (project == null) {
+                return failCommandLineExport(
+                        "Project not found in workspace: " + startupArguments.projectName + "\nAvailable projects: " + String.join(", ", getSortedProjectNames()),
+                        null,
+                        false
+                );
+            }
+
+            File exportTarget = new File(startupArguments.exportTarget).getAbsoluteFile();
+            validateHeadlessExportTarget(exportTarget);
+
+            logInfo("Project loaded: " + project.name);
+            logInfo("Exporting project '" + project.name + "' to " + exportTarget.getAbsolutePath());
+
+            if (isZipExportTarget(exportTarget)) {
+                project.exportProjectAsZipPackageSync(exportTarget);
+            } else {
+                project.exportProjectOverGameSourceSync(exportTarget);
+            }
+
+            logInfo("Export completed successfully.");
+            return 0;
+        } catch (Exception e) {
+            return failCommandLineExport("Project export failed.", e, false);
+        } finally {
+            if (!skipLockCheck) {
+                WorkspaceInstanceLock.releaseCurrentWorkspace();
+            }
+        }
+    }
+
+    private static List<String> getSortedProjectNames() {
+        if (Workspace.activeWorkspace == null || Workspace.activeWorkspace.projectsName == null || Workspace.activeWorkspace.projectsName.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> projectNames = new ArrayList<>(Workspace.activeWorkspace.projectsName);
+        Collections.sort(projectNames);
+        return projectNames;
+    }
+
+    private static void validateHeadlessExportTarget(File exportTarget) {
+        if (exportTarget == null) {
+            throw new IllegalArgumentException("Export target is missing.");
+        }
+
+        if (isZipExportTarget(exportTarget)) {
+            File parentFolder = exportTarget.getParentFile();
+            if (parentFolder != null && !parentFolder.isDirectory()) {
+                throw new IllegalArgumentException("Zip export target folder does not exist: " + parentFolder.getAbsolutePath());
+            }
+            return;
+        }
+
+        if (!exportTarget.exists() || !exportTarget.isDirectory()) {
+            throw new IllegalArgumentException("Game-source export target must be an existing directory: " + exportTarget.getAbsolutePath());
+        }
+    }
+
+    private static boolean isZipExportTarget(File exportTarget) {
+        return exportTarget.getName().toLowerCase(Locale.ROOT).endsWith(".zip");
+    }
+
+    private static int failCommandLineExport(String message, Throwable error, boolean showUsage) {
+        System.err.println(message);
+        if (error != null) {
+            error.printStackTrace(System.err);
+        }
+        if (showUsage) {
+            printCommandLineUsage(System.err);
+        }
+        return 1;
+    }
+
+    private static void logInfo(String message) {
+        if (!quietMode) {
+            System.out.println(message);
+        }
+    }
+
+    public static boolean isHeadlessExportMode() {
+        return headlessExportMode;
+    }
+
+    public static boolean isSkipLockCheckEnabled() {
+        return skipLockCheck;
+    }
+
+    public static void logHeadlessDetail(String message) {
+        if (headlessExportMode) {
+            logInfo(message);
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private static void printCommandLineUsage(PrintStream stream) {
+        new CommandLine(new StartupArguments()).usage(stream);
     }
 
     private static File getStartupWorkspace() {
@@ -123,20 +331,22 @@ public class ATContentStudio {
         }
 
         final File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
-        WorkspaceInstanceLock.AcquireResult lockResult = WorkspaceInstanceLock.acquireForCurrentProcess(normalizedWorkspaceRoot);
-        if (lockResult.isLockedByAnotherProcess()) {
-            showWorkspaceAlreadyOpenMessage(normalizedWorkspaceRoot);
-            if (!STARTED) {
-                showWorkspaceSelector();
+        if (!skipLockCheck) {
+            WorkspaceInstanceLock.AcquireResult lockResult = WorkspaceInstanceLock.acquireForCurrentProcess(normalizedWorkspaceRoot);
+            if (lockResult.isLockedByAnotherProcess()) {
+                showWorkspaceAlreadyOpenMessage(normalizedWorkspaceRoot);
+                if (!STARTED) {
+                    showWorkspaceSelector();
+                }
+                return;
             }
-            return;
-        }
-        if (!lockResult.isAcquired()) {
-            showWorkspaceLockError(normalizedWorkspaceRoot, lockResult.getErrorMessage());
-            if (!STARTED) {
-                showWorkspaceSelector();
+            if (!lockResult.isAcquired()) {
+                showWorkspaceLockError(normalizedWorkspaceRoot, lockResult.getErrorMessage());
+                if (!STARTED) {
+                    showWorkspaceSelector();
+                }
+                return;
             }
-            return;
         }
 
         rememberWorkspace(normalizedWorkspaceRoot);
@@ -189,9 +399,11 @@ public class ATContentStudio {
         }
 
         File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
-        if (WorkspaceInstanceLock.isLockedByAnotherProcess(normalizedWorkspaceRoot)) {
-            showWorkspaceAlreadyOpenMessage(normalizedWorkspaceRoot);
-            return;
+        if (!skipLockCheck) {
+            if (WorkspaceInstanceLock.isLockedByAnotherProcess(normalizedWorkspaceRoot)) {
+                showWorkspaceAlreadyOpenMessage(normalizedWorkspaceRoot);
+                return;
+            }
         }
         rememberWorkspace(normalizedWorkspaceRoot);
 
@@ -203,10 +415,13 @@ public class ATContentStudio {
         command.add(ATContentStudio.class.getName());
         command.add(WORKSPACE_ARGUMENT);
         command.add(normalizedWorkspaceRoot.getAbsolutePath());
-        if (ARGS != null) {
-            command.addAll(Arrays.asList(ARGS));
+        if (!isBlank(startupExportTarget)) {
+            command.add(EXPORT_TARGET_ARGUMENT);
+            command.add(startupExportTarget);
         }
-
+        if (skipLockCheck) {
+            command.add(SKIP_LOCK_CHECK_ARGUMENT);
+        }
         new ProcessBuilder(command).start();
     }
 
@@ -239,31 +454,48 @@ public class ATContentStudio {
         ConfigCache.setLatestWorkspace(workspaceRoot);
     }
 
+    @Command(
+            name = "ATContentStudio",
+            sortOptions = false,
+            customSynopsis = {
+                    "  GUI mode:",
+                    "    ATContentStudio [--help] [--workspace <workspace>] [--export-target <path>] [--skip-lock-check]",
+                    "  Headless export mode:",
+                    "    ATContentStudio [--help] --workspace <workspace> --project <project-name> --export-target <target> [-q|--quiet] [--skip-lock-check]"
+            },
+            description = "Launches Andor's Trail Content Studio in GUI mode or headless export mode.",
+            footer = {
+                    "Notes:",
+                    "  - If <target> ends with .zip, ATCS exports a zip package.",
+                    "  - Otherwise, <target> must be an existing game-source directory.",
+                    "  - --skip-lock-check bypasses single-instance workspace locking.",
+            }
+    )
     private static final class StartupArguments {
-        private final File workspaceRoot;
-        private final String[] appArgs;
+        @Option(names = {SHORT_WORKSPACE_ARGUMENT, WORKSPACE_ARGUMENT}, paramLabel = "<workspace>", description = "Workspace root to open.")
+        private File workspaceRoot;
 
-        private StartupArguments(File workspaceRoot, String[] appArgs) {
-            this.workspaceRoot = workspaceRoot;
-            this.appArgs = appArgs;
+        @Option(names = {SHORT_PROJECT_ARGUMENT, PROJECT_ARGUMENT}, paramLabel = "<project-name>", description = "Project to export in headless mode.")
+        private String projectName;
+
+        @Option(names = {SHORT_EXPORT_TARGET_ARGUMENT, EXPORT_TARGET_ARGUMENT}, paramLabel = "<target>", description = "Zip file or existing game-source directory to export to.")
+        private String exportTarget;
+
+        @Option(names = {SHORT_QUIET_ARGUMENT, QUIET_ARGUMENT}, description = "Suppresses informational console output in headless mode.")
+        private boolean quiet;
+
+        @Option(names = SKIP_LOCK_CHECK_ARGUMENT, description = "Bypasses single-instance workspace locking.")
+        private boolean skipLockCheck;
+
+        @Option(names = {SHORT_HELP_ARGUMENT, HELP_ARGUMENT}, usageHelp = true, description = "Prints this message and exits.")
+        private boolean help;
+
+        private boolean isHeadlessExportRequested() {
+            return !isBlank(projectName);
         }
 
-        private static StartupArguments parse(String[] args) {
-            File workspaceRoot = null;
-            List<String> appArgs = new ArrayList<>();
-
-            for (int i = 0; i < args.length; i++) {
-                String arg = args[i];
-                if (WORKSPACE_ARGUMENT.equals(arg) && i + 1 < args.length) {
-                    workspaceRoot = new File(args[++i]);
-                } else if (arg.startsWith(WORKSPACE_ARGUMENT + "=")) {
-                    workspaceRoot = new File(arg.substring((WORKSPACE_ARGUMENT + "=").length()));
-                } else {
-                    appArgs.add(arg);
-                }
-            }
-
-            return new StartupArguments(workspaceRoot, appArgs.toArray(new String[0]));
+        private String getDefaultExportTarget() {
+            return exportTarget;
         }
     }
 

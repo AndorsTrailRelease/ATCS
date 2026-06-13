@@ -158,6 +158,7 @@ public class AboutEditor extends Editor {
         editorTabsHolder.add("libtiled-java License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.libtiled.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("prefuse License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/license-prefuse.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("BeanShell License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.LGPLv3.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
+        editorTabsHolder.add("picocli License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.picocli.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("SipHash for Java License",
                              getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.siphash-zackehh.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("jsoup License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.jsoup.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
