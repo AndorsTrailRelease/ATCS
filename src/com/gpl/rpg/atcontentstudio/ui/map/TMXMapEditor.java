@@ -1625,6 +1625,35 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         tmxViewer.revalidate();
     }
 
+    @Override
+    public boolean canSaveCurrent() {
+        TMXMap map = (TMXMap) target;
+        return map != null && map.writable && map.state != TMXMap.State.saved;
+    }
+
+    @Override
+    public void saveCurrent() {
+        if (!canSaveCurrent()) return;
+
+        TMXMap map = (TMXMap) target;
+
+        if (map.changedOnDisk) {
+            int confirm = JOptionPane.showConfirmDialog(TMXMapEditor.this,
+                                                        "You modified this map in an external tool. All external changes will be lost if you confirm.\n On the other hand, if you reload in ATCS, all ATCS-made changes will be lost.\n Do you want to save?",
+                                                        "Confirm save?", JOptionPane.OK_CANCEL_OPTION);
+            if (confirm == JOptionPane.CANCEL_OPTION) return;
+            File backup = FileUtils.backupFile(map.tmxFile);
+            if (backup != null) {
+                JOptionPane.showMessageDialog(TMXMapEditor.this, "The externally-modified file was backed up as " + backup.getAbsolutePath(), "File backed up",
+                                              JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(TMXMapEditor.this, "The externally-modified file could not be backed up.", "File backup failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        map.save();
+        ATContentStudio.frame.nodeChanged(map);
+    }
+
 
     protected void selectMapObject(MapObject obj) {
         for (MapObjectGroup group : ((TMXMap) target).groups) {
@@ -1689,28 +1718,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             // Save Button
             JButton save = new JButton(SAVE);
             save.setMnemonic(KeyEvent.VK_S);
-            save.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (map.state != TMXMap.State.saved) {
-                        if (map.changedOnDisk) {
-                            int confirm = JOptionPane.showConfirmDialog(TMXMapEditor.this,
-                                                                        "You modified this map in an external tool. All external changes will be lost if you confirm.\n On the other hand, if you reload in ATCS, all ATCS-made changes will be lost.\n Do you want to save?",
-                                                                        "Confirm save?", JOptionPane.OK_CANCEL_OPTION);
-                            if (confirm == JOptionPane.CANCEL_OPTION) return;
-                            File backup = FileUtils.backupFile(map.tmxFile);
-                            if (backup != null) {
-                                JOptionPane.showMessageDialog(TMXMapEditor.this, "The externally-modified file was backed up as " + backup.getAbsolutePath(), "File backed up",
-                                                              JOptionPane.INFORMATION_MESSAGE);
-                            } else {
-                                JOptionPane.showMessageDialog(TMXMapEditor.this, "The externally-modified file could not be backed up.", "File backup failed", JOptionPane.ERROR_MESSAGE);
-                            }
-                        }
-                        map.save();
-                        ATContentStudio.frame.nodeChanged(map);
-                    }
-                }
-            });
+            save.addActionListener(e -> saveCurrent());
             savePane.add(save, JideBoxLayout.FIX);
             JButton delete = new JButton(DELETE);
             if (map.getDataType() == GameSource.Type.altered) {

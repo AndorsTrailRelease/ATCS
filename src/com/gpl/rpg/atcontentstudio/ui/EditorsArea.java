@@ -17,6 +17,7 @@ import com.jidesoft.swing.JideTabbedPane;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,13 +25,42 @@ import java.util.Map;
 public class EditorsArea extends JPanel {
 
     private static final long serialVersionUID = 8801849846876081538L;
+    private static final String SAVE_CURRENT_EDITOR_ACTION_KEY = "saveCurrentEditor";
+    private static final String CLOSE_CURRENT_EDITOR_ACTION_KEY = "closeCurrentEditor";
 
     private Map<Object, Editor> editors = new LinkedHashMap<Object, Editor>();
     private DraggableJideTabbedPane tabHolder;
+    private final Action saveCurrentEditorAction;
+    private final Action closeCurrentEditorAction;
+
+    private void updateCurrentEditorActions() {
+        Component selected = tabHolder == null ? null : tabHolder.getSelectedComponent();
+        saveCurrentEditorAction.setEnabled(selected instanceof Editor && ((Editor) selected).canSaveCurrent());
+    }
 
     public EditorsArea() {
         super();
         setLayout(new BorderLayout());
+        saveCurrentEditorAction = new AbstractAction("Save this element") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveCurrentEditor();
+            }
+        };
+        saveCurrentEditorAction.putValue(Action.SHORT_DESCRIPTION, "Saves the currently selected editor");
+        saveCurrentEditorAction.putValue(Action.ACCELERATOR_KEY,
+                KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        closeCurrentEditorAction = new AbstractAction("Close Tab") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                closeCurrentEditor();
+            }
+        };
+        closeCurrentEditorAction.putValue(Action.SHORT_DESCRIPTION, "Closes the currently selected editor tab");
+        closeCurrentEditorAction.putValue(Action.ACCELERATOR_KEY,
+                KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
         tabHolder = new DraggableJideTabbedPane();
         tabHolder.setTabPlacement(JideTabbedPane.TOP);
         tabHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
@@ -70,8 +100,9 @@ public class EditorsArea extends JPanel {
         });
 
         tabHolder.addChangeListener(e -> {
-            if(ATContentStudio.frame == null) return; // Not initialized yet
             Component selected = tabHolder.getSelectedComponent();
+            if(ATContentStudio.frame == null) return; // Not initialized yet
+            updateCurrentEditorActions();
             if (selected instanceof Editor) {
                 Object target = ((Editor) selected).target;
                 if (target instanceof ProjectTreeNode) {
@@ -79,7 +110,33 @@ public class EditorsArea extends JPanel {
                 }
             }
         });
+
+        KeyStroke saveShortcut = (KeyStroke) saveCurrentEditorAction.getValue(Action.ACCELERATOR_KEY);
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(saveShortcut, SAVE_CURRENT_EDITOR_ACTION_KEY);
+        getActionMap().put(SAVE_CURRENT_EDITOR_ACTION_KEY, saveCurrentEditorAction);
+
+        KeyStroke closeTabShortcut = (KeyStroke) closeCurrentEditorAction.getValue(Action.ACCELERATOR_KEY);
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(closeTabShortcut, CLOSE_CURRENT_EDITOR_ACTION_KEY);
+        getActionMap().put(CLOSE_CURRENT_EDITOR_ACTION_KEY, closeCurrentEditorAction);
+
+        updateCurrentEditorActions();
+
         add(tabHolder, BorderLayout.CENTER);
+    }
+
+    public Action getCloseCurrentEditorAction() {
+        return closeCurrentEditorAction;
+    }
+
+    public Action getSaveCurrentEditorAction() {
+        return saveCurrentEditorAction;
+    }
+
+    public void saveCurrentEditor() {
+        Component selected = tabHolder.getSelectedComponent();
+        if (selected instanceof Editor) {
+            ((Editor) selected).saveCurrent();
+        }
     }
 
     public void openEditor(Editor e) {
@@ -87,6 +144,7 @@ public class EditorsArea extends JPanel {
             editors.put(e.target, e);
             tabHolder.addTab(e.name, e.icon, e);
             tabHolder.setSelectedComponent(e);
+            updateCurrentEditorActions();
         }
     }
 
@@ -95,6 +153,14 @@ public class EditorsArea extends JPanel {
             tabHolder.remove(e);
             editors.remove(e.target);
             e.clearElementListeners();
+            updateCurrentEditorActions();
+        }
+    }
+
+    public void closeCurrentEditor() {
+        Component selected = tabHolder.getSelectedComponent();
+        if (selected instanceof Editor) {
+            closeEditor((Editor) selected);
         }
     }
 
@@ -169,6 +235,7 @@ public class EditorsArea extends JPanel {
             tabHolder.setTitleAt(index, e.name);
             tabHolder.setIconAt(index, e.icon);
         }
+        updateCurrentEditorActions();
     }
 
     public void editorTabChanged(ProjectTreeNode node) {

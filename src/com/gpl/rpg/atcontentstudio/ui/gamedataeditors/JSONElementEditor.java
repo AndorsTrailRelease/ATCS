@@ -136,21 +136,7 @@ public abstract class JSONElementEditor extends Editor {
             save.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if (node.getParent() instanceof GameDataCategory<?>) {
-                        if (node.state != GameDataElement.State.saved) {
-                            final List<SaveEvent> events = node.attemptSave();
-                            if (events == null) {
-                                ATContentStudio.frame.nodeChanged(node);
-                            } else {
-                                new Thread() {
-                                    @Override
-                                    public void run() {
-                                        new SaveItemsWizard(events, node).setVisible(true);
-                                    }
-                                }.start();
-                            }
-                        }
-                    }
+                    saveCurrent();
                 }
             });
             savePane.add(save, JideBoxLayout.FIX);

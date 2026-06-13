@@ -89,6 +89,16 @@ public class WriterModeEditor extends Editor {
         ATContentStudio.frame.editorChanged(this);
     }
 
+    // TODO: Use the common save method in EditorsArea if we can.  Not sure how this works yet.  And why doesn't it print a notification?
+    @Override
+    public void saveCurrent() {
+        if (!data.needsSaving()) return;
+
+        data.save();
+        data.childrenChanged(new ArrayList<ProjectTreeNode>());
+        ATContentStudio.frame.editorChanged(this);
+    }
+
     public JPanel createButtonPane() {
         JPanel pane = new JPanel();
         pane.setLayout(new JideBoxLayout(pane, JideBoxLayout.LINE_AXIS));
@@ -97,9 +107,7 @@ public class WriterModeEditor extends Editor {
         save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                data.save();
-                data.childrenChanged(new ArrayList<ProjectTreeNode>());
-                ATContentStudio.frame.editorChanged(WriterModeEditor.this);
+                saveCurrent();
             }
         });
         export.addActionListener(new ActionListener() {

@@ -121,8 +121,9 @@ public class StudioFrame extends JFrame {
 
         JMenu projectMenu = new JMenu("Project");
         projectMenu.setMnemonic(KeyEvent.VK_P);
-        projectMenu.add(new JMenuItem(actions.saveElement)).setMnemonic(KeyEvent.VK_S);
+        projectMenu.add(new JMenuItem(editors.getSaveCurrentEditorAction())).setMnemonic(KeyEvent.VK_S);
         projectMenu.add(new JMenuItem(actions.deleteSelected)).setMnemonic(KeyEvent.VK_R);
+        projectMenu.add(new JMenuItem(editors.getCloseCurrentEditorAction())).setMnemonic(KeyEvent.VK_W);
         projectMenu.add(new JSeparator());
         projectMenu.add(new JMenuItem(actions.createGDE)).setMnemonic(KeyEvent.VK_J);
         projectMenu.add(new JMenuItem(actions.importJSON)).setMnemonic(KeyEvent.VK_I);

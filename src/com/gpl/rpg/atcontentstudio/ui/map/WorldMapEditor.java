@@ -106,6 +106,10 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         editorPane.setText(text);
     }
 
+    private void saveCurrent(ActionEvent event) {
+        saveCurrent();
+    }
+
 
     @SuppressWarnings("unchecked")
     private JPanel buildSegmentTab(final WorldmapSegment worldmap) {
@@ -826,26 +830,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                 savePane.add(message = new JLabel(CREATED_MESSAGE), JideBoxLayout.FIX);
             }
             JButton save = new JButton(SAVE);
-            save.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (node.getParent() instanceof Worldmap) {
-                        if (node.state != GameDataElement.State.saved) {
-                            final List<SaveEvent> events = node.attemptSave();
-                            if (events == null) {
-                                ATContentStudio.frame.nodeChanged(node);
-                            } else {
-                                new Thread() {
-                                    @Override
-                                    public void run() {
-                                        new SaveItemsWizard(events, node).setVisible(true);
-                                    }
-                                }.start();
-                            }
-                        }
-                    }
-                }
-            });
+            save.addActionListener(this::saveCurrent);
             savePane.add(save, JideBoxLayout.FIX);
             JButton delete = new JButton(DELETE);
             if (node.getDataType() == GameSource.Type.altered) {

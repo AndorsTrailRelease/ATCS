@@ -178,7 +178,7 @@ public class WorkspaceActions {
                             }
                         }
                         if (!events.isEmpty()) {
-                            new SaveItemsWizard(events, null).setVisible(true);
+                            SwingUtilities.invokeLater(() -> new SaveItemsWizard(events, null).setVisible(true));
                         }
                     }
                 }.start();
@@ -204,7 +204,7 @@ public class WorkspaceActions {
                                 if (events == null || events.isEmpty()) {
                                     node.save();
                                 } else {
-                                    new SaveItemsWizard(events, null).setVisible(true);
+                                    SwingUtilities.invokeLater(() -> new SaveItemsWizard(events, null).setVisible(true));
                                 }
                                 GameDataElement newOne = node.getProject().getGameDataElement(((JSONElement) node).getClass(), node.id);
                                 if (node instanceof Quest) {

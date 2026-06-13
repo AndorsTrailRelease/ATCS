@@ -5,6 +5,7 @@ import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.ProjectElementListener;
+import com.gpl.rpg.atcontentstudio.model.SaveEvent;
 import com.gpl.rpg.atcontentstudio.model.Workspace;
 import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
@@ -73,6 +74,21 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     public GameDataElement target = null;
 
     public JLabel message = null;
+
+    public boolean canSaveCurrent() {
+        return target != null && target.writable && target.needsSaving();
+    }
+
+    public void saveCurrent() {
+        if (!canSaveCurrent()) return;
+
+        final List<SaveEvent> events = target.attemptSave();
+        if (events == null) {
+            ATContentStudio.frame.nodeChanged(target);
+        } else {
+            SwingUtilities.invokeLater(() -> new SaveItemsWizard(events, target).setVisible(true));
+        }
+    }
 
 
     public static JTextField addLabelField(JPanel pane, String label, String value) {
