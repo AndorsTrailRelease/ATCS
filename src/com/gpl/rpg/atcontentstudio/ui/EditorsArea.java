@@ -1,7 +1,12 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
 import com.gpl.rpg.atcontentstudio.ATContentStudio;
+import com.gpl.rpg.atcontentstudio.model.GameDataElement;
+import com.gpl.rpg.atcontentstudio.model.Preferences.OpenEditorState;
+import com.gpl.rpg.atcontentstudio.model.Preferences.OpenEditorState.TargetType;
+import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.ProjectTreeNode;
+import com.gpl.rpg.atcontentstudio.model.Workspace;
 import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
 import com.gpl.rpg.atcontentstudio.model.maps.WorldmapSegment;
@@ -19,7 +24,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EditorsArea extends JPanel {
@@ -103,6 +110,7 @@ public class EditorsArea extends JPanel {
             Component selected = tabHolder.getSelectedComponent();
             if(ATContentStudio.frame == null) return; // Not initialized yet
             updateCurrentEditorActions();
+            updateSavedOpenEditorStates();
             if (selected instanceof Editor) {
                 Object target = ((Editor) selected).target;
                 if (target instanceof ProjectTreeNode) {
@@ -145,6 +153,7 @@ public class EditorsArea extends JPanel {
             tabHolder.addTab(e.name, e.icon, e);
             tabHolder.setSelectedComponent(e);
             updateCurrentEditorActions();
+            updateSavedOpenEditorStates();
         }
     }
 
@@ -154,6 +163,7 @@ public class EditorsArea extends JPanel {
             editors.remove(e.target);
             e.clearElementListeners();
             updateCurrentEditorActions();
+            updateSavedOpenEditorStates();
         }
     }
 
@@ -162,6 +172,218 @@ public class EditorsArea extends JPanel {
         if (selected instanceof Editor) {
             closeEditor((Editor) selected);
         }
+    }
+
+    public ProjectTreeNode getSelectedEditorTarget() {
+        Component selected = tabHolder.getSelectedComponent();
+        if (!(selected instanceof Editor)) {
+            return null;
+        }
+
+        GameDataElement target = ((Editor) selected).target;
+        if (target instanceof ProjectTreeNode) {
+            return (ProjectTreeNode) target;
+        }
+        return null;
+    }
+
+    public List<OpenEditorState> captureOpenEditorStates() {
+        List<OpenEditorState> openEditorStates = new ArrayList<OpenEditorState>();
+        Component selectedComponent = tabHolder.getSelectedComponent();
+        for (int i = 0; i < tabHolder.getTabCount(); i++) {
+            Component component = tabHolder.getComponentAt(i);
+            if (!(component instanceof Editor)) {
+                continue;
+            }
+
+            OpenEditorState openEditorState = createOpenEditorState((Editor) component, component == selectedComponent);
+            if (openEditorState != null) {
+                openEditorStates.add(openEditorState);
+            }
+        }
+        return openEditorStates;
+    }
+
+    public boolean restoreOpenEditorStates(List<OpenEditorState> openEditorStates) {
+        if (openEditorStates == null || openEditorStates.isEmpty()) {
+            return false;
+        }
+
+        Editor selectedEditor = null;
+        int restoredCount = 0;
+        for (OpenEditorState openEditorState : openEditorStates) {
+            ProjectTreeNode target = resolveOpenEditorState(openEditorState);
+            if (target == null) {
+                continue;
+            }
+
+            openEditorForTarget(target);
+            restoredCount++;
+            if (openEditorState.selected) {
+                Editor restoredEditor = editors.get(target);
+                if (restoredEditor != null) {
+                    selectedEditor = restoredEditor;
+                }
+            }
+        }
+
+        if (selectedEditor != null) {
+            tabHolder.setSelectedComponent(selectedEditor);
+        }
+        return restoredCount > 0;
+    }
+
+    private OpenEditorState createOpenEditorState(Editor editor, boolean selected) {
+        if (editor == null || editor.target == null) {
+            return null;
+        }
+
+        return createOpenEditorState(editor.target, selected);
+    }
+
+    static OpenEditorState createOpenEditorState(GameDataElement target, boolean selected) {
+        if (target == null) {
+            return null;
+        }
+
+        Project project = target.getProject();
+        if (project == null || project.name == null || target.id == null) {
+            return null;
+        }
+
+        TargetType targetType = getTargetType(target.getClass());
+        if (targetType == null) {
+            return null;
+        }
+
+        return new OpenEditorState(project.name, targetType, target.id, selected);
+    }
+
+    private TargetType getTargetType(ProjectTreeNode target) {
+        return target == null ? null : getTargetType(target.getClass());
+    }
+
+    static TargetType getTargetType(Class<?> targetClass) {
+        if (targetClass == null) {
+            return null;
+        }
+        if (ActorCondition.class.isAssignableFrom(targetClass)) {
+            return TargetType.actorCondition;
+        }
+        if (Dialogue.class.isAssignableFrom(targetClass)) {
+            return TargetType.dialogue;
+        }
+        if (Droplist.class.isAssignableFrom(targetClass)) {
+            return TargetType.droplist;
+        }
+        if (ItemCategory.class.isAssignableFrom(targetClass)) {
+            return TargetType.itemCategory;
+        }
+        if (Item.class.isAssignableFrom(targetClass)) {
+            return TargetType.item;
+        }
+        if (NPC.class.isAssignableFrom(targetClass)) {
+            return TargetType.npc;
+        }
+        if (Quest.class.isAssignableFrom(targetClass)) {
+            return TargetType.quest;
+        }
+        if (TMXMap.class.isAssignableFrom(targetClass)) {
+            return TargetType.map;
+        }
+        if (Spritesheet.class.isAssignableFrom(targetClass)) {
+            return TargetType.spritesheet;
+        }
+        if (WorldmapSegment.class.isAssignableFrom(targetClass)) {
+            return TargetType.worldmapSegment;
+        }
+        if (WriterModeData.class.isAssignableFrom(targetClass)) {
+            return TargetType.writerSketch;
+        }
+        return null;
+    }
+
+    private ProjectTreeNode resolveOpenEditorState(OpenEditorState openEditorState) {
+        if (openEditorState == null || openEditorState.projectName == null || openEditorState.targetType == null || openEditorState.targetId == null) {
+            return null;
+        }
+
+        Project project = findOpenProject(openEditorState.projectName);
+        if (project == null) {
+            return null;
+        }
+
+        return resolveOpenEditorState(project, openEditorState);
+    }
+
+    static ProjectTreeNode resolveOpenEditorState(Project project, OpenEditorState openEditorState) {
+        if (project == null || openEditorState == null || openEditorState.targetType == null || openEditorState.targetId == null) {
+            return null;
+        }
+
+        switch (openEditorState.targetType) {
+            case actorCondition:
+                return project.getActorCondition(openEditorState.targetId);
+            case dialogue:
+                return project.getDialogue(openEditorState.targetId);
+            case droplist:
+                return project.getDroplist(openEditorState.targetId);
+            case itemCategory:
+                return project.getItemCategory(openEditorState.targetId);
+            case item:
+                return project.getItem(openEditorState.targetId);
+            case npc:
+                return project.getNPC(openEditorState.targetId);
+            case quest:
+                return project.getQuest(openEditorState.targetId);
+            case map:
+                return project.getMap(openEditorState.targetId);
+            case spritesheet:
+                return project.getSpritesheet(openEditorState.targetId);
+            case worldmapSegment:
+                return project.getWorldmapSegment(openEditorState.targetId);
+            case writerSketch:
+                return project.getWriterSketch(openEditorState.targetId);
+            default:
+                return null;
+        }
+    }
+
+    private Project findOpenProject(String projectName) {
+        if (Workspace.activeWorkspace == null || projectName == null) {
+            return null;
+        }
+
+        for (ProjectTreeNode node : Workspace.activeWorkspace.projects) {
+            if (node instanceof Project) {
+                Project project = (Project) node;
+                if (projectName.equals(project.name)) {
+                    return project;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void openEditorForTarget(ProjectTreeNode target) {
+        if (target instanceof JSONElement) {
+            openEditor((JSONElement) target);
+        } else if (target instanceof Spritesheet) {
+            openEditor((Spritesheet) target);
+        } else if (target instanceof TMXMap) {
+            openEditor((TMXMap) target);
+        } else if (target instanceof WorldmapSegment) {
+            openEditor((WorldmapSegment) target);
+        } else if (target instanceof WriterModeData) {
+            openEditor((WriterModeData) target);
+        }
+    }
+
+    private void updateSavedOpenEditorStates() {
+        if (Workspace.activeWorkspace == null || Workspace.activeWorkspace.preferences == null) {
+            return;
+        }
+        Workspace.activeWorkspace.preferences.openEditors = captureOpenEditorStates();
     }
 
     public void openEditor(JSONElement node) {

@@ -365,6 +365,7 @@ public class ATContentStudio {
             frame = new StudioFrame(buildFrameTitle(normalizedWorkspaceRoot));
             frame.setDefaultCloseOperation(StudioFrame.DO_NOTHING_ON_CLOSE);
             frame.setVisible(true);
+            SwingUtilities.invokeLater(() -> frame.restoreWorkspaceUiState());
         });
     }
 

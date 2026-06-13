@@ -33,6 +33,7 @@ public class StudioFrame extends JFrame {
     final EditorsArea editors;
 
     final WorkspaceActions actions = new WorkspaceActions();
+    private boolean workspaceUiStateRestored = false;
 
     public StudioFrame(String name) {
         super(name);
@@ -115,8 +116,6 @@ public class StudioFrame extends JFrame {
             }
         });
 
-        showAbout();
-
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -125,6 +124,7 @@ public class StudioFrame extends JFrame {
 
             @Override
             public void windowClosing(WindowEvent e) {
+                Workspace.activeWorkspace.preferences.openEditors = editors.captureOpenEditorStates();
                 Workspace.saveActive();
                 actions.exitATCS.actionPerformed(null);
             }
@@ -133,6 +133,23 @@ public class StudioFrame extends JFrame {
 
     private boolean isInNormalWindowState() {
         return (getExtendedState() & Frame.MAXIMIZED_BOTH) == 0;
+    }
+
+    public void restoreWorkspaceUiState() {
+        if (workspaceUiStateRestored) {
+            return;
+        }
+        workspaceUiStateRestored = true;
+
+        if (!editors.restoreOpenEditorStates(Workspace.activeWorkspace.preferences.openEditors)) {
+            showAbout();
+            return;
+        }
+
+        ProjectTreeNode selectedEditorTarget = editors.getSelectedEditorTarget();
+        if (selectedEditorTarget != null) {
+            projectTree.setSelectedNode(selectedEditorTarget);
+        }
     }
 
     private void restoreNormalWindowState() {

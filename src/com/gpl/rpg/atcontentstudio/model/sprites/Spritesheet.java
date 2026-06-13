@@ -26,7 +26,6 @@ public class Spritesheet extends GameDataElement {
     public File spritesheetFile;
     public int spriteWidth = 32;
     public int spriteHeight = 32;
-    public String id;
     public Category category = Category.none;
     public boolean animated = false;
 
