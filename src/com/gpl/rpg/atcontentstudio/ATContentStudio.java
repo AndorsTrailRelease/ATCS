@@ -47,8 +47,10 @@ public class ATContentStudio {
     private static final String SHORT_QUIET_ARGUMENT = "-q";
     private static final String QUIET_ARGUMENT = "--quiet";
     private static final String SKIP_LOCK_CHECK_ARGUMENT = "--skip-lock-check";
+    private static final String IGNORE_EXISTING_CONFIG_ARGUMENT = "--ignore-config";
     private static final String HELP_ARGUMENT = "--help";
     private static final String SHORT_HELP_ARGUMENT = "-h";
+    private static final String IGNORE_EXISTING_CONFIG_PROPERTY = "atcs.ignoreConfig";
 
     public static final String APP_NAME = "Andor's Trail Content Studio";
     public static final String APP_VERSION = readVersionFromFile();
@@ -83,6 +85,10 @@ public class ATContentStudio {
             printCommandLineUsage(System.err);
             System.exit(2);
             return;
+        }
+
+        if (startupArguments.ignoreExistingConfig) {
+            System.setProperty(IGNORE_EXISTING_CONFIG_PROPERTY, "true");
         }
 
         startupExportTarget = startupArguments.getDefaultExportTarget();
@@ -311,9 +317,7 @@ public class ATContentStudio {
     private static void showWorkspaceSelector() {
         final WorkspaceSelector wsSelect = new WorkspaceSelector();
         wsSelect.pack();
-        Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension wdim = wsSelect.getSize();
-        wsSelect.setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
+        wsSelect.setLocationRelativeTo(null);
         wsSelect.addWindowListener(new WindowAdapter() {
             @Override
             public synchronized void windowClosed(WindowEvent e) {
@@ -459,9 +463,9 @@ public class ATContentStudio {
             sortOptions = false,
             customSynopsis = {
                     "  GUI mode:",
-                    "    ATContentStudio [--help] [--workspace <workspace>] [--export-target <path>] [--skip-lock-check]",
+                    "    ATContentStudio [--help] [--workspace <workspace>] [--export-target <path>] [--skip-lock-check] [--ignore-config]",
                     "  Headless export mode:",
-                    "    ATContentStudio [--help] --workspace <workspace> --project <project-name> --export-target <target> [-q|--quiet] [--skip-lock-check]"
+                    "    ATContentStudio [--help] --workspace <workspace> --project <project-name> --export-target <target> [-q|--quiet] [--skip-lock-check] [--ignore-config]"
             },
             description = "Launches Andor's Trail Content Studio in GUI mode or headless export mode.",
             footer = {
@@ -469,6 +473,7 @@ public class ATContentStudio {
                     "  - If <target> ends with .zip, ATCS exports a zip package.",
                     "  - Otherwise, <target> must be an existing game-source directory.",
                     "  - --skip-lock-check bypasses single-instance workspace locking.",
+                    "  - --ignore-config ignores saved global config and behaves like a fresh install for this run.",
             }
     )
     private static final class StartupArguments {
@@ -486,6 +491,9 @@ public class ATContentStudio {
 
         @Option(names = SKIP_LOCK_CHECK_ARGUMENT, description = "Bypasses single-instance workspace locking.")
         private boolean skipLockCheck;
+
+        @Option(names = IGNORE_EXISTING_CONFIG_ARGUMENT, description = "Ignores saved global config and behaves like a fresh install for this run.")
+        private boolean ignoreExistingConfig;
 
         @Option(names = {SHORT_HELP_ARGUMENT, HELP_ARGUMENT}, usageHelp = true, description = "Prints this message and exits.")
         private boolean help;

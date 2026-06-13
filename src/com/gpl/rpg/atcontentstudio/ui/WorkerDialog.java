@@ -13,16 +13,20 @@ public class WorkerDialog extends JDialog {
     private WorkerDialog(String message, Frame parent) {
         super(parent, "Loading...");
         this.setIconImage(DefaultIcons.getMainIconImage());
-        this.getContentPane().setLayout(new JideBoxLayout(this.getContentPane(), JideBoxLayout.PAGE_AXIS, 6));
-        this.getContentPane().add(new JLabel("<html><font size=" + (int) (5 * ATContentStudio.SCALING) + ">Please wait.<br/>" + message + "</font></html>"), JideBoxLayout.VARY);
+        this.getContentPane().setLayout(new BorderLayout());
+
+        JPanel messagePanel = new JPanel();
+        messagePanel.setLayout(new JideBoxLayout(messagePanel, JideBoxLayout.PAGE_AXIS, 6));
+        messagePanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        messagePanel.add(new JLabel("<html><font size=" + (int) (5 * ATContentStudio.SCALING) + ">Please wait.<br/>" + message + "</font></html>"), JideBoxLayout.VARY);
+        this.getContentPane().add(messagePanel, BorderLayout.CENTER);
+
         JMovingIdler idler = new JMovingIdler();
         idler.setBackground(Color.WHITE);
         idler.setForeground(Color.GREEN);
+        idler.setPreferredSize(new Dimension(0, 10));
         idler.start();
-        this.getContentPane().add(idler, JideBoxLayout.FIX);
-        this.pack();
-        Dimension wdim = this.getSize();
-        idler.setPreferredSize(new Dimension(wdim.width, 10));
+        this.getContentPane().add(idler, BorderLayout.SOUTH);
         this.pack();
         this.setLocationRelativeTo(parent);
         this.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);

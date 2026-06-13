@@ -50,13 +50,13 @@ public class StudioFrame extends JFrame {
         buildMenu();
 
         JScrollPane treeScroller = new JScrollPane(projectTree);
-        treeScroller.getVerticalScrollBar().setUnitIncrement(16);
+        treeScroller.getVerticalScrollBar().setUnitIncrement(12);
         leftRight.setLeftComponent(treeScroller);
         leftRight.setRightComponent(editors);
         leftRight.setName("StudioFrame.leftRight");
         topDown.setTopComponent(leftRight);
         JScrollPane notifScroller = new JScrollPane(notifs);
-        notifScroller.getVerticalScrollBar().setUnitIncrement(16);
+        notifScroller.getVerticalScrollBar().setUnitIncrement(12);
         topDown.setBottomComponent(notifScroller);
         topDown.setName("StudioFrame.topDown");
 
