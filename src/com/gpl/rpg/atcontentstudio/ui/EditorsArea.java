@@ -23,6 +23,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -113,6 +115,31 @@ public class EditorsArea extends JPanel {
             updateSavedOpenEditorStates();
             if (selected instanceof Editor) {
                 Object target = ((Editor) selected).target;
+                if (target instanceof ProjectTreeNode) {
+                    if(!ATContentStudio.frame.selectInTreeIfBranchExpanded((ProjectTreeNode) target)) {
+                        ATContentStudio.frame.selectInTree(null);
+                    }
+                }
+            }
+        });
+        tabHolder.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() != 2 || ATContentStudio.frame == null) {
+                    return;
+                }
+
+                int tabIndex = tabHolder.getUI().tabForCoordinate(tabHolder, e.getX(), e.getY());
+                if (tabIndex < 0) {
+                    return;
+                }
+
+                Component component = tabHolder.getComponentAt(tabIndex);
+                if (!(component instanceof Editor)) {
+                    return;
+                }
+
+                GameDataElement target = ((Editor) component).target;
                 if (target instanceof ProjectTreeNode) {
                     ATContentStudio.frame.selectInTree((ProjectTreeNode) target);
                 }

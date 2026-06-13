@@ -126,5 +126,40 @@ public class PreferencesTest {
             index++;
         }
     }
+
+    @Test
+    public void preferencesRoundTripPreservesTreeNodeState() {
+        Preferences preferences = new Preferences();
+        preferences.expandedTreeNodes.add(new Preferences.TreeNodeState(java.util.Arrays.asList(
+                "project:demo-project",
+                "gameSource:source",
+                "slot:spritesheets"
+        )));
+        preferences.expandedTreeNodes.add(new Preferences.TreeNodeState(java.util.Arrays.asList(
+                "project:demo-project",
+                "gameSource:created",
+                "slot:writerMode"
+        )));
+        preferences.selectedTreeNode = new Preferences.TreeNodeState(java.util.Arrays.asList(
+                "project:demo-project",
+                "gameSource:source",
+                "slot:spritesheets",
+                "element:com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet:monsters"
+        ));
+
+        Preferences restored = new Preferences();
+        restored.fromMap(preferences.toMap());
+
+        assertEquals(2, restored.expandedTreeNodes.size());
+        assertEquals(java.util.Arrays.asList("project:demo-project", "gameSource:source", "slot:spritesheets"), restored.expandedTreeNodes.get(0).path);
+        assertEquals(java.util.Arrays.asList("project:demo-project", "gameSource:created", "slot:writerMode"), restored.expandedTreeNodes.get(1).path);
+        assertNotNull(restored.selectedTreeNode);
+        assertEquals(java.util.Arrays.asList(
+                "project:demo-project",
+                "gameSource:source",
+                "slot:spritesheets",
+                "element:com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet:monsters"
+        ), restored.selectedTreeNode.path);
+    }
 }
 

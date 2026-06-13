@@ -79,10 +79,46 @@ public class Preferences implements Serializable, JsonSerializable {
         }
     }
 
+    public static class TreeNodeState implements Serializable, JsonSerializable {
+
+        private static final long serialVersionUID = -4131779495438218618L;
+
+        public java.util.List<String> path = new java.util.ArrayList<>();
+
+        public TreeNodeState() {
+        }
+
+        public TreeNodeState(java.util.List<String> path) {
+            if (path != null) {
+                this.path = new java.util.ArrayList<>(path);
+            }
+        }
+
+        @Override
+        public Map toMap() {
+            Map map = new HashMap();
+            map.put("path", new java.util.ArrayList<>(path));
+            return map;
+        }
+
+        @Override
+        public void fromMap(Map map) {
+            path = new java.util.ArrayList<>();
+            if (map == null) return;
+
+            java.util.List<String> loadedPath = (java.util.List<String>) map.get("path");
+            if (loadedPath != null) {
+                path.addAll(loadedPath);
+            }
+        }
+    }
+
     public Dimension windowSize = null;
     public Point windowLocation = null;
     public Map<String, Integer> splittersPositions = new HashMap<>();
     public java.util.List<OpenEditorState> openEditors = new java.util.ArrayList<>();
+    public java.util.List<TreeNodeState> expandedTreeNodes = new java.util.ArrayList<>();
+    public TreeNodeState selectedTreeNode = null;
 
     public Preferences() {
 
@@ -117,6 +153,22 @@ public class Preferences implements Serializable, JsonSerializable {
                     }
                     map.put("openEditors", openEditorsMaps);
                 }
+
+        if (!expandedTreeNodes.isEmpty()) {
+            java.util.List<Map> expandedTreeNodeMaps = new java.util.ArrayList<>(expandedTreeNodes.size());
+            for (TreeNodeState treeNodeState : expandedTreeNodes) {
+                if (treeNodeState != null && treeNodeState.path != null && !treeNodeState.path.isEmpty()) {
+                    expandedTreeNodeMaps.add(treeNodeState.toMap());
+                }
+            }
+            if (!expandedTreeNodeMaps.isEmpty()) {
+                map.put("expandedTreeNodes", expandedTreeNodeMaps);
+            }
+        }
+
+        if (selectedTreeNode != null && selectedTreeNode.path != null && !selectedTreeNode.path.isEmpty()) {
+            map.put("selectedTreeNode", selectedTreeNode.toMap());
+        }
 
         return map;
     }
@@ -154,6 +206,28 @@ public class Preferences implements Serializable, JsonSerializable {
                 if (openEditorState.projectName != null && openEditorState.targetType != null && openEditorState.targetId != null) {
                     openEditors.add(openEditorState);
                 }
+            }
+        }
+
+        expandedTreeNodes = new java.util.ArrayList<>();
+        java.util.List<Map> expandedTreeNodeList = (java.util.List<Map>) map.get("expandedTreeNodes");
+        if (expandedTreeNodeList != null) {
+            for (Map treeNodeMap : expandedTreeNodeList) {
+                TreeNodeState treeNodeState = new TreeNodeState();
+                treeNodeState.fromMap(treeNodeMap);
+                if (treeNodeState.path != null && !treeNodeState.path.isEmpty()) {
+                    expandedTreeNodes.add(treeNodeState);
+                }
+            }
+        }
+
+        selectedTreeNode = null;
+        Map selectedTreeNodeMap = (Map) map.get("selectedTreeNode");
+        if (selectedTreeNodeMap != null) {
+            TreeNodeState treeNodeState = new TreeNodeState();
+            treeNodeState.fromMap(selectedTreeNodeMap);
+            if (treeNodeState.path != null && !treeNodeState.path.isEmpty()) {
+                selectedTreeNode = treeNodeState;
             }
         }
 

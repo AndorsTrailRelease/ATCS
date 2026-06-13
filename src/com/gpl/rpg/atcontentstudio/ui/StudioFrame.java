@@ -125,6 +125,8 @@ public class StudioFrame extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 Workspace.activeWorkspace.preferences.openEditors = editors.captureOpenEditorStates();
+                Workspace.activeWorkspace.preferences.expandedTreeNodes = projectTree.captureExpandedTreeNodes();
+                Workspace.activeWorkspace.preferences.selectedTreeNode = projectTree.captureSelectedTreeNode();
                 Workspace.saveActive();
                 actions.exitATCS.actionPerformed(null);
             }
@@ -141,13 +143,16 @@ public class StudioFrame extends JFrame {
         }
         workspaceUiStateRestored = true;
 
-        if (!editors.restoreOpenEditorStates(Workspace.activeWorkspace.preferences.openEditors)) {
+        boolean restoredEditors = editors.restoreOpenEditorStates(Workspace.activeWorkspace.preferences.openEditors);
+        if (!restoredEditors) {
             showAbout();
-            return;
         }
 
+        projectTree.restoreTreeState(Workspace.activeWorkspace.preferences.expandedTreeNodes,
+                                     Workspace.activeWorkspace.preferences.selectedTreeNode);
+
         ProjectTreeNode selectedEditorTarget = editors.getSelectedEditorTarget();
-        if (selectedEditorTarget != null) {
+        if (!projectTree.hasSelection() && selectedEditorTarget != null) {
             projectTree.setSelectedNode(selectedEditorTarget);
         }
     }
@@ -375,7 +380,15 @@ public class StudioFrame extends JFrame {
     }
 
     public void selectInTree(ProjectTreeNode node) {
+        if (node == null) {
+            projectTree.clearSelection();
+            return;
+        }
         projectTree.setSelectedNode(node);
+    }
+
+    public boolean selectInTreeIfBranchExpanded(ProjectTreeNode node) {
+        return projectTree.setSelectedNodeIfBranchExpanded(node);
     }
 
     public void editorChanged(Editor e) {
