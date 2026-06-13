@@ -1719,6 +1719,8 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             delete.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    if (!ConfirmationDialogs.confirmDelete(TMXMapEditor.this, map)) return;
+
                     ATContentStudio.frame.closeEditor(map);
                     map.childrenRemoved(new ArrayList<ProjectTreeNode>());
                     map.delete();

@@ -64,13 +64,11 @@ public class WorkspaceActions {
     public ATCSAction deleteProject = new ATCSAction("Delete Project", "Deletes the project, and all created/altered data, from disk") {
         public void actionPerformed(ActionEvent e) {
             if (selectedNode instanceof Project) {
-                if (JOptionPane.showConfirmDialog(ATContentStudio.frame, "Are you sure you wish to delete this project ?\nAll files created for it will be deleted too...", "Delete this project ?",
-                                                  JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                if (ConfirmationDialogs.confirmProjectDelete()) {
                     Workspace.deleteProject((Project) selectedNode);
                 }
             } else if (selectedNode instanceof ClosedProject) {
-                if (JOptionPane.showConfirmDialog(ATContentStudio.frame, "Are you sure you wish to delete this project ?\nAll files created for it will be deleted too...", "Delete this project ?",
-                                                  JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                if (ConfirmationDialogs.confirmProjectDelete()) {
                     Workspace.deleteProject((ClosedProject) selectedNode);
                 }
             }
@@ -114,17 +112,7 @@ public class WorkspaceActions {
             if (multiMode) {
                 if (elementsToDelete == null) return;
 
-                int confirm = JOptionPane.showOptionDialog(
-                        ATContentStudio.frame,
-                        "Are you sure you want to delete " + elementsToDelete.size() + " selected elements?\n\nAny changes or new content in these elements will be lost.",
-                        "Confirm delete",
-                        JOptionPane.DEFAULT_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
-                        null,
-                        new String[]{"Cancel", "Delete"},
-                        "Cancel"
-                );
-                if (confirm != 1) return;
+                if (!ConfirmationDialogs.confirmDelete(elementsToDelete.size())) return;
 
                 //ATContentStudio.frame.projectTree.clearSelection();
 
@@ -198,32 +186,7 @@ public class WorkspaceActions {
                 if (selectedNode == null || !(selectedNode instanceof GameDataElement)) return;
                 final GameDataElement node = ((GameDataElement) selectedNode);
 
-                String message;
-                String title;
-                String[] options;
-                if(node.getDataType() == GameSource.Type.altered) {
-                    message = "Are you sure you want to revert '" + node.getDesc() + "' to the original version?\n\nAny changes you have made will be lost.";
-                    title = "Confirm revert";
-                    options = new String[]{"Cancel", "Revert"};
-
-
-                } else {
-                    message = "Are you sure you want to delete '" + node.getDesc() + "'?";
-                    title = "Confirm delete";
-                    options = new String[]{"Cancel", "Delete"};
-                }
-
-                int confirm = JOptionPane.showOptionDialog(
-                        ATContentStudio.frame,
-                        message,
-                        title,
-                        JOptionPane.DEFAULT_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
-                        null,
-                        options,
-                        "Cancel"
-                );
-                if (confirm != 1) return;
+                if (!ConfirmationDialogs.confirmDelete(node)) return;
 
                 // We've got permission, and we've got a copy in node, so clear the selection
                 ATContentStudio.frame.projectTree.clearSelection();

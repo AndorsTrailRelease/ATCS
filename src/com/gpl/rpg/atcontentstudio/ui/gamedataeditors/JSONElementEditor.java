@@ -161,6 +161,8 @@ public abstract class JSONElementEditor extends Editor {
             delete.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    if (!ConfirmationDialogs.confirmDelete(JSONElementEditor.this, node)) return;
+
                     ATContentStudio.frame.closeEditor(node);
                     node.childrenRemoved(new ArrayList<ProjectTreeNode>());
                     if (node.getParent() instanceof GameDataCategory<?>) {
