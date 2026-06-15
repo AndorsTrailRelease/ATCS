@@ -12,11 +12,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WorkspaceSelector extends JFrame {
 
+    @Serial
     private static final long serialVersionUID = 7518745499760748574L;
 
     public String selected = null;

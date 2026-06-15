@@ -104,12 +104,7 @@ public class WriterModeEditor extends Editor {
         pane.setLayout(new JideBoxLayout(pane, JideBoxLayout.LINE_AXIS));
         JButton save = new JButton("Save sketch");
         JButton export = new JButton("Export sketch to game data");
-        save.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveCurrent();
-            }
-        });
+        save.addActionListener(e -> saveCurrent());
         export.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

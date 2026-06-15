@@ -1049,18 +1049,13 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     public void exportProjectAsZipPackage(final File target) {
-        WorkerDialog.showTaskMessage("Exporting project " + name + "...", ATContentStudio.frame, true, new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    exportProjectAsZipPackageSync(target);
-                } catch (IOException e) {
-                    Notification.addError("Error exporting project \"" + name + "\" as " + target.getAbsolutePath() + " : " + e.getMessage());
-                    e.printStackTrace();
-                }
+        WorkerDialog.showTaskMessage("Exporting project %s...".formatted(name), ATContentStudio.frame, true, () -> {
+            try {
+                exportProjectAsZipPackageSync(target);
+            } catch (IOException e) {
+                Notification.addError("Error exporting project \"%s\" as %s : %s".formatted(name, target.getAbsolutePath(), e.getMessage()));
+                e.printStackTrace();
             }
-
-
         });
     }
 
@@ -1081,7 +1076,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     public void exportProjectAsZipPackageSync(File target) throws IOException {
-        Notification.addInfo("Exporting project \"" + name + "\" as " + target.getAbsolutePath());
+        Notification.addInfo("Exporting project \"%s\" as %s".formatted(name, target.getAbsolutePath()));
 
         File tmpDir = exportProjectToTmpDir();
         try {
@@ -1090,11 +1085,11 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             FileUtils.deleteDir(tmpDir);
         }
 
-        Notification.addSuccess("Project \"" + name + "\" exported as " + target.getAbsolutePath());
+        Notification.addSuccess("Project \"%s\" exported as %s".formatted(name, target.getAbsolutePath()));
     }
 
     public void exportProjectOverGameSourceSync(File target) throws IOException {
-        Notification.addInfo("Exporting project \"" + name + "\" into " + target.getAbsolutePath());
+        Notification.addInfo("Exporting project \"%s\"s into %s".formatted(name, target.getAbsolutePath()));
 
         File tmpDir = exportProjectToTmpDir();
         try {
@@ -1103,7 +1098,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             FileUtils.deleteDir(tmpDir);
         }
 
-        Notification.addSuccess("Project \"" + name + "\" exported into " + target.getAbsolutePath());
+        Notification.addSuccess("Project \"%s\" exported into %s".formatted(name, target.getAbsolutePath()));
     }
 
 

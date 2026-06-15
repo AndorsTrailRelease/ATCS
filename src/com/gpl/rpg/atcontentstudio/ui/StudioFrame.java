@@ -82,11 +82,13 @@ public class StudioFrame extends JFrame {
 
         pack();
         restoreNormalWindowState();
+
         if (Workspace.activeWorkspace.preferences.windowSize != null) {
             setSize(Workspace.activeWorkspace.preferences.windowSize);
         } else {
             setSize(800, 600);
         }
+
         if (isSavedLocationUsable(Workspace.activeWorkspace.preferences.windowLocation)) {
             setLocation(Workspace.activeWorkspace.preferences.windowLocation);
         } else {
@@ -98,17 +100,20 @@ public class StudioFrame extends JFrame {
         } else {
             topDown.setDividerLocation(0.2);
         }
+
         topDown.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 Workspace.activeWorkspace.preferences.splittersPositions.put(topDown.getName(), topDown.getDividerLocation());
             }
         });
+
         if (Workspace.activeWorkspace.preferences.splittersPositions.get(leftRight.getName()) != null) {
             leftRight.setDividerLocation(Workspace.activeWorkspace.preferences.splittersPositions.get(leftRight.getName()));
         } else {
             leftRight.setDividerLocation(0.3);
         }
+
         leftRight.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -141,10 +146,17 @@ public class StudioFrame extends JFrame {
         Workspace.saveActive();
     }
 
+    /**
+     * Checks if the window is NOT maximized.
+     * @return true if the window is not maximized, false if it is.
+     */
     private boolean isInNormalWindowState() {
         return (getExtendedState() & Frame.MAXIMIZED_BOTH) == 0;
     }
 
+    /**
+     * Restores the workspace state (opened editors, expanded tree nodes, selected tree node) to the last saved state.
+     */
     public void restoreWorkspaceUiState() {
         if (workspaceUiStateRestored) {
             return;
@@ -165,10 +177,16 @@ public class StudioFrame extends JFrame {
         }
     }
 
+    /**
+     * Restores the window state to normal (not maximized, not minimized) to ensure that the saved size and location are applied correctly.
+     */
     private void restoreNormalWindowState() {
         setExtendedState(getExtendedState() & ~Frame.MAXIMIZED_BOTH & ~Frame.ICONIFIED);
     }
 
+    /**
+     * Checks if the saved location is usable, i.e., does the current display cover the saved coordinates.
+     */
     private boolean isSavedLocationUsable(Point savedLocation) {
         if (savedLocation == null) {
             return false;
@@ -185,6 +203,9 @@ public class StudioFrame extends JFrame {
         return false;
     }
 
+    /**
+     * Builds the top menu bar.
+     */
     private void buildMenu() {
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -205,9 +226,9 @@ public class StudioFrame extends JFrame {
 
         JMenu projectMenu = new JMenu("Project");
         projectMenu.setMnemonic(KeyEvent.VK_P);
-        projectMenu.add(new JMenuItem(editors.getSaveCurrentEditorAction())).setMnemonic(KeyEvent.VK_S);
+        projectMenu.add(new JMenuItem(editors.saveCurrentEditorAction)).setMnemonic(KeyEvent.VK_S);
         projectMenu.add(new JMenuItem(actions.deleteSelected)).setMnemonic(KeyEvent.VK_R);
-        projectMenu.add(new JMenuItem(editors.getCloseCurrentEditorAction())).setMnemonic(KeyEvent.VK_W);
+        projectMenu.add(new JMenuItem(editors.closeCurrentEditorAction)).setMnemonic(KeyEvent.VK_W);
         projectMenu.add(new JSeparator());
         projectMenu.add(new JMenuItem(actions.createGDE)).setMnemonic(KeyEvent.VK_J);
         projectMenu.add(new JMenuItem(actions.importJSON)).setMnemonic(KeyEvent.VK_I);

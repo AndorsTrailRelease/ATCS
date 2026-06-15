@@ -39,8 +39,8 @@ public class EditorsArea extends JPanel {
 
     private Map<Object, Editor> editors = new LinkedHashMap<Object, Editor>();
     private DraggableJideTabbedPane tabHolder;
-    private final Action saveCurrentEditorAction;
-    private final Action closeCurrentEditorAction;
+    final Action saveCurrentEditorAction;
+    final Action closeCurrentEditorAction;
 
     private void updateCurrentEditorActions() {
         Component selected = tabHolder == null ? null : tabHolder.getSelectedComponent();
@@ -159,13 +159,6 @@ public class EditorsArea extends JPanel {
         add(tabHolder, BorderLayout.CENTER);
     }
 
-    public Action getCloseCurrentEditorAction() {
-        return closeCurrentEditorAction;
-    }
-
-    public Action getSaveCurrentEditorAction() {
-        return saveCurrentEditorAction;
-    }
 
     public void saveCurrentEditor() {
         Component selected = tabHolder.getSelectedComponent();

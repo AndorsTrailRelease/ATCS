@@ -3,16 +3,21 @@ package com.gpl.rpg.atcontentstudio.model;
 import com.gpl.rpg.atcontentstudio.io.JsonSerializable;
 
 import java.awt.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Preferences implements Serializable, JsonSerializable {
 
-    private static final long serialVersionUID = 2455802658424031276L;
+    protected static final long serialVersionUID = 2455802658424031276L;
 
+    /**
+     * Represents the state of an open editor.  Used to save and restore editors when the application is restarted.
+     */
     public static class OpenEditorState implements Serializable, JsonSerializable {
 
+        @Serial
         private static final long serialVersionUID = -3848639004723719604L;
 
         public enum TargetType {
@@ -135,24 +140,24 @@ public class Preferences implements Serializable, JsonSerializable {
             map.put("windowSize", windowSizeMap);
         }
 
-            if(windowLocation != null){
-              Map windowLocationMap = new HashMap<>();
-              windowLocationMap.put("x", windowLocation.x);
-              windowLocationMap.put("y", windowLocation.y);
-              map.put("windowLocation", windowLocationMap);
-            }
+        if(windowLocation != null){
+          Map windowLocationMap = new HashMap<>();
+          windowLocationMap.put("x", windowLocation.x);
+          windowLocationMap.put("y", windowLocation.y);
+          map.put("windowLocation", windowLocationMap);
+        }
 
         map.put("splittersPositions", splittersPositions);
 
-                if (!openEditors.isEmpty()) {
-                    java.util.List<Map> openEditorsMaps = new java.util.ArrayList<>(openEditors.size());
-                    for (OpenEditorState openEditorState : openEditors) {
-                        if (openEditorState != null) {
-                            openEditorsMaps.add(openEditorState.toMap());
-                        }
-                    }
-                    map.put("openEditors", openEditorsMaps);
+        if (!openEditors.isEmpty()) {
+            java.util.List<Map> openEditorsMaps = new java.util.ArrayList<>(openEditors.size());
+            for (OpenEditorState openEditorState : openEditors) {
+                if (openEditorState != null) {
+                    openEditorsMaps.add(openEditorState.toMap());
                 }
+            }
+            map.put("openEditors", openEditorsMaps);
+        }
 
         if (!expandedTreeNodes.isEmpty()) {
             java.util.List<Map> expandedTreeNodeMaps = new java.util.ArrayList<>(expandedTreeNodes.size());
