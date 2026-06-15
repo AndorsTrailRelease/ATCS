@@ -7,6 +7,7 @@ import com.gpl.rpg.atcontentstudio.model.ProjectTreeNode;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
 import com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
+import com.gpl.rpg.atcontentstudio.ui.DraggableJideTabbedPane;
 import com.gpl.rpg.atcontentstudio.ui.Editor;
 import com.gpl.rpg.atcontentstudio.ui.FieldUpdateListener;
 import com.gpl.rpg.atcontentstudio.ui.ListenerListModel;
@@ -111,9 +112,9 @@ public class SpritesheetEditor extends Editor {
         //Placeholder. Fills the eventual remaining space.
         pane.add(new JPanel(), JideBoxLayout.VARY);
 
-        setLayout(new BorderLayout());
-        editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
+        editorTabsHolder.setTabPlacement(JideTabbedPane.TOP);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);
         add(editorTabsHolder, BorderLayout.CENTER);

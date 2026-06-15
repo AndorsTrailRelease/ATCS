@@ -87,12 +87,10 @@ public class UiUtils {
         editorPane.setLayout(new JideBoxLayout(editorPane, JideBoxLayout.PAGE_AXIS));
         itemsPane.add(editorPane, JideBoxLayout.FIX);
 
-        return new CollapsibleItemListCreation<E>() {
-            {
-                collapsiblePanel = itemsPane;
-                list = list;
-            }
-        };
+        CollapsibleItemListCreation<E> result = new CollapsibleItemListCreation<>();
+        result.collapsiblePanel = itemsPane;
+        result.list = list;
+        return result;
     }
 
     private static <S, E, M extends OrderedListenerListModel<S, E>> void addRemoveAndAddButtons(FieldUpdateListener listener, M itemsListModel, BasicLambda selectedItemReset, BasicLambdaWithReturn<E> selectedItem, Supplier<E> newValueSupplier, JButton createBtn, JList<E> itemsList, JPanel listButtonsPane, JButton deleteBtn) {
@@ -101,6 +99,7 @@ public class UiUtils {
             itemsListModel.addItem(tempItem);
             itemsList.setSelectedValue(tempItem, true);
             listener.valueChanged(new JLabel(), null); //Item changed, but we took care of it, just do the usual notification and JSON update stuff.
+            resizeListToFit(itemsList);
         });
         listButtonsPane.add(createBtn, JideBoxLayout.FIX);
 
@@ -165,6 +164,11 @@ public class UiUtils {
                 }
             }
         });
+    }
+
+    public static void resizeListToFit(JList<?> list) {
+        if (list == null) return;
+        list.setVisibleRowCount(Math.min(8, list.getModel().getSize()));
     }
 
 }

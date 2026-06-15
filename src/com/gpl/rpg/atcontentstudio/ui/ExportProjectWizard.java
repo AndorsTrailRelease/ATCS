@@ -62,8 +62,9 @@ public class ExportProjectWizard extends JDialog {
         overSources.addActionListener(updateListener);
 
         target = new JComboBox<String>();
-        if  (ATContentStudio.ARGS != null && ATContentStudio.ARGS.length > 0 && !"".equals(ATContentStudio.ARGS[0])) {
-            target.addItem(ATContentStudio.ARGS[0]);
+        String defaultExportTarget = ATContentStudio.getDefaultExportTarget();
+        if (defaultExportTarget != null && !defaultExportTarget.trim().isEmpty()) {
+            target.addItem(defaultExportTarget);
         }
         target.setEditable(true);
         target.addActionListener(updateListener);
@@ -153,11 +154,11 @@ public class ExportProjectWizard extends JDialog {
         getContentPane().add(pane, BorderLayout.CENTER);
 
         setMinimumSize(new Dimension(500, 150));
+        pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pack();
 
-        Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension wdim = getSize();
-        setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
+        setLocationRelativeTo(ATContentStudio.frame);
+
     }
 
     private void updateState() {

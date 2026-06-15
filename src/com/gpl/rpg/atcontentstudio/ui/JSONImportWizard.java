@@ -209,11 +209,10 @@ public class JSONImportWizard extends JDialog {
         getContentPane().add(pane, BorderLayout.CENTER);
 
         setMinimumSize(new Dimension(450, 350));
+        pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pack();
 
-        Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension wdim = getSize();
-        setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
+        setLocationRelativeTo(ATContentStudio.frame);
 
     }
 

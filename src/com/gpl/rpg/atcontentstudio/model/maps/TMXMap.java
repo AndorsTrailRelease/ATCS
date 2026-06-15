@@ -66,7 +66,7 @@ public class TMXMap extends GameDataElement {
             try {
                 tmxMap = new TMXMapReader().readMap(tmxFile.getAbsolutePath(), this);
                 if (tmxMap.getProperties().get("outdoors") != null) {
-                    outside = new Integer(((String) tmxMap.getProperties().get("outdoors")));
+                    outside = Integer.valueOf((String) tmxMap.getProperties().get("outdoors"));
                 }
                 if (tmxMap.getProperties().get("colorfilter") != null) {
                     colorFilter = ColorFilter.valueOf(((String) tmxMap.getProperties().get("colorfilter")));
@@ -104,7 +104,7 @@ public class TMXMap extends GameDataElement {
             clone.usedSpritesheets = new HashSet<Spritesheet>();
             clone.tmxMap = new TMXMapReader().readMap(new StringReader(this.toXml()), clone);
             if (clone.tmxMap.getProperties().get("outdoors") != null) {
-                clone.outside = new Integer(((String) clone.tmxMap.getProperties().get("outdoors")));
+                clone.outside = Integer.valueOf((String) clone.tmxMap.getProperties().get("outdoors"));
             }
             if (clone.tmxMap.getProperties().get("colorfilter") != null) {
                 clone.colorFilter = ColorFilter.valueOf(((String) tmxMap.getProperties().get("colorfilter")));

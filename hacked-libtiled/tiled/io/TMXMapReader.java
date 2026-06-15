@@ -131,9 +131,9 @@ public class TMXMapReader
 
         for (int i = 0; i < parameterTypes.length; i++) {
             if ("int".equalsIgnoreCase(parameterTypes[i].getName())) {
-                conformingArguments[i] = new Integer(args[i]);
+                conformingArguments[i] = Integer.valueOf(args[i]);
             } else if ("float".equalsIgnoreCase(parameterTypes[i].getName())) {
-                conformingArguments[i] = new Float(args[i]);
+                conformingArguments[i] = Float.valueOf(args[i]);
             } else if (parameterTypes[i].getName().endsWith("String")) {
                 conformingArguments[i] = args[i];
             } else if ("boolean".equalsIgnoreCase(parameterTypes[i].getName())) {

@@ -241,14 +241,15 @@ public class ProjectCreationWizard extends JDialog {
         c.gridwidth = 3;
         panel.add(buttonPane, c);
 
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
         updateOkButtonEnablement();
 
         setContentPane(panel);
 
         pack();
-        Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension wdim = getSize();
-        setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
+
+        setLocationRelativeTo(ATContentStudio.frame);
     }
 
 
