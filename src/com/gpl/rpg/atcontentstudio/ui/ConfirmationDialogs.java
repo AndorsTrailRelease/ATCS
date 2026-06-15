@@ -5,8 +5,9 @@ import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.Workspace;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+
+import javax.swing.JOptionPane;
 
 public final class ConfirmationDialogs {
 
@@ -19,12 +20,18 @@ public final class ConfirmationDialogs {
     }
 
     public static boolean confirmProjectDelete(Component parent) {
-        return JOptionPane.showConfirmDialog(
+        int confirm = JOptionPane.showOptionDialog(
                 parent,
-                "Are you sure you wish to delete this project ?\nAll files created for it will be deleted too...",
+                "Are you sure you wish to delete this project?\n\nAll files created for it will be deleted too...",
                 "Delete this project ?",
-                JOptionPane.OK_CANCEL_OPTION
-        ) == JOptionPane.OK_OPTION;
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.WARNING_MESSAGE,
+                null,
+                new String[]{"Cancel", "Delete"},
+                "Cancel"
+        );
+            return confirm == 1;
+
     }
 
     /**
@@ -38,13 +45,13 @@ public final class ConfirmationDialogs {
     /**
      *
      * @param parent - Parent component of the dialogue (influences placement)
-     * @param elementCount
+     * @param elementCount - Number of elements that will be deleted (e.g., treeview bulk select)
      * @return true if the user confirmed the deletion
      */
     public static boolean confirmDelete(Component parent, int elementCount) {
         int confirm = JOptionPane.showOptionDialog(
                 parent,
-                "Are you sure you want to delete " + elementCount + " selected elements?\n\nAny changes or new content in these elements will be lost.",
+                "Are you sure you want to delete %d selected elements?\n\nAny changes or new content in these elements will be lost.".formatted(elementCount),
                 "Confirm delete",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.WARNING_MESSAGE,
@@ -73,11 +80,11 @@ public final class ConfirmationDialogs {
         String title;
         String[] options;
         if (element.getDataType() == GameSource.Type.altered) {
-            message = "Are you sure you want to revert '" + element.getDesc() + "' to the original version?\n\nAny changes you have made will be lost.";
+            message = "Are you sure you want to revert '%s' to the original version?\n\nAny changes you have made will be lost.".formatted(element.getDesc());
             title = "Confirm revert";
             options = new String[]{"Cancel", "Revert"};
         } else {
-            message = "Are you sure you want to delete '" + element.getDesc() + "'?";
+            message = "Are you sure you want to delete '%s' ?\n\nAny new content in this element will be lost.".formatted(element.getDesc());
             title = "Confirm delete";
             options = new String[]{"Cancel", "Delete"};
         }
@@ -95,10 +102,20 @@ public final class ConfirmationDialogs {
         return confirm == 1;
     }
 
+    /**
+     * @param actionLabel - label for the action to be done (e.g., "restart" or "exit")
+     * @return - true if the user confirmed/approved the action
+     */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean confirmExitOrRestart(String actionLabel) {
         return confirmExitOrRestart(ATContentStudio.frame, actionLabel);
     }
 
+    /**
+     * @param parent - Parent component of the dialogue (influences placement)
+     * @param actionLabel - label for the action to be done (e.g., "restart" or "exit")
+     * @return - true if the user confirmed/approved the action
+     */
     public static boolean confirmExitOrRestart(Component parent, String actionLabel) {
         if (Workspace.activeWorkspace == null || !Workspace.activeWorkspace.needsSaving()) {
             return true;
@@ -112,8 +129,8 @@ public final class ConfirmationDialogs {
 
         int answer = JOptionPane.showConfirmDialog(
                 parent,
-                "There are unsaved changes in your workspace.\n" + capitalizedAction + "ing ATCS will discard these changes.\nDo you really want to " + normalizedAction + "?",
-                "Unsaved changes. Confirm " + normalizedAction + ".",
+                "There are unsaved changes in your workspace.\n%sing ATCS will discard these changes.\nDo you really want to %s?".formatted(capitalizedAction, normalizedAction),
+                "Unsaved changes. Confirm %s.".formatted(normalizedAction),
                 JOptionPane.YES_NO_OPTION
         );
         return answer == JOptionPane.YES_OPTION;
