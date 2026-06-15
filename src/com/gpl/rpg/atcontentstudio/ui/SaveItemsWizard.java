@@ -230,10 +230,12 @@ public class SaveItemsWizard extends JDialog {
 
             getContentPane().setLayout(new BorderLayout());
             getContentPane().add(pane, BorderLayout.CENTER);
+            pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         }
 
         pack();
+        setLocationRelativeTo(ATContentStudio.frame);
     }
 
     public class SaveEventsListCellRenderer extends DefaultListCellRenderer {

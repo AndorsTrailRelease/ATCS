@@ -2,6 +2,7 @@ package com.gpl.rpg.atcontentstudio.ui.tools;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
 import com.gpl.rpg.atcontentstudio.ui.WorkerDialog;
 import com.jidesoft.swing.JideBoxLayout;
@@ -120,7 +121,9 @@ public class BeanShellView extends JFrame {
 
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(splitter, BorderLayout.CENTER);
+        ((JComponent) getContentPane()).setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pack();
+        setLocationRelativeTo(ATContentStudio.frame);
         setVisible(true);
     }
 
