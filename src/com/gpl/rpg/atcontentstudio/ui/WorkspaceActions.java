@@ -14,7 +14,9 @@ import com.gpl.rpg.atcontentstudio.ui.tools.NPCsTableView;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -51,6 +53,25 @@ public class WorkspaceActions {
                     JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    private void restartCurrentWorkspace() {
+        try {
+            persistUiStateIfPossible();
+            ATContentStudio.restartWorkspaceProcess(Workspace.activeWorkspace != null ? Workspace.activeWorkspace.baseFolder : null);
+            ATContentStudio.shutdownCurrentProcess(0);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(
+                    ATContentStudio.frame,
+                    "Unable to restart ATCS.\n" + ex.getMessage(),
+                    "Reload ATCS",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private boolean hasActiveWorkspace() {
+        return Workspace.activeWorkspace != null && Workspace.activeWorkspace.baseFolder != null;
     }
 
     public ATCSAction newWorkspace = new ATCSAction("New Workspace...", "Creates a new workspace and opens it") {
@@ -110,6 +131,28 @@ public class WorkspaceActions {
 
         public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
             setEnabled(true);
+        }
+    };
+
+    public ATCSAction restartATCS = new ATCSAction("Reload ATCS", "Restarts ATCS and reloads the current workspace") {
+        public void init() {
+            int menuShortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+            String shortcutKey = (menuShortcutMask & InputEvent.META_DOWN_MASK) != 0 ? "Cmd" : "Ctrl";
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | InputEvent.SHIFT_DOWN_MASK));
+            putValue(Action.SHORT_DESCRIPTION,
+                    "Restarts ATCS and reloads the current workspace (" + shortcutKey + ")");
+            setEnabled(hasActiveWorkspace());
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            if (!ConfirmationDialogs.confirmExitOrRestart("restart")) {
+                return;
+            }
+
+            restartCurrentWorkspace();
         }
     };
 
@@ -458,16 +501,21 @@ public class WorkspaceActions {
     };
 
     public ATCSAction exitATCS = new ATCSAction("Exit", "Closes the program") {
+        public void init() {
+            boolean macOs = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac");
+            putValue(Action.ACCELERATOR_KEY,
+                    macOs
+                            ? KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
+                            : KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_DOWN_MASK));
+        }
+
         public void actionPerformed(ActionEvent e) {
-            if (Workspace.activeWorkspace.needsSaving()) {
-                int answer = JOptionPane.showConfirmDialog(ATContentStudio.frame, "There are unsaved changes in your workspace.\nExiting ATCS will discard these changes.\nDo you really want to exit?",
-                                                           "Unsaved changes. Confirm exit.", JOptionPane.YES_NO_OPTION);
-                if (answer == JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
-            } else {
-                System.exit(0);
+            if (!ConfirmationDialogs.confirmExitOrRestart("exit")) {
+                return;
             }
+
+            persistUiStateIfPossible();
+            ATContentStudio.shutdownCurrentProcess(0);
         }
 
     };
@@ -532,37 +580,41 @@ public class WorkspaceActions {
 
     };
 
-    List<ATCSAction> actions = new ArrayList<WorkspaceActions.ATCSAction>();
+    List<ATCSAction> selectionAwareActions = new ArrayList<WorkspaceActions.ATCSAction>();
+
+
+    private void persistUiStateIfPossible() {
+        if (ATContentStudio.frame != null) {
+            ATContentStudio.frame.persistWorkspaceUiState();
+        } else if (Workspace.activeWorkspace != null) {
+            Workspace.saveActive();
+        }
+    }
 
     public WorkspaceActions() {
-        actions.add(newWorkspace);
-        actions.add(openWorkspace);
-        actions.add(createProject);
-        actions.add(closeProject);
-        actions.add(openProject);
-        actions.add(deleteProject);
-        actions.add(saveElement);
-        actions.add(deleteSelected);
-        actions.add(createGDE);
-        actions.add(createMap);
-        actions.add(importJSON);
-        actions.add(compareItems);
-        actions.add(compareNPCs);
-        actions.add(exportProject);
-        actions.add(showAbout);
-        actions.add(exitATCS);
-        actions.add(createWriter);
-//		actions.add(testCommitWriter);
-        actions.add(generateWriter);
-        actions.add(editWorkspaceSettings);
+        selectionAwareActions.add(closeProject);
+        selectionAwareActions.add(openProject);
+        selectionAwareActions.add(deleteProject);
+        selectionAwareActions.add(saveElement);
+        selectionAwareActions.add(deleteSelected);
+        selectionAwareActions.add(createGDE);
+        selectionAwareActions.add(createMap);
+        selectionAwareActions.add(createWorldmap);
+        selectionAwareActions.add(importJSON);
+        selectionAwareActions.add(compareItems);
+        selectionAwareActions.add(compareNPCs);
+        selectionAwareActions.add(exportProject);
+        selectionAwareActions.add(createWriter);
+//		selectionAwareActions.add(testCommitWriter);
+        selectionAwareActions.add(generateWriter);
         selectionChanged(null, null);
     }
 
     public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
         this.selectedNode = selectedNode;
         this.selectedPaths = selectedPaths;
-        synchronized (actions) {
-            for (ATCSAction action : actions) {
+        synchronized (selectionAwareActions) {
+            for (ATCSAction action : selectionAwareActions) {
                 action.selectionChanged(selectedNode, selectedPaths);
             }
         }

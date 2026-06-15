@@ -48,9 +48,14 @@ public class ATContentStudio {
     private static final String QUIET_ARGUMENT = "--quiet";
     private static final String SKIP_LOCK_CHECK_ARGUMENT = "--skip-lock-check";
     private static final String IGNORE_EXISTING_CONFIG_ARGUMENT = "--ignore-config";
+    private static final String RESTART_HELPER_ARGUMENT = "--restart-helper";
+    private static final String WAIT_FOR_PID_ARGUMENT = "--wait-for-pid";
     private static final String HELP_ARGUMENT = "--help";
     private static final String SHORT_HELP_ARGUMENT = "-h";
     private static final String IGNORE_EXISTING_CONFIG_PROPERTY = "atcs.ignoreConfig";
+    private static final long RESTART_PARENT_WAIT_TIMEOUT_MILLIS = 30_000L;
+    private static final long RESTART_LOCK_WAIT_TIMEOUT_MILLIS = 10_000L;
+    private static final long RESTART_WAIT_SLEEP_MILLIS = 100L;
 
     public static final String APP_NAME = "Andor's Trail Content Studio";
     public static final String APP_VERSION = readVersionFromFile();
@@ -122,6 +127,13 @@ public class ATContentStudio {
         }
 
         ConfigCache.init();
+
+        if (startupArguments.restartHelper) {
+            if (!waitForRestartParentAndLock(startupArguments.workspaceRoot, startupArguments.waitForPid)) {
+                System.exit(1);
+                return;
+            }
+        }
 
         String laf = ConfigCache.getFavoriteLaFClassName();
         setLookAndFeel(laf);
@@ -430,6 +442,93 @@ public class ATContentStudio {
         new ProcessBuilder(command).start();
     }
 
+    public static void restartWorkspaceProcess(File workspaceRoot) throws IOException {
+        if (workspaceRoot == null) {
+            throw new IllegalArgumentException("workspaceRoot must not be null");
+        }
+
+        File normalizedWorkspaceRoot = workspaceRoot.getAbsoluteFile();
+        rememberWorkspace(normalizedWorkspaceRoot);
+
+        List<String> command = new ArrayList<>();
+        command.add(new File(new File(System.getProperty("java.home"), "bin"), "java").getAbsolutePath());
+        command.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
+        command.add("-cp");
+        command.add(System.getProperty("java.class.path"));
+        command.add(ATContentStudio.class.getName());
+        command.add(RESTART_HELPER_ARGUMENT);
+        command.add(WAIT_FOR_PID_ARGUMENT);
+        command.add(Long.toString(ProcessHandle.current().pid()));
+        command.add(WORKSPACE_ARGUMENT);
+        command.add(normalizedWorkspaceRoot.getAbsolutePath());
+        if (!isBlank(startupExportTarget)) {
+            command.add(EXPORT_TARGET_ARGUMENT);
+            command.add(startupExportTarget);
+        }
+        if (skipLockCheck) {
+            command.add(SKIP_LOCK_CHECK_ARGUMENT);
+        }
+        new ProcessBuilder(command).start();
+    }
+
+    public static void shutdownCurrentProcess(int statusCode) {
+        WorkspaceInstanceLock.releaseCurrentWorkspace();
+        System.exit(statusCode);
+    }
+
+    private static boolean waitForRestartParentAndLock(File workspaceRoot, Long waitForPid) {
+        if (waitForPid != null && waitForPid.longValue() > 0L) {
+            if (!waitForProcessExit(waitForPid.longValue(), RESTART_PARENT_WAIT_TIMEOUT_MILLIS)) {
+                String message = "Timed out while waiting for the previous ATCS process to exit.";
+                Notification.addError(message);
+                System.err.println(message + " PID: " + waitForPid.longValue());
+                return false;
+            }
+        }
+
+        if (workspaceRoot == null || skipLockCheck) {
+            return true;
+        }
+
+        long deadline = System.currentTimeMillis() + RESTART_LOCK_WAIT_TIMEOUT_MILLIS;
+        while (WorkspaceInstanceLock.isLockedByAnotherProcess(workspaceRoot)) {
+            if (System.currentTimeMillis() >= deadline) {
+                String message = "Timed out while waiting for the workspace lock to be released.";
+                Notification.addError(message);
+                System.err.println(message + " Workspace: " + workspaceRoot.getAbsolutePath());
+                return false;
+            }
+            sleepQuietly(RESTART_WAIT_SLEEP_MILLIS);
+        }
+
+        return true;
+    }
+
+    private static boolean waitForProcessExit(long pid, long timeoutMillis) {
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) {
+            return true;
+        }
+
+        long deadline = System.currentTimeMillis() + timeoutMillis;
+        while (processHandle.get().isAlive()) {
+            if (System.currentTimeMillis() >= deadline) {
+                return false;
+            }
+            sleepQuietly(RESTART_WAIT_SLEEP_MILLIS);
+        }
+
+        return true;
+    }
+
+    private static void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     private static void showWorkspaceAlreadyOpenMessage(File workspaceRoot) {
         String message = "This workspace is already open in another ATCS instance.\n\nPath: " + workspaceRoot.getAbsolutePath();
         Notification.addWarn(message);
@@ -495,6 +594,12 @@ public class ATContentStudio {
 
         @Option(names = IGNORE_EXISTING_CONFIG_ARGUMENT, description = "Ignores saved global config and behaves like a fresh install for this run.")
         private boolean ignoreExistingConfig;
+
+        @Option(names = RESTART_HELPER_ARGUMENT, hidden = true)
+        private boolean restartHelper;
+
+        @Option(names = WAIT_FOR_PID_ARGUMENT, hidden = true)
+        private Long waitForPid;
 
         @Option(names = {SHORT_HELP_ARGUMENT, HELP_ARGUMENT}, usageHelp = true, description = "Prints this message and exits.")
         private boolean help;

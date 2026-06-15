@@ -3,6 +3,7 @@ package com.gpl.rpg.atcontentstudio.ui;
 import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
+import com.gpl.rpg.atcontentstudio.model.Workspace;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,6 +93,30 @@ public final class ConfirmationDialogs {
                 "Cancel"
         );
         return confirm == 1;
+    }
+
+    public static boolean confirmExitOrRestart(String actionLabel) {
+        return confirmExitOrRestart(ATContentStudio.frame, actionLabel);
+    }
+
+    public static boolean confirmExitOrRestart(Component parent, String actionLabel) {
+        if (Workspace.activeWorkspace == null || !Workspace.activeWorkspace.needsSaving()) {
+            return true;
+        }
+
+        String normalizedAction = actionLabel == null ? "proceed" : actionLabel.trim();
+        if (normalizedAction.isEmpty()) {
+            normalizedAction = "proceed";
+        }
+        String capitalizedAction = Character.toUpperCase(normalizedAction.charAt(0)) + normalizedAction.substring(1);
+
+        int answer = JOptionPane.showConfirmDialog(
+                parent,
+                "There are unsaved changes in your workspace.\n" + capitalizedAction + "ing ATCS will discard these changes.\nDo you really want to " + normalizedAction + "?",
+                "Unsaved changes. Confirm " + normalizedAction + ".",
+                JOptionPane.YES_NO_OPTION
+        );
+        return answer == JOptionPane.YES_OPTION;
     }
 }
 

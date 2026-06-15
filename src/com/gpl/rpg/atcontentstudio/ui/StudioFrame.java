@@ -124,13 +124,21 @@ public class StudioFrame extends JFrame {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                Workspace.activeWorkspace.preferences.openEditors = editors.captureOpenEditorStates();
-                Workspace.activeWorkspace.preferences.expandedTreeNodes = projectTree.captureExpandedTreeNodes();
-                Workspace.activeWorkspace.preferences.selectedTreeNode = projectTree.captureSelectedTreeNode();
-                Workspace.saveActive();
+                persistWorkspaceUiState();
                 actions.exitATCS.actionPerformed(null);
             }
         });
+    }
+
+    public void persistWorkspaceUiState() {
+        if (Workspace.activeWorkspace == null) {
+            return;
+        }
+
+        Workspace.activeWorkspace.preferences.openEditors = editors.captureOpenEditorStates();
+        Workspace.activeWorkspace.preferences.expandedTreeNodes = projectTree.captureExpandedTreeNodes();
+        Workspace.activeWorkspace.preferences.selectedTreeNode = projectTree.captureSelectedTreeNode();
+        Workspace.saveActive();
     }
 
     private boolean isInNormalWindowState() {
@@ -191,6 +199,7 @@ public class StudioFrame extends JFrame {
         fileMenu.add(new JSeparator());
         fileMenu.add(new JMenuItem(actions.editWorkspaceSettings)).setMnemonic(KeyEvent.VK_E);
         fileMenu.add(new JSeparator());
+        fileMenu.add(new JMenuItem(actions.restartATCS)).setMnemonic(KeyEvent.VK_L);
         fileMenu.add(new JMenuItem(actions.exitATCS)).setMnemonic(KeyEvent.VK_X);
         getJMenuBar().add(fileMenu);
 
