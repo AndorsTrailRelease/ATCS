@@ -68,7 +68,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         this.icon = new ImageIcon(worldmap.getIcon());
         setLayout(new BorderLayout());
 
-        JideTabbedPane editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        JideTabbedPane editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);
@@ -434,7 +434,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
 
     private void buildMapPropsPane(JPanel mapPropsPane, final WorldmapSegment worldmap) {
-        JideTabbedPane tabPane = new JideTabbedPane(JideTabbedPane.TOP);
+        JideTabbedPane tabPane = new DraggableJideTabbedPane(JideTabbedPane.TOP);
 
         JPanel mapListPane = new JPanel();
         mapListPane.setLayout(new JideBoxLayout(mapListPane, JideBoxLayout.PAGE_AXIS));
@@ -826,45 +826,9 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                 savePane.add(message = new JLabel(CREATED_MESSAGE), JideBoxLayout.FIX);
             }
             JButton save = new JButton(SAVE);
-            save.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (node.getParent() instanceof Worldmap) {
-                        if (node.state != GameDataElement.State.saved) {
-                            final List<SaveEvent> events = node.attemptSave();
-                            if (events == null) {
-                                ATContentStudio.frame.nodeChanged(node);
-                            } else {
-                                new Thread() {
-                                    @Override
-                                    public void run() {
-                                        new SaveItemsWizard(events, node).setVisible(true);
-                                    }
-                                }.start();
-                            }
-                        }
-                    }
-                }
-            });
+            save.addActionListener(e -> saveCurrent());
             savePane.add(save, JideBoxLayout.FIX);
-            JButton delete = new JButton(DELETE);
-            if (node.getDataType() == GameSource.Type.altered) {
-                delete.setText(REVERT);
-            }
-            delete.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ATContentStudio.frame.closeEditor(node);
-                    node.childrenRemoved(new ArrayList<ProjectTreeNode>());
-                    if (node.getParent() instanceof Worldmap) {
-                        ((Worldmap) node.getParent()).remove(node);
-                        node.save();
-                        for (GameDataElement backlink : node.getBacklinks()) {
-                            backlink.elementChanged(node, node.getProject().getWorldmapSegment(node.id));
-                        }
-                    }
-                }
-            });
+            JButton delete = getJButton(node);
             savePane.add(delete, JideBoxLayout.FIX);
         } else {
             if (node.getProject().alteredContent.getWorldmapSegment(node.id) != null) {
@@ -947,6 +911,30 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         //Placeholder. Fills the eventual remaining space.
         savePane.add(new JPanel(), JideBoxLayout.VARY);
         return savePane;
+    }
+
+    private JButton getJButton(WorldmapSegment node) {
+        JButton delete = new JButton(DELETE);
+        if (node.getDataType() == GameSource.Type.altered) {
+            delete.setText(REVERT);
+        }
+        delete.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!ConfirmationDialogs.confirmDelete(WorldMapEditor.this, node)) return;
+
+                ATContentStudio.frame.closeEditor(node);
+                node.childrenRemoved(new ArrayList<ProjectTreeNode>());
+                if (node.getParent() instanceof Worldmap) {
+                    ((Worldmap) node.getParent()).remove(node);
+                    node.save();
+                    for (GameDataElement backlink : node.getBacklinks()) {
+                        backlink.elementChanged(node, node.getProject().getWorldmapSegment(node.id));
+                    }
+                }
+            }
+        });
+        return delete;
     }
 
     public void updateMessage() {

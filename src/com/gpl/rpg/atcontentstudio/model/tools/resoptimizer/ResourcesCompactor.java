@@ -67,7 +67,11 @@ public class ResourcesCompactor {
             cs.drawFile();
         }
         for (File preserved : preservedSpritesheets) {
-            FileUtils.copyFile(preserved, new File(baseFolder.getAbsolutePath() + File.separator + DEFAULT_DRAWABLE_REL_PATH + File.separator + preserved.getName()));
+            try {
+                FileUtils.copyFile(preserved, new File(baseFolder.getAbsolutePath() + File.separator + DEFAULT_DRAWABLE_REL_PATH + File.separator + preserved.getName()));
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to copy preserved spritesheet: " + preserved.getAbsolutePath(), e);
+            }
         }
         compactMaps();
     }

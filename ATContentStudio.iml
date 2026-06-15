@@ -7,15 +7,17 @@
     <libelement value="jar://$MODULE_DIR$/lib/prefuse.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/rsyntaxtextarea.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/ui.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/lib/picocli-4.7.6.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/bsh-2.0b4.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/jsoup-1.10.2.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/AndorsTrainer_v0.1.5.jar!/" />
     <src_description expected_position="0">
       <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
-      <src_folder value="file://$MODULE_DIR$/res" expected_position="1" />
-      <src_folder value="file://$MODULE_DIR$/hacked-libtiled" expected_position="2" />
-      <src_folder value="file://$MODULE_DIR$/siphash-zackehh/src/main/java" expected_position="3" />
-      <src_folder value="file://$MODULE_DIR$/minify" expected_position="4" />
+      <src_folder value="file://$MODULE_DIR$/test" expected_position="1" />
+      <src_folder value="file://$MODULE_DIR$/res" expected_position="2" />
+      <src_folder value="file://$MODULE_DIR$/hacked-libtiled" expected_position="3" />
+      <src_folder value="file://$MODULE_DIR$/siphash-zackehh/src/main/java" expected_position="4" />
+      <src_folder value="file://$MODULE_DIR$/minify" expected_position="5" />
     </src_description>
   </component>
   <component name="NewModuleRootManager">
@@ -27,6 +29,8 @@
       <sourceFolder url="file://$MODULE_DIR$/res" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/siphash-zackehh/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/caches" />
       <excludeFolder url="file://$MODULE_DIR$/packaging/tmp" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
@@ -80,6 +84,15 @@
       <library name="ui.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/ui.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="picocli-4.7.6.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/picocli-4.7.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

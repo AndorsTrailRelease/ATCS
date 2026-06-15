@@ -76,6 +76,9 @@ public class Dialogue extends JSONElement {
             mapchange,
             changeIcon
         }
+
+        public List<Requirement> requirements = null;
+
     }
 
     public static class Reply {
@@ -122,6 +125,8 @@ public class Dialogue extends JSONElement {
                 if (dialogue.getDataType() == GameSource.Type.created || dialogue.getDataType() == GameSource.Type.altered) {
                     dialogue.writable = true;
                 }
+                // Parse now so link() doesn't re-open and rescan the full source file per dialogue.
+                dialogue.parse(dialogueJson);
                 category.add(dialogue);
             }
         } catch (FileNotFoundException e) {
@@ -203,8 +208,29 @@ public class Dialogue extends JSONElement {
                     reward.type = Reward.RewardType.valueOf((String) rewardJson.get("rewardType"));
                 if (rewardJson.get("rewardID") != null) reward.reward_obj_id = (String) rewardJson.get("rewardID");
                 if (rewardJson.get("value") != null)
-                    reward.reward_value = JSONElement.getInteger((Number) rewardJson.get("value"));
+                    reward.reward_value = JSONElement.getInteger(Integer.parseInt(rewardJson.get("value").toString()));
                 if (rewardJson.get("mapName") != null) reward.map_name = (String) rewardJson.get("mapName");
+
+                List requirementsJson = (List) rewardJson.get("requires");
+                if (requirementsJson != null && !requirementsJson.isEmpty()) {
+                    reward.requirements = new ArrayList<Requirement>();
+                    for (Object requirementJsonObj : requirementsJson) {
+                        Map requirementJson = (Map) requirementJsonObj;
+                        Requirement requirement = new Requirement();
+                        requirement.jsonFile = this.jsonFile;
+                        requirement.parent = this;
+                        if (requirementJson.get("requireType") != null)
+                            requirement.type = RequirementType.valueOf((String) requirementJson.get("requireType"));
+                        requirement.required_obj_id = (String) requirementJson.get("requireID");
+                        if (requirementJson.get("value") != null)
+                            requirement.required_value = JSONElement.getInteger(Integer.parseInt(requirementJson.get("value").toString()));
+                        if (requirementJson.get("negate") != null)
+                            requirement.negated = (Boolean) requirementJson.get("negate");
+                        requirement.state = State.parsed;
+                        reward.requirements.add(requirement);
+                    }
+                }
+
                 this.rewards.add(reward);
             }
         }
@@ -296,6 +322,11 @@ public class Dialogue extends JSONElement {
                     }
                     if (reward.reward_obj != null) reward.reward_obj.addBacklink(this);
                     if (reward.map != null) reward.map.addBacklink(this);
+                    if (reward.requirements != null) {
+                        for (Requirement requirement : reward.requirements) {
+                            requirement.link();
+                        }
+                    }
                 }
             }
         }
@@ -341,6 +372,12 @@ public class Dialogue extends JSONElement {
                 rclone.map_name = r.map_name;
                 if (rclone.map != null) {
                     rclone.map.addBacklink(clone);
+                }
+                if (r.requirements != null) {
+                    rclone.requirements = new ArrayList<Requirement>();
+                    for (Requirement req : r.requirements) {
+                        rclone.requirements.add((Requirement) req.clone(clone));
+                    }
                 }
                 clone.rewards.add(rclone);
             }
@@ -395,6 +432,11 @@ public class Dialogue extends JSONElement {
                         oldOne.removeBacklink(this);
                         r.reward_obj = newOne;
                         if (newOne != null) newOne.addBacklink(this);
+                    }
+                    if (r.requirements != null) {
+                        for (Requirement req : r.requirements) {
+                            req.elementChanged(oldOne, newOne);
+                        }
                     }
                     if (oldOne instanceof QuestStage) {
                         if (r.reward_obj != null && r.reward_obj.equals(oldOne.parent) && r.reward_value != null && r.reward_value.equals(((QuestStage) oldOne).progress)) {
@@ -466,6 +508,24 @@ public class Dialogue extends JSONElement {
                 if (reward.map != null) {
                     rewardJson.put("mapName", reward.map.id);
                 } else if (reward.map_name != null) rewardJson.put("mapName", reward.map_name);
+                if (reward.requirements != null ) {
+                    List requirementsJson = new ArrayList();
+                    rewardJson.put("requires", requirementsJson);
+                    for (Requirement requirement : reward.requirements) {
+                        Map requirementJson = new LinkedHashMap();
+                        requirementsJson.add(requirementJson);
+                        if (requirement.type != null) requirementJson.put("requireType", requirement.type.toString());
+                        if (requirement.required_obj != null) {
+                            requirementJson.put("requireID", requirement.required_obj.id);
+                        } else if (requirement.required_obj_id != null) {
+                            requirementJson.put("requireID", requirement.required_obj_id);
+                        }
+                        if (requirement.required_value != null) {
+                            requirementJson.put("value", requirement.required_value);
+                        }
+                        if (requirement.negated != null) requirementJson.put("negate", requirement.negated);
+                    }
+                }
             }
         }
         return dialogueJson;

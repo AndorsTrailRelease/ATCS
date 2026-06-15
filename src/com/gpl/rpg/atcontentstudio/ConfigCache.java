@@ -1,17 +1,21 @@
 package com.gpl.rpg.atcontentstudio;
 
 import com.gpl.rpg.atcontentstudio.io.SettingsSave;
+import com.gpl.rpg.atcontentstudio.model.Workspace;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ConfigCache implements Serializable {
 
     private static final long serialVersionUID = 4584324644282843961L;
+    private static final String IGNORE_EXISTING_CONFIG_PROPERTY = "atcs.ignoreConfig";
 
     private static final File CONFIG_CACHE_STORAGE;
+    private static final boolean IGNORE_EXISTING_CONFIG;
 
     private static ConfigCache instance = null;
 
@@ -22,8 +26,11 @@ public class ConfigCache implements Serializable {
         } else {
             CONFIG_CACHE_STORAGE = new File(System.getenv("HOME") + File.separator + "." + ATContentStudio.APP_NAME + File.separator + "configCache");
         }
+        IGNORE_EXISTING_CONFIG = Boolean.parseBoolean(System.getProperty(IGNORE_EXISTING_CONFIG_PROPERTY, "false"));
         CONFIG_CACHE_STORAGE.getParentFile().mkdirs();
-        if (CONFIG_CACHE_STORAGE.exists()) {
+        if (IGNORE_EXISTING_CONFIG) {
+            ConfigCache.instance = new ConfigCache();
+        } else if (CONFIG_CACHE_STORAGE.exists()) {
             ConfigCache.instance = (ConfigCache) SettingsSave.loadInstance(CONFIG_CACHE_STORAGE, "Configuration cache");
             if (ConfigCache.instance == null) {
                 ConfigCache.instance = new ConfigCache();
@@ -34,7 +41,33 @@ public class ConfigCache implements Serializable {
     }
 
     private void save() {
+        if (IGNORE_EXISTING_CONFIG) {
+            return;
+        }
         SettingsSave.saveInstance(instance, ConfigCache.CONFIG_CACHE_STORAGE, "Configuration cache");
+    }
+
+    private boolean pruneMissingWorkspaces() {
+        boolean changed = false;
+
+        for (Iterator<File> iterator = knownWorkspaces.iterator(); iterator.hasNext(); ) {
+            File workspace = iterator.next();
+            if (workspace == null || !Workspace.isValidWorkspaceRoot(workspace.getAbsoluteFile())) {
+                iterator.remove();
+                changed = true;
+            }
+        }
+
+        if (latestWorkspace != null && !Workspace.isValidWorkspaceRoot(latestWorkspace.getAbsoluteFile())) {
+            latestWorkspace = null;
+            changed = true;
+        }
+
+        if (changed) {
+            save();
+        }
+
+        return changed;
     }
 
 
@@ -45,6 +78,7 @@ public class ConfigCache implements Serializable {
 
 
     public static List<File> getKnownWorkspaces() {
+        instance.pruneMissingWorkspaces();
         return instance.knownWorkspaces;
     }
 
@@ -59,6 +93,7 @@ public class ConfigCache implements Serializable {
     }
 
     public static File getLatestWorkspace() {
+        instance.pruneMissingWorkspaces();
         return instance.latestWorkspace;
     }
 

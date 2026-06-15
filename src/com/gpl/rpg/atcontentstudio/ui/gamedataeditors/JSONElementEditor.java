@@ -40,7 +40,7 @@ public abstract class JSONElementEditor extends Editor {
         this.icon = new ImageIcon(icon);
 
         setLayout(new BorderLayout());
-        editorTabsHolder = new JideTabbedPane(JideTabbedPane.BOTTOM);
+        editorTabsHolder = new DraggableJideTabbedPane(JideTabbedPane.BOTTOM);
         editorTabsHolder.setTabShape(JideTabbedPane.SHAPE_FLAT);
         editorTabsHolder.setUseDefaultShowCloseButtonOnTab(false);
         editorTabsHolder.setShowCloseButtonOnTab(false);
@@ -136,21 +136,7 @@ public abstract class JSONElementEditor extends Editor {
             save.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if (node.getParent() instanceof GameDataCategory<?>) {
-                        if (node.state != GameDataElement.State.saved) {
-                            final List<SaveEvent> events = node.attemptSave();
-                            if (events == null) {
-                                ATContentStudio.frame.nodeChanged(node);
-                            } else {
-                                new Thread() {
-                                    @Override
-                                    public void run() {
-                                        new SaveItemsWizard(events, node).setVisible(true);
-                                    }
-                                }.start();
-                            }
-                        }
-                    }
+                    saveCurrent();
                 }
             });
             savePane.add(save, JideBoxLayout.FIX);
@@ -161,6 +147,8 @@ public abstract class JSONElementEditor extends Editor {
             delete.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    if (!ConfirmationDialogs.confirmDelete(JSONElementEditor.this, node)) return;
+
                     ATContentStudio.frame.closeEditor(node);
                     node.childrenRemoved(new ArrayList<ProjectTreeNode>());
                     if (node.getParent() instanceof GameDataCategory<?>) {

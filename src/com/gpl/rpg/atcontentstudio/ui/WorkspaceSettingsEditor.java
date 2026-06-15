@@ -37,6 +37,7 @@ public class WorkspaceSettingsEditor extends JDialog {
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(new JScrollPane(pane), BorderLayout.CENTER);
         pane.setLayout(new JideBoxLayout(pane, JideBoxLayout.PAGE_AXIS));
+        pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new JideBoxLayout(buttonPane, JideBoxLayout.LINE_AXIS));
         getContentPane().add(buttonPane, BorderLayout.SOUTH);
@@ -75,6 +76,7 @@ public class WorkspaceSettingsEditor extends JDialog {
 
         loadFromModel();
         pack();
+        setLocationRelativeTo(ATContentStudio.frame);
         setVisible(true);
 
     }

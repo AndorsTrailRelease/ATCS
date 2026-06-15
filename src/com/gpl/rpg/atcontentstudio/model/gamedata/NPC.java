@@ -100,6 +100,7 @@ public class NPC extends JSONElement {
                 if (npc.getDataType() == GameSource.Type.created || npc.getDataType() == GameSource.Type.altered) {
                     npc.writable = true;
                 }
+                npc.parse(npcJson);
                 category.add(npc);
             }
         } catch (FileNotFoundException e) {
@@ -185,6 +186,7 @@ public class NPC extends JSONElement {
         if (deathEffect != null) {
             this.death_effect = parseDeathEffect(deathEffect);
         }
+        this.state = State.parsed;
     }
 
     @Override
@@ -357,7 +359,7 @@ public class NPC extends JSONElement {
         }
         double experience = (((avgAttackHP * 3) + avgDefenseHP) * EXP_FACTOR_SCALING) + attackConditionBonus;
 
-        return new Double(Math.ceil(experience)).intValue();
+        return (int) Math.ceil(experience);
     }
 
 

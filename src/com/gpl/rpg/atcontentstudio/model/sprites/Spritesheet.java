@@ -26,7 +26,6 @@ public class Spritesheet extends GameDataElement {
     public File spritesheetFile;
     public int spriteWidth = 32;
     public int spriteHeight = 32;
-    public String id;
     public Category category = Category.none;
     public boolean animated = false;
 
@@ -165,12 +164,12 @@ public class Spritesheet extends GameDataElement {
         sx1 = (index * spriteWidth) % spritesheet.getWidth();
         sy1 = spriteHeight * ((index * spriteWidth) / spritesheet.getWidth());
         if (sx1 + spriteWidth > spritesheet.getWidth() || sy1 + spriteHeight > spritesheet.getHeight()) {
-            g.finalize();
+            g.dispose();
             return null;
         }
         g.drawImage(spritesheet, 0, 0, spriteWidth, spriteHeight, sx1, sy1, sx1 + spriteWidth, sy1 + spriteHeight, null);
         result.flush();
-        g.finalize();
+        g.dispose();
         cache_full_size.put(index, result);
         return result;
     }

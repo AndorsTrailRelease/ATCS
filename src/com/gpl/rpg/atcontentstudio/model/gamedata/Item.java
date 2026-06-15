@@ -97,6 +97,7 @@ public class Item extends JSONElement {
                 if (item.getDataType() == GameSource.Type.created || item.getDataType() == GameSource.Type.altered) {
                     item.writable = true;
                 }
+                item.parse(itemJson);
                 category.add(item);
             }
         } catch (FileNotFoundException e) {

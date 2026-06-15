@@ -36,6 +36,7 @@ LIBRARIES=(
   "json_simple-1.1.jar"
   "jsoup-1.10.2.jar"
   "junit-4.10.jar"
+  "picocli-4.7.6.jar"
   "prefuse.jar"
   "rsyntaxtextarea.jar"
   "ui.jar"

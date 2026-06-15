@@ -1,5 +1,8 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
+import static java.awt.event.KeyEvent.VK_B;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+
 import com.gpl.rpg.atcontentstudio.ConfigCache;
 
 import javax.imageio.ImageIO;
@@ -9,11 +12,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WorkspaceSelector extends JFrame {
 
+    @Serial
     private static final long serialVersionUID = 7518745499760748574L;
 
     public String selected = null;
@@ -40,7 +45,12 @@ public class WorkspaceSelector extends JFrame {
             combo.addItem(path);
         }
         if (ConfigCache.getLatestWorkspace() != null) {
-            combo.setSelectedItem(wsPaths.get(workspaces.indexOf(ConfigCache.getLatestWorkspace())));
+            int latestWorkspaceIndex = workspaces.indexOf(ConfigCache.getLatestWorkspace());
+            if (latestWorkspaceIndex >= 0) {
+                combo.setSelectedItem(wsPaths.get(latestWorkspaceIndex));
+            } else {
+                combo.setSelectedItem(ConfigCache.getLatestWorkspace().getAbsolutePath());
+            }
         }
         combo.addActionListener(new ActionListener() {
             @Override
@@ -52,7 +62,7 @@ public class WorkspaceSelector extends JFrame {
         });
 
 
-        ok.setEnabled(ConfigCache.getLatestWorkspace() != null);
+        ok.setEnabled(combo.getSelectedItem() != null);
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -85,6 +95,7 @@ public class WorkspaceSelector extends JFrame {
                 fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 fc.setMultiSelectionEnabled(false);
                 fc.setAcceptAllFileFilterUsed(false);
+                fc.setDialogTitle("Choose a workspace directory");
                 int result = fc.showSaveDialog(WorkspaceSelector.this);
                 if (result == JFileChooser.APPROVE_OPTION) {
                     String selected = fc.getSelectedFile().getAbsolutePath();
@@ -110,10 +121,12 @@ public class WorkspaceSelector extends JFrame {
 
         JPanel dialogPane = new JPanel();
         dialogPane.setLayout(new BorderLayout());
+        dialogPane.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         dialogPane.add(logoLabel, BorderLayout.NORTH);
         dialogPane.add(new JLabel("Workspace : "), BorderLayout.WEST);
         dialogPane.add(combo, BorderLayout.CENTER);
+        browse.setMnemonic(VK_B);
         dialogPane.add(browse, BorderLayout.EAST);
 
         JPanel buttonPane = new JPanel();
@@ -135,6 +148,18 @@ public class WorkspaceSelector extends JFrame {
         buttonPane.add(ok, c);
 
         dialogPane.add(buttonPane, BorderLayout.SOUTH);
+
+        // Set up keyboard shortcuts (Enter/Escape)
+        rootPane.setDefaultButton(ok);
+
+        KeyStroke esc = KeyStroke.getKeyStroke(VK_ESCAPE, 0);
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(esc, "cancel");
+        rootPane.getActionMap().put("cancel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cancel.doClick();
+            }
+        });
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setContentPane(dialogPane);

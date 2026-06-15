@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DialogueEditor extends JSONElementEditor {
-
     private static final long serialVersionUID = 4140553240585599873L;
 
     private static final String form_view_id = "Form";
@@ -91,6 +90,21 @@ public class DialogueEditor extends JSONElementEditor {
     private JComponent requirementValue;
     private BooleanBasedCheckBox requirementNegated;
 
+    private Requirement selectedRewardRequirement;
+    private RewardRequirementsListModel rewardRequirementsListModel;
+    @SuppressWarnings("rawtypes")
+    private JList rewardRequirementsList;
+    @SuppressWarnings("rawtypes")
+    private JComboBox rewardRequirementTypeCombo;
+    private JPanel rewardRequirementParamsPane;
+    private MyComboBox rewardRequirementObj;
+    @SuppressWarnings("rawtypes")
+    private JComboBox rewardRequirementSkill;
+    private JComponent rewardRequirementObjId;
+    private JComponent rewardRequirementValue;
+    private BooleanBasedCheckBox rewardRequirementNegated;
+
+
     private DialogueGraphView dialogueGraphView;
 
 
@@ -139,7 +153,7 @@ public class DialogueEditor extends JSONElementEditor {
         RewardsCellRenderer cellRendererRewards = new RewardsCellRenderer();
         rewardsListModel = new RewardsListModel(dialogue);
 
-        CollapsiblePanel rewards = UiUtils.getCollapsibleItemList(
+        UiUtils.CollapsibleItemListCreation rewardsPane = UiUtils.getCollapsibleItemList(
                 listener,
                 rewardsListModel,
                 () -> selectedReward = null,
@@ -153,16 +167,17 @@ public class DialogueEditor extends JSONElementEditor {
                 cellRendererRewards,
                 titleRewards,
                 (x) -> null
-        ).collapsiblePanel;
+        );
         if (dialogue.rewards == null || dialogue.rewards.isEmpty()) {
-            rewards.collapse();
+            rewardsPane.collapsiblePanel.collapse();
         }
-        pane.add(rewards, JideBoxLayout.FIX);
+        pane.add(rewardsPane.collapsiblePanel, JideBoxLayout.FIX);
+        UiUtils.resizeListToFit(rewardsPane.list);
 
         RepliesCellRenderer cellRendererReplies = new RepliesCellRenderer();
         String titleReplies = "Replies / Next Phrase: ";
         repliesListModel = new RepliesListModel(dialogue);
-        CollapsiblePanel replies = UiUtils.getCollapsibleItemList(
+        UiUtils.CollapsibleItemListCreation repliesPane = UiUtils.getCollapsibleItemList(
                 listener,
                 repliesListModel,
                 () -> selectedReply = null,
@@ -181,13 +196,13 @@ public class DialogueEditor extends JSONElementEditor {
                 cellRendererReplies,
                 titleReplies,
                 (x) -> null
-        ).collapsiblePanel;
+        );
         if (dialogue.replies == null || dialogue.replies.isEmpty()) {
-            replies.collapse();
+            repliesPane.collapsiblePanel.collapse();
         }
 
-        pane.add(replies, JideBoxLayout.FIX);
-
+        pane.add(repliesPane.collapsiblePanel, JideBoxLayout.FIX);
+        UiUtils.resizeListToFit(repliesPane.list);
 
     }
 
@@ -206,6 +221,34 @@ public class DialogueEditor extends JSONElementEditor {
             rewardsParamsPane.setLayout(new JideBoxLayout(rewardsParamsPane, JideBoxLayout.PAGE_AXIS));
             updateRewardsParamsEditorPane(rewardsParamsPane, reward, listener);
             pane.add(rewardsParamsPane, JideBoxLayout.FIX);
+
+            RewardRequirementsCellRenderer cellRenderer = new RewardRequirementsCellRenderer();
+            String title = "Requirements to receive this reward: ";
+            rewardRequirementsListModel = new RewardRequirementsListModel(reward);
+
+            UiUtils.CollapsibleItemListCreation itemsPane = UiUtils.getCollapsibleItemList(
+                    listener,
+                    rewardRequirementsListModel,
+                    () -> selectedRewardRequirement = null,
+                    (selectedItem) -> this.selectedRewardRequirement = selectedItem,
+                    () -> this.selectedRewardRequirement,
+                    (selectedItem) -> { },
+                    (editorPane) -> updateRewardRequirementsEditorPane(editorPane, this.selectedRewardRequirement, listener),
+                    target.writable,
+                    Requirement::new,
+                    cellRenderer,
+                    title,
+                    (x) -> x.required_obj
+            );
+
+            CollapsiblePanel reqPane = itemsPane.collapsiblePanel;
+            rewardRequirementsList = itemsPane.list;
+            UiUtils.resizeListToFit(rewardRequirementsList);
+            if (reward.requirements == null || reward.requirements.isEmpty()) {
+                reqPane.collapse();
+            }
+            pane.add(reqPane, JideBoxLayout.FIX);
+
         }
         pane.revalidate();
         pane.repaint();
@@ -292,20 +335,20 @@ public class DialogueEditor extends JSONElementEditor {
                     rewardConditionTimed.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            listener.valueChanged(rewardConditionTimed, new Boolean(rewardConditionTimed.isSelected()));
+                            listener.valueChanged(rewardConditionTimed, rewardConditionTimed.isSelected());
                         }
                     });
                     rewardConditionForever.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            listener.valueChanged(rewardConditionForever, new Boolean(rewardConditionForever.isSelected()));
+                            listener.valueChanged(rewardConditionForever, rewardConditionForever.isSelected());
                         }
                     });
                     if (!immunity) {
                         rewardConditionClear.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                listener.valueChanged(rewardConditionClear, new Boolean(rewardConditionClear.isSelected()));
+                                listener.valueChanged(rewardConditionClear, rewardConditionClear.isSelected());
                             }
                         });
                     }
@@ -381,6 +424,178 @@ public class DialogueEditor extends JSONElementEditor {
 
             }
         }
+        pane.revalidate();
+        pane.repaint();
+    }
+
+    public void updateRewardRequirementsEditorPane(final JPanel pane, final Requirement requirement, final FieldUpdateListener listener) {
+        boolean writable = ((Dialogue) target).writable;
+        pane.removeAll();
+
+        if (rewardRequirementObj != null) {
+            removeElementListener(rewardRequirementObj);
+        }
+
+        rewardRequirementTypeCombo = addEnumValueBox(
+                pane,
+                "Requirement type: ",
+                Requirement.RequirementType.values(),
+                requirement == null ? null : requirement.type,
+                writable,
+                listener
+        );
+
+        rewardRequirementParamsPane = new JPanel();
+        rewardRequirementParamsPane.setLayout(new JideBoxLayout(rewardRequirementParamsPane, JideBoxLayout.PAGE_AXIS));
+        updateRewardRequirementParamsEditorPane(rewardRequirementParamsPane, requirement, listener);
+        pane.add(rewardRequirementParamsPane, JideBoxLayout.FIX);
+
+        pane.revalidate();
+        pane.repaint();
+    }
+
+    public void updateRewardRequirementParamsEditorPane(final JPanel pane, final Requirement requirement, final FieldUpdateListener listener) {
+        boolean writable = ((Dialogue) target).writable;
+        Project project = ((Dialogue) target).getProject();
+        pane.removeAll();
+
+        if (rewardRequirementObj != null) {
+            removeElementListener(rewardRequirementObj);
+        }
+
+        if (requirement != null && requirement.type != null) {
+            switch (requirement.type) {
+                case consumedBonemeals:
+                case spentGold:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = addIntegerField(pane, "Quantity: ", requirement.required_value, false, writable, listener);
+                    break;
+
+                case random:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addChanceField(pane, "Chance: ", requirement.required_obj_id, "50/100", writable, listener);
+                    rewardRequirementValue = null;
+                    break;
+
+                case hasActorCondition:
+                    rewardRequirementObj = addActorConditionBox(
+                            pane, project, "Actor Condition: ", (ActorCondition) requirement.required_obj, writable, listener
+                    );
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = null;
+                    break;
+
+                case inventoryKeep:
+                case inventoryRemove:
+                case usedItem:
+                case wear:
+                case wearRemove:
+                    rewardRequirementObj = addItemBox(
+                            pane, project, "Item: ", (Item) requirement.required_obj, writable, listener
+                    );
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = addIntegerField(pane, "Quantity: ", requirement.required_value, false, writable, listener);
+                    break;
+
+                case killedMonster:
+                    rewardRequirementObj = addNPCBox(
+                            pane, project, "Monster: ", (NPC) requirement.required_obj, writable, listener
+                    );
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = addIntegerField(pane, "Quantity: ", requirement.required_value, false, writable, listener);
+                    break;
+
+                case questLatestProgress:
+                case questProgress:
+                    rewardRequirementObj = addQuestBox(
+                            pane, project, "Quest: ", (Quest) requirement.required_obj, writable, listener
+                    );
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = addQuestStageBox(
+                            pane, project, "Quest stage: ", requirement.required_value, writable, listener,
+                            (Quest) requirement.required_obj, rewardRequirementObj
+                    );
+                    break;
+
+                case skillLevel: {
+                    Requirement.SkillID skillId = null;
+                    try {
+                        skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
+                    } catch (IllegalArgumentException e) {
+                    }
+                    rewardRequirementObj = null;
+                    rewardRequirementSkill = addEnumValueBox(
+                            pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener
+                    );
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
+                    break;
+                }
+
+                case timerElapsed:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Timer ID:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Timer value: ", requirement.required_value, false, writable, listener);
+                    break;
+
+                case factionScore:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Faction ID:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Minimum score: ", requirement.required_value, true, writable, listener);
+                    break;
+
+                case factionScoreEquals:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Faction ID:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Exact value: ", requirement.required_value, true, writable, listener);
+                    break;
+
+                case date:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Date type YYYYMMTT:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Minimum date value: ", requirement.required_value, true, writable, listener);
+                    break;
+
+                case dateEquals:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Date type YYYYMMTT:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Exact date value: ", requirement.required_value, true, writable, listener);
+                    break;
+
+                case time:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Time type HHMMSS:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Minimum time value: ", requirement.required_value, true, writable, listener);
+                    break;
+
+                case timeEquals:
+                    rewardRequirementObj = null;
+                    rewardRequirementObjId = addTextField(pane, "Time type HHMMSS:", requirement.required_obj_id, writable, listener);
+                    rewardRequirementValue = addIntegerField(pane, "Exact time value: ", requirement.required_value, true, writable, listener);
+                    break;
+
+                case skillIncrease: {
+                    Requirement.SkillID skillId = null;
+                    try {
+                        skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
+                    } catch (IllegalArgumentException e) {
+                    }
+                    rewardRequirementObj = null;
+                    rewardRequirementSkill = addEnumValueBox(
+                            pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener
+                    );
+                    rewardRequirementObjId = null;
+                    rewardRequirementValue = addIntegerField(pane, "Level up: ", requirement.required_value, false, writable, listener);
+                    break;
+                }
+            }
+
+            rewardRequirementNegated = addBooleanBasedCheckBox(
+                    pane, "Negate this requirement.", requirement.negated, writable, listener
+            );
+        }
+
         pane.revalidate();
         pane.repaint();
     }
@@ -464,7 +679,7 @@ public class DialogueEditor extends JSONElementEditor {
         pane.add(repliesParamsPane, JideBoxLayout.FIX);
 
         ReplyRequirementsCellRenderer cellRendererRequirements = new ReplyRequirementsCellRenderer();
-        String titleRequirements = "Requirements the player must fulfill to select this reply: ";
+        String titleRequirements = "Requirements the player must fulfill to select this: ";
         requirementsListModel = new ReplyRequirementsListModel(reply);
         UiUtils.CollapsibleItemListCreation itemsPane = UiUtils.getCollapsibleItemList(
                 listener,
@@ -483,6 +698,7 @@ public class DialogueEditor extends JSONElementEditor {
         );
         CollapsiblePanel requirementsPane = itemsPane.collapsiblePanel;
         requirementsList = itemsPane.list;
+        UiUtils.resizeListToFit(requirementsList);
 
         if (reply.requirements == null || reply.requirements.isEmpty()) {
             requirementsPane.collapse();
@@ -681,6 +897,33 @@ public class DialogueEditor extends JSONElementEditor {
         }
     }
 
+    public static class RewardRequirementsListModel extends OrderedListenerListModel<Dialogue.Reward, Requirement> {
+        @Override
+        protected List<Requirement> getItems() {
+            return source.requirements;
+        }
+
+        @Override
+        protected void setItems(List<Requirement> items) {
+            source.requirements = items;
+        }
+
+        public RewardRequirementsListModel(Dialogue.Reward reward) {
+            super(reward);
+        }
+    }
+    public static class RewardRequirementsCellRenderer extends DefaultListCellRenderer {
+        private static final long serialVersionUID = 7987880146189575234L;
+
+        @Override
+        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (c instanceof JLabel) {
+                decorateRequirementJLabel((JLabel) c, (Requirement) value);
+            }
+            return c;
+        }
+    }
     public static void decorateRewardJLabel(JLabel label, Dialogue.Reward reward) {
         if (reward.type != null) {
             String rewardObjDesc = null;
@@ -806,6 +1049,10 @@ public class DialogueEditor extends JSONElementEditor {
         } else {
             label.setText("New, undefined reward");
         }
+        if (reward.requirements != null && !reward.requirements.isEmpty()) {
+            label.setText("[Reqs] " + label.getText());
+        }
+
     }
 
 
@@ -1054,7 +1301,9 @@ public class DialogueEditor extends JSONElementEditor {
                     selectedReply.next_phrase_id = null;
                 }
                 repliesListModel.itemChanged(selectedReply);
-            } else if (source == requirementTypeCombo) {
+            }
+            // Reply Requirement stuff...
+            else if (source == requirementTypeCombo) {
                 selectedRequirement.changeType((Requirement.RequirementType) requirementTypeCombo.getSelectedItem());
                 updateRequirementParamsEditorPane(requirementParamsPane, selectedRequirement, this);
                 requirementsListModel.itemChanged(selectedRequirement);
@@ -1102,6 +1351,57 @@ public class DialogueEditor extends JSONElementEditor {
                 requirementsListModel.itemChanged(selectedRequirement);
             } else if (source == requirementNegated) {
                 selectedRequirement.negated = (Boolean) value;
+            }
+
+            // Reward Requirement stuff...  this is ugly and should be combined with reply reqs somehow
+            else if (source == rewardRequirementTypeCombo) {
+                selectedRewardRequirement.changeType((Requirement.RequirementType) rewardRequirementTypeCombo.getSelectedItem());
+                updateRewardRequirementParamsEditorPane(rewardRequirementParamsPane, selectedRewardRequirement, this);
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementObj) {
+                if (selectedRewardRequirement.required_obj != null) {
+                    selectedRewardRequirement.required_obj.removeBacklink(dialogue);
+                }
+                selectedRewardRequirement.required_obj = (GameDataElement) value;
+                if (selectedRewardRequirement.required_obj != null) {
+                    selectedRewardRequirement.required_obj_id = selectedRewardRequirement.required_obj.id;
+                    selectedRewardRequirement.required_obj.addBacklink(dialogue);
+                } else {
+                    selectedRewardRequirement.required_obj_id = null;
+                }
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementSkill) {
+                if (selectedRewardRequirement.required_obj != null) {
+                    selectedRewardRequirement.required_obj.removeBacklink(dialogue);
+                    selectedRewardRequirement.required_obj = null;
+                }
+                if (selectedRewardRequirement.type == Requirement.RequirementType.skillLevel || selectedRewardRequirement.type == Requirement.RequirementType.skillIncrease) {
+                    selectedRewardRequirement.required_obj_id = value == null ? null : value.toString();
+                }
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementObjId) {
+                selectedRewardRequirement.required_obj_id = (String) value;
+                selectedRewardRequirement.required_obj = null;
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementValue) {
+                //Backlink removal to quest stages when selecting another quest are handled in the addQuestStageBox() method. Too complex too handle here
+                Quest quest = null;
+                QuestStage stage;
+                if (rewardRequirementValue instanceof JComboBox<?>) {
+                    quest = ((Quest) selectedRewardRequirement.required_obj);
+                    if (quest != null && selectedRewardRequirement.required_value != null) {
+                        stage = quest.getStage(selectedRewardRequirement.required_value);
+                        if (stage != null) stage.removeBacklink(dialogue);
+                    }
+                }
+                selectedRewardRequirement.required_value = (Integer) value;
+                if (quest != null) {
+                    stage = quest.getStage(selectedRewardRequirement.required_value);
+                    if (stage != null) stage.addBacklink(dialogue);
+                }
+                rewardRequirementsListModel.itemChanged(selectedRewardRequirement);
+            } else if (source == rewardRequirementNegated) {
+                selectedRewardRequirement.negated = (Boolean) value;
             }
 
             if (dialogue.state != GameDataElement.State.modified) {

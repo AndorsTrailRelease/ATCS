@@ -314,7 +314,7 @@ public class JSONCreationWizard extends JDialog {
 
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(pane, BorderLayout.CENTER);
-
+        pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         setMinimumSize(new Dimension(350, 250));
         idPane.setVisible(false);
         iconPane.setVisible(false);
@@ -322,9 +322,8 @@ public class JSONCreationWizard extends JDialog {
         updateStatus();
         pack();
 
-        Dimension sdim = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension wdim = getSize();
-        setLocation((sdim.width - wdim.width) / 2, (sdim.height - wdim.height) / 2);
+        setLocationRelativeTo(ATContentStudio.frame);
+
     }
 
     public void updateStatus() {

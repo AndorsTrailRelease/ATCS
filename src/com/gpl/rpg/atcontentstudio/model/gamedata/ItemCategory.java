@@ -120,6 +120,7 @@ public class ItemCategory extends JSONElement {
                 if (itemCat.getDataType() == GameSource.Type.created || itemCat.getDataType() == GameSource.Type.altered) {
                     itemCat.writable = true;
                 }
+                itemCat.parse(itemCatJson);
                 category.add(itemCat);
             }
         } catch (FileNotFoundException e) {

@@ -112,6 +112,7 @@ public class ActorCondition extends JSONElement {
                 if (aCond.getDataType() == GameSource.Type.created || aCond.getDataType() == GameSource.Type.altered) {
                     aCond.writable = true;
                 }
+                aCond.parse(aCondJson);
                 category.add(aCond);
             }
         } catch (FileNotFoundException e) {
