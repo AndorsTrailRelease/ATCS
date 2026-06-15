@@ -1,10 +1,12 @@
 package com.gpl.rpg.atcontentstudio;
 
 import com.gpl.rpg.atcontentstudio.io.SettingsSave;
+import com.gpl.rpg.atcontentstudio.model.Workspace;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ConfigCache implements Serializable {
@@ -45,6 +47,29 @@ public class ConfigCache implements Serializable {
         SettingsSave.saveInstance(instance, ConfigCache.CONFIG_CACHE_STORAGE, "Configuration cache");
     }
 
+    private boolean pruneMissingWorkspaces() {
+        boolean changed = false;
+
+        for (Iterator<File> iterator = knownWorkspaces.iterator(); iterator.hasNext(); ) {
+            File workspace = iterator.next();
+            if (workspace == null || !Workspace.isValidWorkspaceRoot(workspace.getAbsoluteFile())) {
+                iterator.remove();
+                changed = true;
+            }
+        }
+
+        if (latestWorkspace != null && !Workspace.isValidWorkspaceRoot(latestWorkspace.getAbsoluteFile())) {
+            latestWorkspace = null;
+            changed = true;
+        }
+
+        if (changed) {
+            save();
+        }
+
+        return changed;
+    }
+
 
     private List<File> knownWorkspaces = new ArrayList<File>();
     private File latestWorkspace = null;
@@ -53,6 +78,7 @@ public class ConfigCache implements Serializable {
 
 
     public static List<File> getKnownWorkspaces() {
+        instance.pruneMissingWorkspaces();
         return instance.knownWorkspaces;
     }
 
@@ -67,6 +93,7 @@ public class ConfigCache implements Serializable {
     }
 
     public static File getLatestWorkspace() {
+        instance.pruneMissingWorkspaces();
         return instance.latestWorkspace;
     }
 
