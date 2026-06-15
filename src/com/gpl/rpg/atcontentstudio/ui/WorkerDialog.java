@@ -37,7 +37,7 @@ public class WorkerDialog extends JDialog {
 
         JPanel messagePanel = new JPanel();
         messagePanel.setLayout(new JideBoxLayout(messagePanel, JideBoxLayout.PAGE_AXIS, 6));
-        messagePanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        messagePanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         messagePanel.setBackground(DARK_GRAY);
         JLabel messageLabel = new JLabel("<html><font size=%d>%s</font></html>".formatted((int) (5 * ATContentStudio.SCALING), message));
         messageLabel.setForeground(LIGHT_TEXT);
