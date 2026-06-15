@@ -367,7 +367,7 @@ public class ATContentStudio {
 
         rememberWorkspace(normalizedWorkspaceRoot);
         STARTED = true;
-        WorkerDialog.showTaskMessage("Loading your workspace...", null, () -> {
+        WorkerDialog.showTaskMessage("Loading workspace...", null, () -> {
             Workspace.setActive(normalizedWorkspaceRoot);
             if (Workspace.activeWorkspace.settings.useInternet.getCurrentValue()
                     && Workspace.activeWorkspace.settings.checkUpdates.getCurrentValue()) {
