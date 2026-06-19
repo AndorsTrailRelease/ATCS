@@ -30,10 +30,6 @@ public class WorkspaceActions {
     ProjectTreeNode selectedNode = null;
     TreePath[] selectedPaths = null;
 
-    /**
-     * Get a sensible workspace parent location: either the parent of the current workspace, or the home directory (check if this works on windows)
-     * @return the directory to start the chooser at
-     */
     private File getWorkspaceChooserDirectory() {
         if (Workspace.activeWorkspace != null && Workspace.activeWorkspace.baseFolder != null) {
             File parent = Workspace.activeWorkspace.baseFolder.getParentFile();
@@ -44,11 +40,6 @@ public class WorkspaceActions {
         return home != null ? new File(home) : new File(".");
     }
 
-    /**
-     * Launch a new workspace process
-     * @param workspaceRoot the root of the workspace
-     * @param dialogTitle the title to use for an error message dialog if there is an error
-     */
     public void launchWorkspace(File workspaceRoot, String dialogTitle) {
         if (workspaceRoot == null) return;
 
@@ -64,9 +55,6 @@ public class WorkspaceActions {
         }
     }
 
-    /**
-     * Restart the current workspace.  Saves the UI state, starts the restart helper process, and shuts this one down.
-     */
     private void restartCurrentWorkspace() {
         try {
             persistUiStateIfPossible();
@@ -82,17 +70,10 @@ public class WorkspaceActions {
         }
     }
 
-    /**
-     * Determine if there's an active workspace, or if we haven't opened one yet.
-     * @return true if there's an active workspace
-     */
     private boolean hasActiveWorkspace() {
         return Workspace.activeWorkspace != null && Workspace.activeWorkspace.baseFolder != null;
     }
 
-    /**
-     * Create a new workspace
-     */
     public ATCSAction newWorkspace = new ATCSAction("New Workspace...", "Creates a new workspace and opens it") {
         public void actionPerformed(ActionEvent e) {
             JFileChooser chooser = new JFileChooser(getWorkspaceChooserDirectory());
@@ -230,7 +211,8 @@ public class WorkspaceActions {
 
     public ATCSAction saveElement = new ATCSAction("Save this element", "Saves the current state of this element on disk") {
         public void actionPerformed(ActionEvent e) {
-            if (!(selectedNode instanceof GameDataElement node)) return;
+            if (!(selectedNode instanceof GameDataElement)) return;
+            final GameDataElement node = ((GameDataElement) selectedNode);
             if (node.needsSaving()) {
                 node.save();
                 ATContentStudio.frame.nodeChanged(node);
@@ -256,7 +238,6 @@ public class WorkspaceActions {
         }
 
         public void actionPerformed(ActionEvent e) {
-            // TODO: Overhaul this - check thread safety on BOTH branches (UI stuff should be on EDT only)
             if (multiMode) {
                 if (elementsToDelete == null) return;
 
@@ -273,7 +254,9 @@ public class WorkspaceActions {
                             @SuppressWarnings("unchecked")
                             GameDataCategory<JSONElement> category = (GameDataCategory<JSONElement>) element.getParent();
                             category.remove((JSONElement) element);
-                            impactedCategories.computeIfAbsent(category, k -> new HashSet<File>());
+                            if (impactedCategories.get(category) == null) {
+                                impactedCategories.put(category, new HashSet<File>());
+                            }
 
                             GameDataElement newOne = element.getProject().getGameDataElement(((JSONElement) element).getClass(), element.id);
                             if (element instanceof Quest) {
@@ -329,7 +312,8 @@ public class WorkspaceActions {
                     }
                 }.start();
             } else {
-                if (selectedNode == null || !(selectedNode instanceof GameDataElement node)) return;
+                if (selectedNode == null || !(selectedNode instanceof GameDataElement)) return;
+                final GameDataElement node = ((GameDataElement) selectedNode);
 
                 if (!ConfirmationDialogs.confirmDelete(node)) return;
 
@@ -342,51 +326,45 @@ public class WorkspaceActions {
                     @Override
                     public void run() {
                         node.childrenRemoved(new ArrayList<ProjectTreeNode>());
-                        switch (node) {
-                            case JSONElement jsonElement -> {
-                                if (node.getParent() instanceof GameDataCategory<?>) {
-                                    ((GameDataCategory<?>) node.getParent()).removeGeneric(jsonElement);
-                                    List<SaveEvent> events = node.attemptSave();
-                                    if (events == null || events.isEmpty()) {
-                                        node.save();
-                                    } else {
-                                        SwingUtilities.invokeLater(() -> new SaveItemsWizard(events, null).setVisible(true));
-                                    }
-                                    GameDataElement newOne = node.getProject().getGameDataElement(jsonElement.getClass(), node.id);
-                                    if (node instanceof Quest) {
-                                        for (QuestStage oldStage : ((Quest) node).stages) {
-                                            QuestStage newStage = newOne != null ? ((Quest) newOne).getStage(oldStage.progress) : null;
-                                            for (GameDataElement backlink : oldStage.getBacklinks()) {
-                                                backlink.elementChanged(oldStage, newStage);
-                                            }
+                        // Don't change to pattern-based switch as long as we need Java 17 support
+                        if (node instanceof JSONElement) {
+                            if (node.getParent() instanceof GameDataCategory<?>) {
+                                ((GameDataCategory<?>) node.getParent()).removeGeneric((JSONElement) node);
+                                List<SaveEvent> events = node.attemptSave();
+                                if (events == null || events.isEmpty()) {
+                                    node.save();
+                                } else {
+                                    SwingUtilities.invokeLater(() -> new SaveItemsWizard(events, null).setVisible(true));
+                                }
+                                GameDataElement newOne = node.getProject().getGameDataElement(((JSONElement) node).getClass(), node.id);
+                                if (node instanceof Quest) {
+                                    for (QuestStage oldStage : ((Quest) node).stages) {
+                                        QuestStage newStage = newOne != null ? ((Quest) newOne).getStage(oldStage.progress) : null;
+                                        for (GameDataElement backlink : oldStage.getBacklinks()) {
+                                            backlink.elementChanged(oldStage, newStage);
                                         }
                                     }
-                                    for (GameDataElement backlink : node.getBacklinks()) {
-                                        backlink.elementChanged(node, newOne);
-                                    }
                                 }
-                            }
-                            case TMXMap tmxMap -> {
-                                tmxMap.delete();
-                                GameDataElement newOne = node.getProject().getMap(node.id);
                                 for (GameDataElement backlink : node.getBacklinks()) {
                                     backlink.elementChanged(node, newOne);
                                 }
                             }
-                            case WriterModeData writerModeData -> {
-                                WriterModeDataSet parent = (WriterModeDataSet) node.getParent();
-                                parent.writerModeDataList.remove(node);
+                        } else if (node instanceof TMXMap) {
+                            ((TMXMap) node).delete();
+                            GameDataElement newOne = node.getProject().getMap(node.id);
+                            for (GameDataElement backlink : node.getBacklinks()) {
+                                backlink.elementChanged(node, newOne);
                             }
-                            case WorldmapSegment worldmapSegment -> {
-                                if (node.getParent() instanceof Worldmap) {
-                                    ((Worldmap) node.getParent()).remove(node);
-                                    node.save();
-                                    for (GameDataElement backlink : node.getBacklinks()) {
-                                        backlink.elementChanged(node, node.getProject().getWorldmapSegment(node.id));
-                                    }
+                        } else if (node instanceof WriterModeData) {
+                            WriterModeDataSet parent = (WriterModeDataSet) node.getParent();
+                            parent.writerModeDataList.remove(node);
+                        } else if (node instanceof WorldmapSegment) {
+                            if (node.getParent() instanceof Worldmap) {
+                                ((Worldmap) node.getParent()).remove(node);
+                                node.save();
+                                for (GameDataElement backlink : node.getBacklinks()) {
+                                    backlink.elementChanged(node, node.getProject().getWorldmapSegment(node.id));
                                 }
-                            }
-                            default -> {
                             }
                         }
                     }
@@ -581,7 +559,7 @@ public class WorkspaceActions {
         }
 
         public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
-            setEnabled(selectedNode instanceof Dialogue);
+            setEnabled(selectedNode != null && selectedNode instanceof Dialogue);
         }
     };
 
@@ -596,6 +574,9 @@ public class WorkspaceActions {
 
     };
 
+    List<ATCSAction> selectionAwareActions = new ArrayList<WorkspaceActions.ATCSAction>();
+
+
     private void persistUiStateIfPossible() {
         if (ATContentStudio.frame != null) {
             ATContentStudio.frame.persistWorkspaceUiState();
@@ -603,8 +584,6 @@ public class WorkspaceActions {
             Workspace.saveActive();
         }
     }
-
-    final List<ATCSAction> selectionAwareActions = new ArrayList<WorkspaceActions.ATCSAction>();
 
     public WorkspaceActions() {
         selectionAwareActions.add(closeProject);
@@ -620,6 +599,7 @@ public class WorkspaceActions {
         selectionAwareActions.add(compareNPCs);
         selectionAwareActions.add(exportProject);
         selectionAwareActions.add(createWriter);
+//		selectionAwareActions.add(testCommitWriter);
         selectionAwareActions.add(generateWriter);
         selectionChanged(null, null);
     }
@@ -662,7 +642,6 @@ public class WorkspaceActions {
             return values.get(key);
         }
 
-        private final List<PropertyChangeListener> listeners = new CopyOnWriteArrayList<PropertyChangeListener>();
         @Override
         public void putValue(String key, Object value) {
             PropertyChangeEvent event = new PropertyChangeEvent(this, key, values.get(key), value);
@@ -685,6 +664,8 @@ public class WorkspaceActions {
         public boolean isEnabled() {
             return enabled;
         }
+
+        private List<PropertyChangeListener> listeners = new CopyOnWriteArrayList<PropertyChangeListener>();
 
         @Override
         public void addPropertyChangeListener(PropertyChangeListener listener) {
