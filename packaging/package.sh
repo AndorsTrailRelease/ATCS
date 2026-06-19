@@ -72,7 +72,7 @@ echo 'Building java classes'
 
 # shellcheck disable=SC2086
 # (we need word splitting here to pass multiple files)
-javac -cp "${TEMP_DIR}" -d "${TEMP_DIR}" ${SOURCE_FILES}
+javac --release 17 -cp "${TEMP_DIR}" -d "${TEMP_DIR}" ${SOURCE_FILES}
 if [ $? -ne 0 ]; then
     echo "Compilation failed. Please check errors above."
     exit 1
