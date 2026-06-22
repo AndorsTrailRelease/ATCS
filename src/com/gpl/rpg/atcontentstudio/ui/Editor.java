@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 
@@ -551,6 +552,72 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             }
         });
         JButton nullify = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
+        comboPane.add(nullify, JideBoxLayout.FIX);
+        nullify.setEnabled(writable);
+        nullify.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enumValuesCombo.setSelectedItem(null);
+                listener.valueChanged(enumValuesCombo, null);
+            }
+        });
+
+        pane.add(comboPane, JideBoxLayout.FIX);
+        return enumValuesCombo;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static <E extends Enum<E>> JComboBox addEnumValueBoxWithDescriptions(JPanel pane, String label, E[] values, E initialValue, boolean writable, final Function<E, String> descGetter, final FieldUpdateListener listener) {
+        JPanel comboPane = new JPanel();
+        comboPane.setLayout(new JideBoxLayout(comboPane, JideBoxLayout.LINE_AXIS, 6));
+        JLabel comboLabel = new JLabel(label);
+        comboPane.add(comboLabel, JideBoxLayout.FIX);
+        final JComboBox<E> enumValuesCombo = new JComboBox<E>(values);
+        enumValuesCombo.setEnabled(writable);
+        enumValuesCombo.setSelectedItem(initialValue);
+        // Renderer shows description and tooltip with enum name
+        enumValuesCombo.setRenderer(new DefaultListCellRenderer() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value == null) {
+                    label.setText("None");
+                } else {
+                    try {
+                        E e = (E) value;
+                        String desc = descGetter.apply(e);
+                        label.setText(desc == null ? e.toString() : desc);
+                        label.setToolTipText(e.toString());
+                    } catch (ClassCastException ex) {
+                        // fallback
+                        label.setText(value.toString());
+                    }
+                }
+                return label;
+            }
+        });
+
+        // Sorted model by description (null-safe, case-insensitive)
+        java.util.List<E> typeList = new java.util.ArrayList<E>(java.util.Arrays.asList(values));
+        typeList.sort(Comparator.comparing(descGetter, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
+        E[] sortedArray = typeList.toArray(Arrays.copyOf(values, typeList.size()));
+        DefaultComboBoxModel<E> sortedModel = new DefaultComboBoxModel<E>(sortedArray);
+        enumValuesCombo.setModel(sortedModel);
+        enumValuesCombo.setSelectedItem(initialValue);
+
+        enumValuesCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    listener.valueChanged(enumValuesCombo, e.getItem());
+                }
+            }
+        });
+
+        JButton nullify = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
+        comboPane.add(enumValuesCombo, JideBoxLayout.VARY);
         comboPane.add(nullify, JideBoxLayout.FIX);
         nullify.setEnabled(writable);
         nullify.addActionListener(new ActionListener() {

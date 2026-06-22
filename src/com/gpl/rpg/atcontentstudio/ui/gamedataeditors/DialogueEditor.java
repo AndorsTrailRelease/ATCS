@@ -217,33 +217,16 @@ public class DialogueEditor extends JSONElementEditor {
         }
 
         if (reward != null) {
-            rewardTypeCombo = addEnumValueBox(pane, "Reward type: ", Dialogue.Reward.RewardType.values(), reward.type, ((Dialogue) target).writable, listener);
-            // Show human-readable descriptions in the combo instead of enum names
-            rewardTypeCombo.setRenderer(new DefaultListCellRenderer() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (value == null) {
-                        label.setText("None");
-                    } else if (value instanceof Dialogue.Reward.RewardType) {
-                        label.setText(((Dialogue.Reward.RewardType) value).getDescription());
-                        label.setToolTipText(((Dialogue.Reward.RewardType) value).name());
-                    }
-                    return label;
-                }
-            });
-            // Replace model with a description-sorted model (alphabetical by description)
-            java.util.List<Dialogue.Reward.RewardType> typeList = new java.util.ArrayList<>(java.util.Arrays.asList(Dialogue.Reward.RewardType.values()));
-            // Null-safe, case-insensitive sort by getDescription()
-            typeList.sort(Comparator.comparing(
+            // Use the modular described-enum combo so items are rendered by description and sorted alphabetically.
+            rewardTypeCombo = addEnumValueBoxWithDescriptions(
+                    pane,
+                    "Reward type: ",
+                    Dialogue.Reward.RewardType.values(),
+                    reward.type,
+                    ((Dialogue) target).writable,
                     Dialogue.Reward.RewardType::getDescription,
-                    Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)
-            ));
-            DefaultComboBoxModel<Dialogue.Reward.RewardType> sortedModel = new DefaultComboBoxModel<>(typeList.toArray(new Dialogue.Reward.RewardType[0]));
-            rewardTypeCombo.setModel(sortedModel);
-            rewardTypeCombo.setSelectedItem(reward.type);
+                    listener
+            );
             rewardsParamsPane = new JPanel();
             rewardsParamsPane.setLayout(new JideBoxLayout(rewardsParamsPane, JideBoxLayout.PAGE_AXIS));
             updateRewardsParamsEditorPane(rewardsParamsPane, reward, listener);
@@ -440,7 +423,7 @@ public class DialogueEditor extends JSONElementEditor {
                     }
                     rewardMap = null;
                     rewardObjId = null;// addTextField(pane, "Skill ID: ", reward.reward_obj_id, writable, listener);
-                    rewardObjIdCombo = addEnumValueBox(pane, "Skill ID: ", Requirement.SkillID.values(), skillId, writable, listener);
+                    rewardObjIdCombo = addEnumValueBoxWithDescriptions(pane, "Skill ID: ", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
                     rewardObj = null;
                     rewardValue = null;
                     break;
@@ -480,12 +463,13 @@ public class DialogueEditor extends JSONElementEditor {
             removeElementListener(rewardRequirementObj);
         }
 
-        rewardRequirementTypeCombo = addEnumValueBox(
+        rewardRequirementTypeCombo = addEnumValueBoxWithDescriptions(
                 pane,
                 "Requirement type: ",
                 Requirement.RequirementType.values(),
                 requirement == null ? null : requirement.type,
                 writable,
+                Requirement.RequirementType::getDescription,
                 listener
         );
 
@@ -789,7 +773,7 @@ public class DialogueEditor extends JSONElementEditor {
             removeElementListener(requirementObj);
         }
 
-        requirementTypeCombo = addEnumValueBox(pane, "Requirement type: ", Requirement.RequirementType.values(), requirement == null ? null : requirement.type, writable, listener);
+        requirementTypeCombo = addEnumValueBoxWithDescriptions(pane, "Requirement type: ", Requirement.RequirementType.values(), requirement == null ? null : requirement.type, writable, Requirement.RequirementType::getDescription, listener);
         requirementParamsPane = new JPanel();
         requirementParamsPane.setLayout(new JideBoxLayout(requirementParamsPane, JideBoxLayout.PAGE_AXIS));
         updateRequirementParamsEditorPane(requirementParamsPane, requirement, listener);
@@ -851,7 +835,7 @@ public class DialogueEditor extends JSONElementEditor {
                     } catch (IllegalArgumentException e) {
                     }
                     requirementObj = null;
-                    requirementSkill = addEnumValueBox(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener);
+                    requirementSkill = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
                     break;
@@ -897,7 +881,7 @@ public class DialogueEditor extends JSONElementEditor {
                     } catch (IllegalArgumentException e) {
                     }
                     requirementObj = null;
-                    requirementSkill = addEnumValueBox(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener);
+                    requirementSkill = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level up: ", requirement.required_value, false, writable, listener);
                     break;

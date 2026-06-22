@@ -45,45 +45,113 @@ public class Requirement extends JSONElement {
     public GameDataElement required_obj = null;
 
     public enum RequirementType {
-        questProgress,
-        questLatestProgress,
-        inventoryRemove,
-        inventoryKeep,
-        wear,
-        skillLevel,
-        killedMonster,
-        timerElapsed,
-        usedItem,
-        spentGold,
-        consumedBonemeals,
-        hasActorCondition,
-        factionScore,
-        random,
-        factionScoreEquals,
-        wearRemove,
-        date,
-        dateEquals,
-        time,
-        timeEquals,
-        skillIncrease
+        questProgress("Quest progress reached"),
+        questLatestProgress("Latest quest progress"),
+        inventoryRemove("Remove item from inventory"),
+        inventoryKeep("Keep item in inventory"),
+        wear("Wearing item"),
+        skillLevel("Skill level at least"),
+        killedMonster("Killed monster(s)"),
+        timerElapsed("Timer elapsed"),
+        usedItem("Used item"),
+        spentGold("Spent gold"),
+        consumedBonemeals("Consumed bonemeal(s)"),
+        hasActorCondition("Has actor condition"),
+        factionScore("Minimum faction score"),
+        random("Random chance"),
+        factionScoreEquals("Exact faction score"),
+        wearRemove("Removed worn item"),
+        date("Date at least"),
+        dateEquals("Exact date"),
+        time("Time at least"),
+        timeEquals("Exact time"),
+        skillIncrease("Skill increased by amount");
+
+        private final String description;
+
+        RequirementType(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     public enum SkillID {
-        weaponChance, weaponDmg, barter, dodge, barkSkin, moreCriticals, betterCriticals, speed                // Raises max ap
-        , coinfinder, moreExp, cleave                // +10ap on kill
-        , eater                // +1hp per kill
-        , fortitude            // +N hp per levelup
-        , evasion            // increase successful flee chance & reduce chance of monster attack
-        , regeneration        // +N hp per round
-        , lowerExploss, magicfinder, resistanceMental    // lowers chance to get negative active conditions by monsters (Mental like Dazed)
-        , resistancePhysical    // lowers chance to get negative active conditions by monsters (Physical Capacity like Minor fatigue)
-        , resistanceBlood    // lowers chance to get negative active conditions by monsters (Blood Disorder like Weak Poison)
-        , shadowBless, sporeImmunity, crit1            // lowers atk ability
-        , crit2            // lowers def ability ,rejuvenation	// Reduces magnitudes of conditions
-        , rejuvenation    // Reduces magnitudes of conditions
-        , taunt            // Causes AP loss of attackers that miss
-        , concussion        // AC loss for monsters with (AC-BC)>N
-        , weaponProficiencyDagger, weaponProficiency1hsword, weaponProficiency2hsword, weaponProficiencyAxe, weaponProficiencyBlunt, weaponProficiencyUnarmed, weaponProficiencyPole, armorProficiencyShield, armorProficiencyUnarmored, armorProficiencyLight, armorProficiencyHeavy, fightstyleDualWield, fightstyle2hand, fightstyleWeaponShield, specializationDualWield, specialization2hand, specializationWeaponShield
+        // Offensive / weapon skills
+        weaponChance("Chance to hit with weapons"),
+        weaponDmg("Weapon damage bonus"),
+
+        // General / utility skills
+        barter("Better prices when trading"),
+        dodge("Chance to dodge attacks"),
+        barkSkin("Defensive skill (bark skin)") ,
+        moreCriticals("Increased chance to score critical hits"),
+        betterCriticals("Stronger critical hit damage"),
+        speed("Increases action points / initiative"), // Raises max AP
+
+        // Pickup / passive bonuses
+        coinfinder("Find more coins on kills"),
+        moreExp("Gain more experience from kills"),
+
+        // Special attack / on-kill effects
+        cleave("Cleave: damage multiple enemies (+AP on kill)"), // +10ap on kill
+
+        // Sustenance / sustain effects
+        eater("Extra HP gained per kill"), // +1hp per kill
+
+        // Health / survivability
+        fortitude("Extra HP per level-up"), // +N hp per levelup
+        evasion("Increase chance to successfully flee and reduce incoming attacks"), // increase successful flee chance & reduce chance of monster attack
+        regeneration("Regenerate HP each round"), // +N hp per round
+
+        // Misc finders / resistances
+        lowerExploss("Reduce experience loss on death"),
+        magicfinder("Find magical items more often"),
+        resistanceMental("Resist mental conditions (e.g. Dazed)"), // lowers chance to get negative active conditions by monsters (Mental like Dazed)
+        resistancePhysical("Resist physical conditions (e.g. Minor fatigue)"), // lowers chance to get negative active conditions by monsters (Physical Capacity like Minor fatigue)
+        resistanceBlood("Resist blood disorders (e.g. Weak Poison)"), // lowers chance to get negative active conditions by monsters (Blood Disorder like Weak Poison)
+
+        // Blessings / immunities / crit modifiers
+        shadowBless("Shadow blessing (flavor/defensive)") ,
+        sporeImmunity("Immunity to spore effects"),
+        crit1("Lower attack ability modifier (crit tier 1)"), // lowers atk ability
+        crit2("Lower defense ability modifier (crit tier 2)"), // lowers def ability
+        rejuvenation("Reduce magnitudes of active conditions"), // Reduces magnitudes of conditions
+
+        // Crowd-control / disruption
+        taunt("Taunt: causes AP loss for attackers that miss"), // Causes AP loss of attackers that miss
+        concussion("Concussion: reduces AC for certain monsters"), // AC loss for monsters with (AC-BC)>N
+
+        // Weapon/armor proficiencies and fighting styles
+        weaponProficiencyDagger("Dagger proficiency"),
+        weaponProficiency1hsword("1H sword proficiency"),
+        weaponProficiency2hsword("2H sword proficiency"),
+        weaponProficiencyAxe("Axe proficiency"),
+        weaponProficiencyBlunt("Blunt weapon proficiency"),
+        weaponProficiencyUnarmed("Unarmed proficiency"),
+        weaponProficiencyPole("Polearm proficiency"),
+        armorProficiencyShield("Shield proficiency"),
+        armorProficiencyUnarmored("Unarmored proficiency"),
+        armorProficiencyLight("Light armor proficiency"),
+        armorProficiencyHeavy("Heavy armor proficiency"),
+        fightstyleDualWield("Dual-wield fighting style"),
+        fightstyle2hand("Two-handed fighting style"),
+        fightstyleWeaponShield("Weapon and shield fighting style"),
+        specializationDualWield("Specialization: dual wield"),
+        specialization2hand("Specialization: two-handed"),
+        specializationWeaponShield("Specialization: weapon+shield");
+
+        private final String description;
+
+        SkillID(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     @Override
