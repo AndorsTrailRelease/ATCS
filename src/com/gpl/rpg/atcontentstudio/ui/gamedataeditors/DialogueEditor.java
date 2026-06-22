@@ -19,6 +19,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 public class DialogueEditor extends JSONElementEditor {
     private static final long serialVersionUID = 4140553240585599873L;
@@ -235,7 +236,11 @@ public class DialogueEditor extends JSONElementEditor {
             });
             // Replace model with a description-sorted model (alphabetical by description)
             java.util.List<Dialogue.Reward.RewardType> typeList = new java.util.ArrayList<>(java.util.Arrays.asList(Dialogue.Reward.RewardType.values()));
-            typeList.sort((a, b) -> a.getDescription().compareToIgnoreCase(b.getDescription()));
+            // Null-safe, case-insensitive sort by getDescription()
+            typeList.sort(Comparator.comparing(
+                    Dialogue.Reward.RewardType::getDescription,
+                    Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)
+            ));
             DefaultComboBoxModel<Dialogue.Reward.RewardType> sortedModel = new DefaultComboBoxModel<>(typeList.toArray(new Dialogue.Reward.RewardType[0]));
             rewardTypeCombo.setModel(sortedModel);
             rewardTypeCombo.setSelectedItem(reward.type);
@@ -344,13 +349,16 @@ public class DialogueEditor extends JSONElementEditor {
                     if (!immunity) radioGroup.add(rewardConditionClear);
 
                     if (immunity) {
-                        rewardConditionTimed.setSelected(
-                                reward.reward_value == null || (!reward.reward_value.equals(ActorCondition.DURATION_FOREVER) && !reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR)));
-                        rewardConditionForever.setSelected(reward.reward_value != null && !reward.reward_value.equals(ActorCondition.DURATION_FOREVER));
-                        rewardConditionClear.setSelected(reward.reward_value != null && !reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR));
+                        // For immunity rewards we only offer Timed / Forever (no "clear" option),
+                        // so don't touch rewardConditionClear which is not created in this mode.
+                        boolean isTimed = reward.reward_value == null || (!reward.reward_value.equals(ActorCondition.DURATION_FOREVER) && !reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR));
+                        boolean isForever = reward.reward_value != null && reward.reward_value.equals(ActorCondition.DURATION_FOREVER);
+                        rewardConditionTimed.setSelected(isTimed);
+                        rewardConditionForever.setSelected(isForever);
                     } else {
                         rewardConditionTimed.setSelected(reward.reward_value != null && !reward.reward_value.equals(ActorCondition.DURATION_FOREVER));
                         rewardConditionForever.setSelected(reward.reward_value == null || reward.reward_value.equals(ActorCondition.DURATION_FOREVER));
+                        if (rewardConditionClear != null) rewardConditionClear.setSelected(reward.reward_value != null && reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR));
                     }
                     rewardValue.setEnabled(rewardConditionTimed.isSelected());
 
