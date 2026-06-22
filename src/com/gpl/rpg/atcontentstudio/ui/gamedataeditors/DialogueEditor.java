@@ -421,6 +421,20 @@ public class DialogueEditor extends JSONElementEditor {
                     rewardObj = null;
                     rewardValue = addIntegerField(pane, "Icon number: ", reward.reward_value, false, writable, listener);
                     break;
+                case setNextPhraseID:
+                    // choose initial Dialogue for the dialogue combo from reward.reward_obj or reward.reward_obj_id
+                    Dialogue initialNextPhrase = null;
+                    if (reward.reward_obj instanceof Dialogue) {
+                        initialNextPhrase = (Dialogue) reward.reward_obj;
+                    } else if (reward.reward_obj_id != null) {
+                        initialNextPhrase = ((Dialogue) target).getProject().getDialogue(reward.reward_obj_id);
+                    }
+                    rewardMap = null;
+                    rewardObjId = null;
+                    rewardObjIdCombo = addDialogueBox(pane, ((Dialogue) target).getProject(), "Next phrase: ", initialNextPhrase, writable, listener);
+                    rewardObj = null;
+                    rewardValue = null;
+                    break;
 
             }
         }
@@ -1045,6 +1059,10 @@ public class DialogueEditor extends JSONElementEditor {
                     label.setText("Change Icon to " + reward.reward_value + " " + rewardObjDesc);
                     if (reward.reward_obj != null) label.setIcon(new ImageIcon(DefaultIcons.getNPCIcon()));
                     break;
+                case setNextPhraseID:
+                    label.setText("Set next phrase ID to " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getDialogueIcon()));
+                    break;
             }
         } else {
             label.setText("New, undefined reward");
@@ -1240,7 +1258,32 @@ public class DialogueEditor extends JSONElementEditor {
                 selectedReward.reward_obj_id = rewardObjId.getText();
                 rewardsListModel.itemChanged(selectedReward);
             } else if (source == rewardObjIdCombo) {
-                selectedReward.reward_obj_id = rewardObjIdCombo.getSelectedItem().toString();
+                Object sel = rewardObjIdCombo.getSelectedItem();
+
+                // Remove backlink from previous reward_obj if any
+                if (selectedReward.reward_obj != null) {
+                    selectedReward.reward_obj.removeBacklink(dialogue);
+                }
+                selectedReward.reward_obj = null;
+                selectedReward.reward_obj_id = null;
+
+                if (sel == null) {
+                    // nothing else to do - both fields cleared
+                } else if (sel instanceof GameDataElement) {
+                    // If the combo contains a GameDataElement (Dialogue, Item, Quest, etc.)
+                    selectedReward.reward_obj = (GameDataElement) sel;
+                    selectedReward.reward_obj_id = selectedReward.reward_obj.id;
+                    selectedReward.reward_obj.addBacklink(dialogue);
+                } else if (sel instanceof Enum) {
+                    // Enum selections (e.g. TMXMap.ColorFilter)
+                    selectedReward.reward_obj_id = ((Enum<?>) sel).name();
+                } else if (sel instanceof String) {
+                    // Plain string selection
+                    selectedReward.reward_obj_id = (String) sel;
+                } else {
+                    // Fallback: store string representation
+                    selectedReward.reward_obj_id = sel.toString();
+                }
                 rewardsListModel.itemChanged(selectedReward);
             } else if (source == rewardObj) {
                 if (selectedReward.reward_obj != null) {
