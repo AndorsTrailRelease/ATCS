@@ -49,33 +49,43 @@ public class Dialogue extends JSONElement {
         public TMXMap map = null;
 
         public enum RewardType {
-            questProgress,
-            removeQuestProgress,
-            dropList,
-            skillIncrease,
-            actorCondition,
-            actorConditionImmunity,
-            alignmentChange,
-            alignmentSet,
-            alignmentToReg1,
-            alignmentToReg2,
-            alignmentToReg3,
-            alignmentFromReg1,
-            alignmentAdd,
-            alignmentSub,
-            alignmentDiv,
-            alignmentMult,
-            giveItem,
-            createTimer,
-            spawnAll,
-            removeSpawnArea,
-            deactivateSpawnArea,
-            activateMapObjectGroup,
-            deactivateMapObjectGroup,
-            changeMapFilter,
-            mapchange,
-            changeIcon,
-            setNextPhraseID,
+            questProgress("Give quest progress"),
+            removeQuestProgress("Remove quest progress"),
+            dropList("Give contents of a droplist"),
+            skillIncrease("Increase a skill level"),
+            actorCondition("Apply an actor condition"),
+            actorConditionImmunity("Give immunity to an actor condition"),
+            alignmentChange("Change faction alignment"),
+            alignmentSet("Set faction alignment"),
+            alignmentToReg1("Store alignment to reg1"),
+            alignmentToReg2("Store alignment to reg2"),
+            alignmentToReg3("Store alignment to reg3"),
+            alignmentFromReg1("Load alignment from reg1"),
+            alignmentAdd("Add to alignment"),
+            alignmentSub("Subtract from alignment"),
+            alignmentDiv("Divide by alignment (reg1 := reg1 / alignment)"),
+            alignmentMult("Multiply by alignment (reg1 := reg1 * alignment)"),
+            giveItem("Give an item"),
+            createTimer("Create a timer"),
+            spawnAll("Respawn all monsters in a spawn area"),
+            removeSpawnArea("Remove all monsters in a spawn area"),
+            deactivateSpawnArea("Deactivate a spawn area"),
+            activateMapObjectGroup("Activate a map object group"),
+            deactivateMapObjectGroup("Deactivate a map object group"),
+            changeMapFilter("Change the map color filter"),
+            mapchange("Teleport player to another map/place"),
+            changeIcon("Change icon number"),
+            setNextPhraseID("Set the next dialogue phrase ID");
+
+            private final String description;
+
+            RewardType(String description) {
+                this.description = description;
+            }
+
+            public String getDescription() {
+                return description;
+            }
         }
 
         public List<Requirement> requirements = null;
