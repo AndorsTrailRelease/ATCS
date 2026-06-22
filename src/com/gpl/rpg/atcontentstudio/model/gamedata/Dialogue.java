@@ -74,7 +74,8 @@ public class Dialogue extends JSONElement {
             deactivateMapObjectGroup,
             changeMapFilter,
             mapchange,
-            changeIcon
+            changeIcon,
+            setNextPhraseID,
         }
 
         public List<Requirement> requirements = null;
