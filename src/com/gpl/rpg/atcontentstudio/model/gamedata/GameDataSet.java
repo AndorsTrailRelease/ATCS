@@ -8,6 +8,7 @@ import com.gpl.rpg.atcontentstudio.model.Project.ResourceSet;
 import com.gpl.rpg.atcontentstudio.model.ProjectTreeNode;
 import com.gpl.rpg.atcontentstudio.model.SavedSlotCollection;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
+import com.gpl.rpg.atcontentstudio.utils.Profiling;
 
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -53,6 +54,8 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
 
         this.parent = source;
         v = new SavedSlotCollection();
+        long loadStart = Profiling.LOAD ? System.nanoTime() : 0L;
+        int filesLoaded = 0;
 
         if (parent.type.equals(GameSource.Type.altered) || parent.type.equals(GameSource.Type.created)) {
             this.baseFolder = new File(parent.baseFolder, GameDataSet.DEFAULT_REL_PATH_IN_PROJECT);
@@ -79,106 +82,118 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
 
         //Start parsing to populate categories' content.
         if (parent.type == GameSource.Type.source && (parent.parent.sourceSetToUse == ResourceSet.debugData || parent.parent.sourceSetToUse == ResourceSet.gameData)) {
+            // This block loads ONLY files that are defined in the res/values/loadresources.xml or loadresources_debug.xml.  Any "extra" files in the source repo are ignored.
             String suffix = (parent.parent.sourceSetToUse == ResourceSet.debugData) ? DEBUG_SUFFIX : "";
-
-            if (parent.referencedSourceFiles.get(GAME_AC_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_AC_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        ActorCondition.fromJson(f, actorConditions);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
+            if (Profiling.LOAD) {
+                Profiling.printf("Loading %s data files from %s using resource arrays (suffix '%s')...", parent.type, baseFolder.getAbsolutePath(), suffix);
+                Profiling.increaseIndent();
             }
 
-            if (parent.referencedSourceFiles.get(GAME_DIALOGUES_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_DIALOGUES_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        Dialogue.fromJson(f, dialogues);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
+            filesLoaded += loadReferencedJson(GAME_AC_ARRAY_NAME + suffix, actorConditions, ActorCondition::fromJson, "actor conditions");
+            filesLoaded += loadReferencedJson(GAME_DIALOGUES_ARRAY_NAME + suffix, dialogues, Dialogue::fromJson, "dialogues");
+            filesLoaded += loadReferencedJson(GAME_DROPLISTS_ARRAY_NAME + suffix, droplists, Droplist::fromJson, "droplists");
+            filesLoaded += loadReferencedJson(GAME_ITEMS_ARRAY_NAME + suffix, items, Item::fromJson, "items");
+            filesLoaded += loadReferencedJson(GAME_ITEMCAT_ARRAY_NAME + suffix, itemCategories, ItemCategory::fromJson, "item categories");
+            filesLoaded += loadReferencedJson(GAME_NPC_ARRAY_NAME + suffix, npcs, NPC::fromJson, "NPCs");
+            filesLoaded += loadReferencedJson(GAME_QUESTS_ARRAY_NAME + suffix, quests, Quest::fromJson, "quests");
+            if (Profiling.LOAD) {
+                Profiling.decreaseIndent();
+                Profiling.printf("Loaded %d data files in %d ms", filesLoaded, Profiling.elapsedMillis(loadStart));
             }
 
-            if (parent.referencedSourceFiles.get(GAME_DROPLISTS_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_DROPLISTS_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        Droplist.fromJson(f, droplists);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
+        } else {
+            if (Profiling.LOAD) {
+                Profiling.printf("Loading %s data files from %s using directory contents...", parent.type, baseFolder.getAbsolutePath());
+                Profiling.increaseIndent();
             }
-
-            if (parent.referencedSourceFiles.get(GAME_ITEMS_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_ITEMS_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        Item.fromJson(f, items);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
-            }
-
-            if (parent.referencedSourceFiles.get(GAME_ITEMCAT_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_ITEMCAT_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        ItemCategory.fromJson(f, itemCategories);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
-            }
-
-            if (parent.referencedSourceFiles.get(GAME_NPC_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_NPC_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        NPC.fromJson(f, npcs);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
-            }
-
-            if (parent.referencedSourceFiles.get(GAME_QUESTS_ARRAY_NAME + suffix) != null) {
-                for (String resource : parent.referencedSourceFiles.get(GAME_QUESTS_ARRAY_NAME + suffix)) {
-                    File f = new File(baseFolder, resource.replaceAll(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
-                    if (f.exists()) {
-                        Quest.fromJson(f, quests);
-                    } else {
-                        Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
-                    }
-                }
-            }
-
-        } else if (parent.type != GameSource.Type.referenced) {
-            List<File> files = new ArrayList<File>(Arrays.stream(baseFolder.listFiles()).collect(Collectors.toList()));
-            Collections.sort(files,Comparator.comparing(x->x.getName()));
+            // This block runs for other gameSource types (altered, created) and for the "source" (repo) type when the selected source is "All Files".
+            // It loads EVERYTHING in the directory. Since we don't have the XML-defined resourceKey to determine the category of file, we infer it from the filename.
+            List<File> files = new ArrayList<>(Arrays.stream(Objects.requireNonNull(baseFolder.listFiles())).toList());
+            files.sort(Comparator.comparing(File::getName));
+            long folderStart = Profiling.LOAD ? System.nanoTime() : 0L;
             for (File f : files) {
-                if (f.getName().startsWith("actorconditions_")) {
-                    ActorCondition.fromJson(f, actorConditions);
-                } else if (f.getName().startsWith("conversationlist_")) {
-                    Dialogue.fromJson(f, dialogues);
-                } else if (f.getName().startsWith("droplists_")) {
-                    Droplist.fromJson(f, droplists);
-                } else if (f.getName().startsWith("itemlist_")) {
-                    Item.fromJson(f, items);
-                } else if (f.getName().startsWith("itemcategories_")) {
-                    ItemCategory.fromJson(f, itemCategories);
-                } else if (f.getName().startsWith("monsterlist_")) {
-                    NPC.fromJson(f, npcs);
-                } else if (f.getName().startsWith("questlist")) {
-                    Quest.fromJson(f, quests);
-                }
+                if (loadSingleFile(f, actorConditions, "actorconditions_", ActorCondition::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, dialogues, "conversationlist_", Dialogue::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, droplists, "droplists_", Droplist::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, items, "itemlist_", Item::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, itemCategories, "itemcategories_", ItemCategory::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, npcs, "monsterlist_", NPC::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, quests, "questlist", Quest::fromJson)) filesLoaded++;
+            }
+            if (Profiling.LOAD) {
+                Profiling.decreaseIndent();
+                Profiling.printf("Loaded %d project data files from %s in %d ms", filesLoaded, baseFolder.getAbsolutePath(), Profiling.elapsedMillis(folderStart));
             }
         }
+
+    }
+
+    /**
+     * Loads all JSON files referenced by a resource array in the source project metadata.
+     *
+     * @param resourceKey the resource-array key to read from {@code referencedSourceFiles}
+     * @param category the destination category to populate
+     * @param loader callback used to load each discovered file into the category
+     * @param label human-readable category label used for profiling output
+     * @param <T> the element type handled by the category
+     * @return the number of files successfully loaded
+     */
+    private <T extends JSONElement> int loadReferencedJson(String resourceKey, GameDataCategory<T> category, JsonLoader<T> loader, String label) {
+        List<String> resources = parent.referencedSourceFiles.get(resourceKey);
+        if (resources == null) return 0;
+        long catStart = Profiling.LOAD ? System.nanoTime() : 0L;
+        int count = 0;
+        for (String resource : resources) {
+            File f = new File(baseFolder, resource.replace(RESOURCE_PREFIX, "") + FILENAME_SUFFIX);
+            if (f.exists()) {
+                loader.load(f, category);
+                count++;
+                if (Profiling.VERBOSE) {
+                    Profiling.printf("Loaded %s", f.getName());
+                }
+            } else {
+                Notification.addWarn("Unable to locate resource " + resource + " in the game source for project " + getProject().name);
+            }
+        }
+        if (Profiling.LOAD) {
+            Profiling.printf("Loaded %s: %d files in %d ms", label, count, Profiling.elapsedMillis(catStart));
+        }
+        return count;
+    }
+
+    /**
+     * Attempts to load a single file into the provided category when its name matches the expected prefix.
+     *
+     * @param f file to inspect and possibly load
+     * @param category the destination category to populate
+     * @param prefix filename prefix that identifies the category
+     * @param loader callback used to load the file into the category
+     * @param <T> the element type handled by the category
+     * @return {@code true} if the file matched the prefix and was loaded, otherwise {@code false}
+     */
+    private <T extends JSONElement> boolean loadSingleFile(File f, GameDataCategory<T> category, String prefix, JsonLoader<T> loader) {
+        if (!f.getName().startsWith(prefix)) return false;
+        loader.load(f, category);
+        if (Profiling.VERBOSE) {
+            Profiling.printf("Loaded %s", f.getName());
+        }
+        return true;
+    }
+
+    /**
+     * Functional interface used to adapt the different category-specific JSON load methods.
+     *
+     * @param <T> the element type handled by the category
+     */
+    @FunctionalInterface
+    private interface JsonLoader<T extends JSONElement> {
+        /**
+         * Loads the specified file into the supplied category.
+         *
+         * @param file the JSON file to load
+         * @param category the target category
+         */
+        void load(File file, GameDataCategory<T> category);
     }
 
     @Override

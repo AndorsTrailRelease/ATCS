@@ -34,7 +34,7 @@ public class ProjectCreationWizard extends JDialog {
 
     final JLabel errorLabel;
 
-    public ProjectCreationWizard() {
+    public ProjectCreationWizard(Runnable onStartCreation, Runnable onFinished) {
         super(ATContentStudio.frame);
         setTitle("Create project");
         projectNameField = new JTextField();
@@ -156,7 +156,8 @@ public class ProjectCreationWizard extends JDialog {
                 if (!Workspace.activeWorkspace.knownMapSourcesFolders.contains(atSourceFolder)) {
                     Workspace.activeWorkspace.knownMapSourcesFolders.add(atSourceFolder);
                 }
-                Workspace.createProject(projectNameField.getText(), atSourceFolder, (Project.ResourceSet) resourceSetToUse.getSelectedItem());
+                onStartCreation.run();
+                Workspace.createProject(projectNameField.getText(), atSourceFolder, (Project.ResourceSet) resourceSetToUse.getSelectedItem(), onFinished);
                 ProjectCreationWizard.this.dispose();
             }
         });

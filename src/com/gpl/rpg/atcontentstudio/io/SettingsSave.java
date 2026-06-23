@@ -6,6 +6,12 @@ import java.io.*;
 
 public class SettingsSave {
 
+    /**
+     * Serializes an object to a file.  No longer used for Projects since June 2025; still used for other data.
+     * @param obj - object to serialize
+     * @param f - file to serialize to
+     * @param type - Object type, used in notification error messages only
+     */
     public static void saveInstance(Object obj, File f, String type) {
         try {
             FileOutputStream fos = new FileOutputStream(f);
@@ -32,6 +38,14 @@ public class SettingsSave {
         }
     }
 
+    /**
+     * Deserializes an object from a file.
+     * No longer used for Projects since June 2025, except for compatibility, but used by ConfigCache and Workspace
+     * TODO: Convert ConfigCache and Workspace saves to json format also?
+     * @param f - file to deserialize from
+     * @param type - used in notification error messages only
+     * @return - deserialized object, to be cast to the appropriate type by caller
+     */
     public static Object loadInstance(File f, String type) {
         FileInputStream fis;
         Object result = null;
