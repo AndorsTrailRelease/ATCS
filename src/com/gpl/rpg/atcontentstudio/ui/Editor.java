@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
+import java.text.Collator;
 
 public abstract class Editor extends JPanel implements ProjectElementListener {
 
@@ -775,7 +776,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         gdePane.setLayout(new JideBoxLayout(gdePane, JideBoxLayout.LINE_AXIS, 6));
         JLabel gdeLabel = new JLabel(label);
         gdePane.add(gdeLabel, JideBoxLayout.FIX);
-        final MyComboBox gdeBox = new MyComboBox(dataClass, comboModel);
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        final GDEComboModel wrappedModel = new SortedGDEComboModel(comboModel);
+        final MyComboBox gdeBox = new MyComboBox(dataClass, wrappedModel);
         gdeBox.setRenderer(new GDERenderer(false, writable));
         new ComboBoxSearchable(gdeBox) {
             @Override
@@ -960,6 +963,123 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             fireIntervalRemoved(this, index, index);
         }
 
+    }
+
+    /**
+     * Wrapper around a GDEComboModel that presents the same elements but
+     * sorted by their description (as returned by getDesc()).
+     *
+     * This keeps the same ComboBoxModel API so callers (e.g. MyComboBox)
+     * can cast to GDEComboModel and call itemAdded/itemRemoved; the wrapper
+     * rebuilds a sorted view and fires change events when the underlying
+     * model changes.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static class SortedGDEComboModel<E extends GameDataElement> extends GDEComboModel<E> {
+
+        private static final long serialVersionUID = 1L;
+
+        private final GDEComboModel<E> source;
+        private final java.util.List<E> sorted = new ArrayList<E>();
+
+        public SortedGDEComboModel(GDEComboModel<E> source) {
+            super(source.project, source.selected);
+            this.source = source;
+            rebuild();
+
+            // Listen to the source model so we rebuild when it changes indirectly.
+            source.addListDataListener(new javax.swing.event.ListDataListener() {
+                @Override
+                public void intervalAdded(javax.swing.event.ListDataEvent e) {
+                    rebuild();
+                    fireContentsChanged(SortedGDEComboModel.this, 0, getSize() - 1);
+                }
+
+                @Override
+                public void intervalRemoved(javax.swing.event.ListDataEvent e) {
+                    rebuild();
+                    fireContentsChanged(SortedGDEComboModel.this, 0, getSize() - 1);
+                }
+
+                @Override
+                public void contentsChanged(javax.swing.event.ListDataEvent e) {
+                    rebuild();
+                    fireContentsChanged(SortedGDEComboModel.this, 0, getSize() - 1);
+                }
+            });
+        }
+
+        private void rebuild() {
+            sorted.clear();
+            int s = source.getSize();
+            for (int i = 1; i < s; i++) {
+                E e = source.getElementAt(i);
+                if (e != null) sorted.add(e);
+            }
+            // Locale-aware comparison on a normalized description key.
+            final Collator collator = Collator.getInstance(Locale.getDefault());
+            collator.setStrength(Collator.PRIMARY); // basic comparison (ignore case/diacritics)
+            sorted.sort((o1, o2) -> {
+                String a = normalizeDesc(o1 == null ? null : o1.getDesc());
+                String b = normalizeDesc(o2 == null ? null : o2.getDesc());
+                return collator.compare(a, b);
+            });
+        }
+
+        private String normalizeDesc(String desc) {
+            if (desc == null) return "";
+            String d = desc.trim();
+            // strip leading markers like '*' that indicate modified/unsaved
+            if (d.startsWith("*")) d = d.substring(1).trim();
+            // remove trailing " (id)" suffixes to avoid sorting by numeric ids
+            d = d.replaceAll(" \\([^)]*\\)$", "");
+            // collapse whitespace
+            d = d.replaceAll("\\s+", " ");
+            return d;
+        }
+
+        @Override
+        public int getSize() {
+            // +1 for the null sentinel at index 0
+            return sorted.size() + 1;
+        }
+
+        @Override
+        public E getElementAt(int index) {
+            if (index == 0) return null;
+            return sorted.get(index - 1);
+        }
+
+        @Override
+        public E getTypedElementAt(int index) {
+            return sorted.get(index);
+        }
+
+        @Override
+        public void setSelectedItem(Object anItem) {
+            // delegate selection to the source model so external callers see the same selected item
+            source.setSelectedItem(anItem);
+            this.selected = (E) anItem;
+            fireContentsChanged(this, -1, -1);
+        }
+
+        @Override
+        public Object getSelectedItem() {
+            return source.getSelectedItem();
+        }
+
+        @Override
+        public void itemAdded(E item, int index) {
+            // when underlying content changes, rebuild sorted view and notify listeners
+            rebuild();
+            fireContentsChanged(this, 0, getSize() - 1);
+        }
+
+        @Override
+        public void itemRemoved(E item, int index) {
+            rebuild();
+            fireContentsChanged(this, 0, getSize() - 1);
+        }
     }
 
     public static class GDERenderer extends DefaultListCellRenderer {
