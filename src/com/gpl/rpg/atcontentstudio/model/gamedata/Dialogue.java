@@ -49,22 +49,22 @@ public class Dialogue extends JSONElement {
         public TMXMap map = null;
 
         public enum RewardType {
-            questProgress("Give quest progress"),
+            questProgress("Grant quest progress"),
             removeQuestProgress("Remove quest progress"),
             dropList("Give contents of a droplist"),
             skillIncrease("Increase a skill level"),
             actorCondition("Apply an actor condition"),
             actorConditionImmunity("Give immunity to an actor condition"),
-            alignmentChange("Change faction alignment"),
-            alignmentSet("Set faction alignment"),
-            alignmentToReg1("Store alignment to reg1"),
-            alignmentToReg2("Store alignment to reg2"),
-            alignmentToReg3("Store alignment to reg3"),
-            alignmentFromReg1("Load alignment from reg1"),
-            alignmentAdd("Add to alignment"),
-            alignmentSub("Subtract from alignment"),
-            alignmentDiv("Divide by alignment (reg1 := reg1 / alignment)"),
-            alignmentMult("Multiply by alignment (reg1 := reg1 * alignment)"),
+            alignmentChange("Alignment: Set value to"),
+            alignmentSet("Alignment: Set faction"),
+            alignmentToReg1("Alignment: Store to reg1"),
+            alignmentToReg2("Alignment: Store to reg2"),
+            alignmentToReg3("Alignment: Store to reg3"),
+            alignmentFromReg1("Alignment: Load from reg1"),
+            alignmentAdd("Alignment: Add"),
+            alignmentSub("Alignment: Subtract"),
+            alignmentDiv("Alignment: Divide by (reg1 := reg1 / alignment)"),
+            alignmentMult("Alignment: Multiply by (reg1 := reg1 * alignment)"),
             giveItem("Give an item"),
             createTimer("Create a timer"),
             spawnAll("Respawn all monsters in a spawn area"),
@@ -75,7 +75,7 @@ public class Dialogue extends JSONElement {
             changeMapFilter("Change the map color filter"),
             mapchange("Teleport player to another map/place"),
             changeIcon("Change icon number"),
-            setNextPhraseID("Set the next dialogue phrase ID");
+            setNextPhraseID("Set the $nextPhraseID dialogue variable");
 
             private final String description;
 

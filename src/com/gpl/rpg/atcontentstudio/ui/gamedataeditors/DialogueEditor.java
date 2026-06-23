@@ -34,12 +34,12 @@ public class DialogueEditor extends JSONElementEditor {
 
 
     private static final String[] replyTypes = new String[]{
-            "Phrase leads to another without replies.",
-            "NPC replies too.",
-            "Reply ends dialogue.",
-            "Engage fight with NPC.",
-            "Remove NPC from map.",
-            "Start trading with NPC."
+            "Phrase leads to another without replies",
+            "NPC replies too",
+            "Reply ends dialogue",
+            "Engage fight with NPC",
+            "Remove NPC from map",
+            "Start trading with NPC"
     };
     private static final int GO_NEXT_INDEX = 0;
     private static final int STD_REPLY_INDEX = 1;

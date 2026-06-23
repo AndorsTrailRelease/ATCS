@@ -45,27 +45,27 @@ public class Requirement extends JSONElement {
     public GameDataElement required_obj = null;
 
     public enum RequirementType {
-        questProgress("Quest progress reached"),
-        questLatestProgress("Latest quest progress"),
-        inventoryRemove("Remove item from inventory"),
-        inventoryKeep("Keep item in inventory"),
-        wear("Wearing item"),
-        skillLevel("Skill level at least"),
-        killedMonster("Killed monster(s)"),
-        timerElapsed("Timer elapsed"),
-        usedItem("Used item"),
-        spentGold("Spent gold"),
-        consumedBonemeals("Consumed bonemeal(s)"),
-        hasActorCondition("Has actor condition"),
-        factionScore("Minimum faction score"),
+        questProgress("Quest stage has been achieved"),
+        questLatestProgress("Quest is now at stage"),
+        inventoryRemove("Hero has item in inventory (and remove it)"),
+        inventoryKeep("Hero has item in inventory"),
+        wear("Hero is wearing item"),
+        skillLevel("Skill level is at least"),
+        killedMonster("Hero has killed monster(s)"),
+        timerElapsed("Timer has elapsed"),
+        usedItem("Hero has used item"),
+        spentGold("Hero has spent gold"),
+        consumedBonemeals("Hero has consumed bonemeal potion(s)"),
+        hasActorCondition("Hero has actor condition"),
+        factionScore("Faction score is at least"),
         random("Random chance"),
-        factionScoreEquals("Exact faction score"),
-        wearRemove("Removed worn item"),
-        date("Date at least"),
-        dateEquals("Exact date"),
-        time("Time at least"),
-        timeEquals("Exact time"),
-        skillIncrease("Skill increased by amount");
+        factionScoreEquals("Faction score is exactly"),
+        wearRemove("Hero is wearing item (and remove it from inventory)"),
+        date("Date is on or after"),
+        dateEquals("Date is exactly"),
+        time("Time is at least"),
+        timeEquals("Time is exactly"),
+        skillIncrease("Skill increase is available");
 
         private final String description;
 
