@@ -243,7 +243,7 @@ public class GameSource implements ProjectTreeNode, Serializable, JsonSerializab
             case referenced:
                 return (needsSaving() ? "*" : "") + "Referenced data";
             case source:
-                return (needsSaving() ? "*" : "") + "AT Source"; //The fact that it is from "source" is already mentionned by its parent.
+                return (needsSaving() ? "*" : "") + "Game source"; // Changed from "AT Source" to preserve the old sort order (after Altered/Created)
             default:
                 return (needsSaving() ? "*" : "") + "Game data";
         }
