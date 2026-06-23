@@ -197,7 +197,12 @@ public class Requirement extends JSONElement {
         ensureParseIfNeeded();
         Project proj = getProject();
         if (proj == null) {
-            Notification.addError("Error linking requirement " + getDesc() + ". No parent project found.");
+            Notification.addError("Error linking requirement '%s' from %s.  No parent project found.".formatted(getDesc(), jsonFile));
+            return;
+        }
+
+        if(type == null) {
+            Notification.addError("Error linking requirement '%s' in element '%s' from %s.  Requirement type is null.".formatted(getDesc(), ((GameDataElement) parent).id, jsonFile));
             return;
         }
         switch (type) {
