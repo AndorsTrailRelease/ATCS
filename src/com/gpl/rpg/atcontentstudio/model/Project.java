@@ -109,8 +109,12 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         loadSpritesheetProperties();
         Map json = FileUtils.mapFromJsonFile(projectFile);
 
-        Profiling.printf("Loading project %s from %s with source type %s from JSON file...", json.get("name"), projectFile.getPath(), json.get("sourceSetToUse"));
-        Profiling.run("Initialize project from json", true, () -> this.fromMap(json));
+        if(Profiling.LOAD) {
+            Profiling.printf("Loading project %s from %s with source type %s from JSON file...", json.get("name"), projectFile.getPath(), json.get("sourceSetToUse"));
+            Profiling.run("Initialize project from json", true, () -> this.fromMap(json));
+        } else {
+            this.fromMap(json);
+        }
 
         initializeData();
         save();
@@ -265,13 +269,16 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             p.save();
         }
 
-        Profiling.printf("Loading project %s from %s with source type %s...", p.name, p.baseFolder, p.sourceSetToUse);
-        try {
-            Profiling.run("Loading project", true, () -> p.refreshTransients(w)); // Actual loading and linking done here
-        } finally {
-            Profiling.printf("Loaded project %s.", p.name);
+        if(Profiling.LOAD) {
+            Profiling.printf("Loading project %s from %s with source type %s...", p.name, p.baseFolder, p.sourceSetToUse);
+            try {
+                Profiling.run("Loading project", true, () -> p.refreshTransients(w)); // Actual loading and linking done here
+            } finally {
+                Profiling.printf("Loaded project %s.", p.name);
+            }
+        } else {
+            p.refreshTransients(w);
         }
-
         return p;
     }
 

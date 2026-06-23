@@ -1230,7 +1230,11 @@ public class DialogueEditor extends JSONElementEditor {
                     return;
                 }
             } else if (source == messageField) {
-                dialogue.message = (String) value;
+                if(((String) value).isEmpty()) {
+                    dialogue.message = null;
+                } else {
+                    dialogue.message = (String) value;
+                }
             } else if (source == switchToNpcBox) {
                 if (dialogue.switch_to_npc != null) {
                     dialogue.switch_to_npc.removeBacklink(dialogue);

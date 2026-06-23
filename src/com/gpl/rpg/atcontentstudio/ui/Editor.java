@@ -199,12 +199,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     public static JTextField addTextField(JPanel pane, String label, String initialValue, boolean editable, final FieldUpdateListener listener) {
         final JTextField tfField = new JTextField(initialValue);
         addTextComponent(pane, label, editable, listener, tfField, false, false);
-        tfField.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                listener.valueChanged(tfField, tfField.getText());
-            }
-        });
+        tfField.addActionListener((e) -> listener.valueChanged(tfField, tfField.getText()));
         return tfField;
     }
 
@@ -226,12 +221,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         nullify.setEnabled(editable);
         pane.add(tfPane, JideBoxLayout.FIX);
 
-        nullify.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tfField.setText("");
-                listener.valueChanged(tfField, null);
-            }
+        nullify.addActionListener(e -> {
+            tfField.setText("");
+            listener.valueChanged(tfField, null);
         });
         tfField.getDocument().addDocumentListener(new DocumentListener() {
             @Override

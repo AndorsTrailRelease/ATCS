@@ -304,7 +304,9 @@ public class ProjectsTree extends JPanel {
             return "slot:bookmarks";
         }
         if (node instanceof BookmarkFolder) {
-            return "bookmarkFolder:" + ((BookmarkFolder) node).getDesc();
+            String desc = ((BookmarkFolder) node).getDesc();
+            if (desc != null && desc.startsWith("*")) desc = desc.replaceFirst("^\\*+", "");
+            return "bookmarkFolder:" + desc;
         }
         if (node instanceof BookmarkEntry) {
             BookmarkEntry bookmarkEntry = (BookmarkEntry) node;
@@ -314,7 +316,9 @@ public class ProjectsTree extends JPanel {
             GameDataElement gameDataElement = (GameDataElement) node;
             return "element:" + node.getClass().getName() + ":" + gameDataElement.id;
         }
-        return "node:" + node.getClass().getName() + ":" + node.getDesc();
+        String desc = node.getDesc();
+        if (desc != null && desc.startsWith("*")) desc = desc.replaceFirst("^\\*+", "");
+        return "node:" + node.getClass().getName() + ":" + desc;
     }
 
     private static ProjectTreeNode findChildByTreeStateKey(ProjectTreeNode parent, String key) {
@@ -540,7 +544,10 @@ public class ProjectsTree extends JPanel {
                 String db = b == null ? "" : b.getDesc();
                 if (da == null) da = "";
                 if (db == null) db = "";
-                int r = String.CASE_INSENSITIVE_ORDER.compare(da, db);
+                // Ignore leading '*' markers (modified indicator) when sorting so saving state doesn't change order
+                String na = da.startsWith("*") ? da.replaceFirst("^\\*+", "") : da;
+                String nb = db.startsWith("*") ? db.replaceFirst("^\\*+", "") : db;
+                int r = String.CASE_INSENSITIVE_ORDER.compare(na, nb);
                 if (r != 0) return r;
                 // Tie-breaker: use underlying index so sorting is deterministic
                 return Integer.compare(parent.getIndex((TreeNode) a), parent.getIndex((TreeNode) b));
