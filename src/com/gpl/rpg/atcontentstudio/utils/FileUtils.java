@@ -30,7 +30,8 @@ public class FileUtils {
         } catch (IOException e) {
             //Impossible with a StringWriter
         }
-        return writer.toString();
+        String result = writer.toString();
+        return unescapeUnicode(result);
     }
     public static String toJsonString(List json) {
         StringWriter writer = new JsonPrettyWriter();
@@ -39,7 +40,37 @@ public class FileUtils {
         } catch (IOException e) {
             //Impossible with a StringWriter
         }
-        return writer.toString();
+        String result = writer.toString();
+        return unescapeUnicode(result);
+    }
+
+    private static String unescapeUnicode(String input) {
+        if (input == null || !input.contains("\\u")) return input;
+        StringBuilder sb = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); ) {
+            char c = input.charAt(i);
+            if (c == '\\' && i + 5 < input.length() && input.charAt(i + 1) == 'u') {
+                String hex = input.substring(i + 2, i + 6);
+                try {
+                    int code = Integer.parseInt(hex, 16);
+                    // Only unescape non-ASCII unicode sequences. Keep ASCII-range escapes (<= 0x7F)
+                    // to avoid introducing unescaped JSON syntax characters like '"' or '\\'.
+                    if (code < 0x80) {
+                        sb.append("\\u").append(hex);
+                    } else {
+                        sb.append((char) code);
+                    }
+                    i += 6;
+                } catch (NumberFormatException ex) {
+                    sb.append(c);
+                    i++;
+                }
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
     }
 
     public static Object fromJsonString(String json) {
