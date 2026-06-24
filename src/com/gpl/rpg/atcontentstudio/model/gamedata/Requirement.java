@@ -80,68 +80,68 @@ public class Requirement extends JSONElement {
 
     public enum SkillID {
         // Offensive / weapon skills
-        weaponChance("Chance to hit with weapons"),
-        weaponDmg("Weapon damage bonus"),
+        weaponChance("Weapon Accuracy - Increased attack chance"),
+        weaponDmg("Hard Hit - Increased attack damage"),
 
         // General / utility skills
-        barter("Better prices when trading"),
-        dodge("Chance to dodge attacks"),
-        barkSkin("Defensive skill (bark skin)") ,
-        moreCriticals("Increased chance to score critical hits"),
-        betterCriticals("Stronger critical hit damage"),
-        speed("Increases action points / initiative"), // Raises max AP
+        barter("Merchant - Better shop prices"),
+        dodge("Dodge - Increased block chance"),
+        barkSkin("Bark Skin - Damage resistance"),
+        moreCriticals("More Criticals - Increased critical skill"),
+        betterCriticals("Better Criticals - Increased critical damage"),
+        speed("Combat Speed - Increased maximum action points"),
 
         // Pickup / passive bonuses
-        coinfinder("Find more coins on kills"),
-        moreExp("Gain more experience from kills"),
+        coinfinder("Treasure Hunter - Higher chance of finding gold"),
+        moreExp("Quick Learner - More experience from monster kills"),
 
         // Special attack / on-kill effects
-        cleave("Cleave: damage multiple enemies (+AP on kill)"), // +10ap on kill
+        cleave("Cleave - Recover action points on every kill"),
 
         // Sustenance / sustain effects
-        eater("Extra HP gained per kill"), // +1hp per kill
+        eater("Corpse Eater - Recover health points on every kill"),
 
         // Health / survivability
-        fortitude("Extra HP per level-up"), // +N hp per levelup
-        evasion("Increase chance to successfully flee and reduce incoming attacks"), // increase successful flee chance & reduce chance of monster attack
-        regeneration("Regenerate HP each round"), // +N hp per round
+        fortitude("Increased Fortitude - Gain health on each level up"),
+        evasion("Evasion - Increased chance of fleeing"),
+        regeneration("Regeneration - Gain health every round"),
 
         // Misc finders / resistances
-        lowerExploss("Reduce experience loss on death"),
-        magicfinder("Find magical items more often"),
-        resistanceMental("Resist mental conditions (e.g. Dazed)"), // lowers chance to get negative active conditions by monsters (Mental like Dazed)
-        resistancePhysical("Resist physical conditions (e.g. Minor fatigue)"), // lowers chance to get negative active conditions by monsters (Physical Capacity like Minor fatigue)
-        resistanceBlood("Resist blood disorders (e.g. Weak Poison)"), // lowers chance to get negative active conditions by monsters (Blood Disorder like Weak Poison)
+        lowerExploss("Failure Mastery - Decrease amount of lost experience when dying"),
+        magicfinder("Magic Finder - Increased chance of finding magic items"),
+        resistanceMental("Strong Mind - Resistance against mental conditions"),
+        resistancePhysical("Enduring Body - Resistance against physical capacity conditions"),
+        resistanceBlood("Pure Blood - Resistance against blood disorders"),
 
         // Blessings / immunities / crit modifiers
-        shadowBless("Shadow blessing (flavor/defensive)") ,
-        sporeImmunity("Immunity to spore effects"),
-        crit1("Lower attack ability modifier (crit tier 1)"), // lowers atk ability
-        crit2("Lower defense ability modifier (crit tier 2)"), // lowers def ability
-        rejuvenation("Reduce magnitudes of active conditions"), // Reduces magnitudes of conditions
+        shadowBless("Dark blessing of the Shadow - Resistance against all types of conditions"),
+        sporeImmunity("Spore poison immunity - Full immunity to spore poison"),
+        crit1("Internal bleeding - Chance of internal bleeding"),
+        crit2("Fracture - Chance of bone fracture"),
+        rejuvenation("Rejuvenation - Chance of effect removal"),
 
         // Crowd-control / disruption
-        taunt("Taunt: causes AP loss for attackers that miss"), // Causes AP loss of attackers that miss
-        concussion("Concussion: reduces AC for certain monsters"), // AC loss for monsters with (AC-BC)>N
+        taunt("Taunt - Attacker loses AP on miss"),
+        concussion("Concussion - Chance of concussion"),
 
         // Weapon/armor proficiencies and fighting styles
-        weaponProficiencyDagger("Dagger proficiency"),
-        weaponProficiency1hsword("1H sword proficiency"),
-        weaponProficiency2hsword("2H sword proficiency"),
-        weaponProficiencyAxe("Axe proficiency"),
-        weaponProficiencyBlunt("Blunt weapon proficiency"),
-        weaponProficiencyUnarmed("Unarmed proficiency"),
-        weaponProficiencyPole("Polearm proficiency"),
-        armorProficiencyShield("Shield proficiency"),
-        armorProficiencyUnarmored("Unarmored proficiency"),
-        armorProficiencyLight("Light armor proficiency"),
-        armorProficiencyHeavy("Heavy armor proficiency"),
-        fightstyleDualWield("Dual-wield fighting style"),
-        fightstyle2hand("Two-handed fighting style"),
-        fightstyleWeaponShield("Weapon and shield fighting style"),
-        specializationDualWield("Specialization: dual wield"),
-        specialization2hand("Specialization: two-handed"),
-        specializationWeaponShield("Specialization: weapon+shield");
+        weaponProficiencyDagger("Dagger proficiency - Better at fighting with daggers"),
+        weaponProficiency1hsword("One-handed sword proficiency - Better at fighting with one-handed swords"),
+        weaponProficiency2hsword("Two-handed sword proficiency - Better at fighting with two-handed swords"),
+        weaponProficiencyAxe("Axe proficiency - Better at fighting with axes"),
+        weaponProficiencyBlunt("Blunt weapon proficiency - Better at fighting with blunt weapons"),
+        weaponProficiencyUnarmed("Unarmed fighting - Better at fighting without weapons"),
+        weaponProficiencyPole("Pole weapon proficiency - Better at fighting with pole weapons"),
+        armorProficiencyShield("Shield proficiency - Make better use of shields and parrying weapons"),
+        armorProficiencyUnarmored("Unarmored fighting - Better at fighting without armor"),
+        armorProficiencyLight("Light armor proficiency - Make better use of light armor"),
+        armorProficiencyHeavy("Heavy armor proficiency - Make better use of heavy armor"),
+        fightstyleDualWield("Fighting style: Dual wield - Wield two weapons at the same time"),
+        fightstyle2hand("Fighting style: Two-handed weapon - Make better use of weapons that require both hands"),
+        fightstyleWeaponShield("Fighting style: Weapon and shield - Better at fighting with weapon and shield"),
+        specializationDualWield("Specialization: Dual wield - Expert at dual wielding"),
+        specialization2hand("Specialization: Two-handed weapon - Expert at two-handed weapons"),
+        specializationWeaponShield("Specialization: Weapon and shield - Expert at fighting with weapon and shield");
 
         private final String description;
 
