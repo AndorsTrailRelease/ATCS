@@ -216,15 +216,17 @@ public class WorkspaceActions {
 
     };
 
-    public ATCSAction deleteProject = new ATCSAction("Delete Project", "Deletes the project, and all created/altered data, from disk") {
+    public ATCSAction deleteProject = new ATCSAction("Delete Project", "Deletes the project from the workspace, optionally removing its folder from disk") {
         public void actionPerformed(ActionEvent e) {
             if (selectedNode instanceof Project) {
-                if (ConfirmationDialogs.confirmProjectDelete()) {
-                    Workspace.deleteProject((Project) selectedNode);
+                Boolean deleteFolder = ConfirmationDialogs.confirmProjectDelete(((Project) selectedNode).name);
+                if (deleteFolder != null) {
+                    Workspace.deleteProject((Project) selectedNode, deleteFolder);
                 }
             } else if (selectedNode instanceof ClosedProject) {
-                if (ConfirmationDialogs.confirmProjectDelete()) {
-                    Workspace.deleteProject((ClosedProject) selectedNode);
+                Boolean deleteFolder = ConfirmationDialogs.confirmProjectDelete(((ClosedProject) selectedNode).name);
+                if (deleteFolder != null) {
+                    Workspace.deleteProject((ClosedProject) selectedNode, deleteFolder);
                 }
             }
         }

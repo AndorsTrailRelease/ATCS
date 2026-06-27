@@ -422,32 +422,30 @@ public class Workspace implements ProjectTreeNode, Serializable, JsonSerializabl
         return null;
     }
 
-    public static void deleteProject(ClosedProject cp) {
-        cp.childrenRemoved(new ArrayList<ProjectTreeNode>());
-        activeWorkspace.projects.remove(cp);
-        activeWorkspace.projectsOpenByName.remove(cp.name);
-        activeWorkspace.projectsName.remove(cp.name);
-        if (delete(new File(activeWorkspace.baseFolder, cp.name))) {
-            Notification.addSuccess("Closed project " + cp.name
-                                            + " successfully deleted.");
-        } else {
-            Notification.addError("Error while deleting closed project "
-                                          + cp.name + ". Files may remain in the workspace.");
-        }
-        saveActive();
+    public static void deleteProject(ClosedProject cp, boolean deleteFolder) {
+        deleteProject(cp, cp.name, new File(activeWorkspace.baseFolder, cp.name), deleteFolder, "Closed project");
     }
 
-    public static void deleteProject(Project p) {
-        p.childrenRemoved(new ArrayList<ProjectTreeNode>());
-        activeWorkspace.projects.remove(p);
-        activeWorkspace.projectsOpenByName.remove(p.name);
-        activeWorkspace.projectsName.remove(p.name);
-        if (delete(p.baseFolder)) {
-            Notification.addSuccess("Project " + p.name
-                                            + " successfully deleted.");
+    public static void deleteProject(Project p, boolean deleteFolder) {
+        deleteProject(p, p.name, p.baseFolder, deleteFolder, "Project");
+    }
+
+    private static void deleteProject(ProjectTreeNode projectNode, String projectName, File projectFolder, boolean deleteFolder, String projectKind) {
+        projectNode.childrenRemoved(new ArrayList<ProjectTreeNode>());
+        activeWorkspace.projects.remove(projectNode);
+        activeWorkspace.projectsOpenByName.remove(projectName);
+        activeWorkspace.projectsName.remove(projectName);
+
+        if (deleteFolder) {
+            if (projectFolder.exists() && delete(projectFolder)) {
+                Notification.addSuccess(projectKind + " " + projectName + " and its folder were successfully deleted.");
+            } else if (!projectFolder.exists()) {
+                Notification.addWarn(projectKind + " " + projectName + " was removed from the workspace, but its folder was not found on disk.");
+            } else {
+                Notification.addError("Error while deleting " + projectKind.toLowerCase() + " " + projectName + ". Files may remain in the workspace.");
+            }
         } else {
-            Notification.addError("Error while deleting project " + p.name
-                                          + ". Files may remain in the workspace.");
+            Notification.addSuccess(projectKind + " " + projectName + " was removed from the workspace.");
         }
         saveActive();
     }

@@ -12,8 +12,8 @@ import java.util.List;
 
 public class ClosedProject implements ProjectTreeNode {
 
-    String name;
-    Workspace parent;
+    public String name;
+    public Workspace parent;
 
     public ClosedProject(Workspace w, String name) {
         this.parent = w;
