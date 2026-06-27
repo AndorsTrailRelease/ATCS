@@ -559,7 +559,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         comboPane.setLayout(new JideBoxLayout(comboPane, JideBoxLayout.LINE_AXIS, 6));
         JLabel comboLabel = new JLabel(label);
         comboPane.add(comboLabel, JideBoxLayout.FIX);
-        @SuppressWarnings("unchecked") final JComboBox enumValuesCombo = new JComboBox(values);
+        Enum[] sortedValues = Arrays.copyOf(values, values.length);
+        Arrays.sort(sortedValues, Comparator.comparing(v -> v == null ? "" : v.toString(), String.CASE_INSENSITIVE_ORDER));
+        @SuppressWarnings("unchecked") final JComboBox enumValuesCombo = new JComboBox(sortedValues);
         enumValuesCombo.setEnabled(writable);
         enumValuesCombo.setSelectedItem(initialValue);
         comboPane.add(enumValuesCombo, JideBoxLayout.VARY);
