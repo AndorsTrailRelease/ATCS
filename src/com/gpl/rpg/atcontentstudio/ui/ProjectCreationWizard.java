@@ -153,11 +153,12 @@ public class ProjectCreationWizard extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File atSourceFolder = new File((String) atSourceSelectionCombo.getSelectedItem());
+                String projectName = projectNameField.getText().trim();
                 if (!Workspace.activeWorkspace.knownMapSourcesFolders.contains(atSourceFolder)) {
                     Workspace.activeWorkspace.knownMapSourcesFolders.add(atSourceFolder);
                 }
                 onStartCreation.run();
-                Workspace.createProject(projectNameField.getText(), atSourceFolder, (Project.ResourceSet) resourceSetToUse.getSelectedItem(), onFinished);
+                Workspace.createProject(projectName, atSourceFolder, (Project.ResourceSet) resourceSetToUse.getSelectedItem(), onFinished);
                 ProjectCreationWizard.this.dispose();
             }
         });
@@ -260,26 +261,38 @@ public class ProjectCreationWizard extends JDialog {
             this.okButton.setEnabled(false);
             return;
         }
+        String projectName = projectNameField.getText();
+        if (!projectName.equals(projectName.trim())) {
+            errorLabel.setText("<html><font color=\"#FF0000\">Project names cannot start or end with spaces.</font></html>");
+            this.okButton.setEnabled(false);
+            return;
+        }
         if (atSourceSelectionCombo.getSelectedItem() == null || ((String) atSourceSelectionCombo.getSelectedItem()).length() <= 0) {
             errorLabel.setText("<html><font color=\"#FF0000\">Select an AT source root folder.</font></html>");
             this.okButton.setEnabled(false);
             return;
         }
-        File projFolder = new File(Workspace.activeWorkspace.baseFolder, projectNameField.getText() + File.separator);
+
+        File projFolder = new File(Workspace.activeWorkspace.baseFolder, projectName + File.separator);
         File sourceFolder = new File((String) atSourceSelectionCombo.getSelectedItem());
-        if (projFolder.exists()) {
-            errorLabel.setText("<html><font color=\"#FF0000\">A project with this name already exists.</font></html>");
+
+        // Check if the project name is already registered in the workspace (not just present on disk)
+        if (Workspace.activeWorkspace.projectsName.contains(projectName)) {
+            errorLabel.setText("<html><font color=\"#FF0000\">A project with this name already exists in this workspace.</font></html>");
             this.okButton.setEnabled(false);
             return;
-        } else {
-            try {
-                projFolder.getCanonicalPath();
-            } catch (IOException ioe) {
-                errorLabel.setText("<html><font color=\"#FF0000\">" + projectNameField.getText() + " is not a valid project name.</font></html>");
-                this.okButton.setEnabled(false);
-                return;
-            }
         }
+
+        // Validate the project folder name (canonical path) to catch invalid names early
+        try {
+            projFolder.getCanonicalPath();
+        } catch (IOException ioe) {
+            errorLabel.setText("<html><font color=\"#FF0000\">" + projectName + " is not a valid project name.</font></html>");
+            this.okButton.setEnabled(false);
+            return;
+        }
+
+        // Validate AT source folder and required subfolders
         if (!sourceFolder.exists()) {
             errorLabel.setText("<html><font color=\"#FF0000\">The selected AT source root folder does not exist.</font></html>");
             this.okButton.setEnabled(false);
@@ -304,11 +317,17 @@ public class ProjectCreationWizard extends JDialog {
                 return;
             }
         }
-        if (!projFolder.exists() && sourceFolder.exists()) {
-            errorLabel.setText("<html><font color=\"#00AA00\">Everything looks good !</font></html>");
+
+        // If the project directory exists on disk but is not registered in the workspace, offer to import it
+        if (projFolder.exists()) {
+            errorLabel.setText("<html><font color=\"#00AA00\">A project directory named \"" + projectName + "\" was found on disk and will be imported into the workspace.</font></html>");
             this.okButton.setEnabled(true);
             return;
         }
+
+        // Otherwise the proj folder does not exist and source folder is valid — ready to create new project
+        errorLabel.setText("<html><font color=\"#00AA00\">Everything looks good !</font></html>");
+        this.okButton.setEnabled(true);
     }
 
 }

@@ -86,7 +86,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         open = (boolean) map.get("open");
         sourceSetToUse = Enum.valueOf(ResourceSet.class, (String)map.get("sourceSetToUse"));
 
-        // This will trigger the load of the source set from disk.  Make sure it is last one so all params are defined.
+        // This will trigger the load of the source set from disk.  Make sure it is last so all params are defined.
         baseContent = new GameSource((Map) map.get("baseContent"), this);
 
     }
@@ -100,7 +100,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     public ResourceSet sourceSetToUse;
 
     /**
-     * Create a new Project instance from the saved JSON project definition
+     * Create a new Project instance from the saved JSON project definition - used when loading a project
      * @param w - Workspace we're attaching it to (becomes parent)
      * @param projectFile - JSON file to load
      */
@@ -116,8 +116,16 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             this.fromMap(json);
         }
 
-        initializeData();
-        save();
+        if(Profiling.LOAD) {
+            Profiling.printf("Loading project %s from %s with source type %s...", name, baseFolder, sourceSetToUse);
+            try {
+                Profiling.run("Loading project", true, this::refreshTransients); // Actual loading and linking done here
+            } finally {
+                Profiling.printf("Loaded project %s.", name);
+            }
+        } else {
+            refreshTransients();
+        }
     }
 
     /**
@@ -129,6 +137,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
      */
     public Project(Workspace w, String name, File source, ResourceSet sourceSet){
         this.parent = w;
+        loadSpritesheetProperties();
         this.name = name;
         this.sourceSetToUse = sourceSet;
 
@@ -141,31 +150,13 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             e.printStackTrace();
         }
 
-        loadSpritesheetProperties();
         baseContent = new GameSource(source, this);
+        alteredContent = new GameSource(this, Type.altered);
+        createdContent = new GameSource(this, Type.created);
         open = true;
-        initializeData();
-        linkAll();
-        save();
+        save(); // Save the new project.json file
+        refreshTransients();
     }
-
-    /**
-     * Add the empty Altered and Created GameSources and Bookmarks containers to the new project.
-     */
-    private void initializeData() {
-        v = new SavedSlotCollection();
-
-       // alteredContent = new GameSource(this, Type.altered);
-       // createdContent = new GameSource(this, Type.created);
-       // bookmarks = new BookmarksRoot(this);
-
-
-        v.add(createdContent);
-        v.add(alteredContent);
-        v.add(baseContent);
-        v.add(bookmarks);
-    }
-
 
     @Override
     public TreeNode getChildAt(int childIndex) {
@@ -268,30 +259,14 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             }
             p.save();
         }
-
-        if(Profiling.LOAD) {
-            Profiling.printf("Loading project %s from %s with source type %s...", p.name, p.baseFolder, p.sourceSetToUse);
-            try {
-                Profiling.run("Loading project", true, () -> p.refreshTransients(w)); // Actual loading and linking done here
-            } finally {
-                Profiling.printf("Loaded project %s.", p.name);
-            }
-        } else {
-            p.refreshTransients(w);
-        }
         return p;
     }
 
     /**
      * Set up project data structures, load content, and link it
-     * @param w - Workspace the project belongs to (becomes parent)
      */
-    public void refreshTransients(Workspace w) {
-        this.parent = w;
-
+    private void refreshTransients() {
         projectElementListeners = new HashMap<Class<? extends GameDataElement>, List<ProjectElementListener>>();
-
-        loadSpritesheetProperties();
 
         if (sourceSetToUse == null) {
             sourceSetToUse = ResourceSet.allFiles;
