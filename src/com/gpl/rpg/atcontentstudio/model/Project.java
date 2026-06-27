@@ -106,11 +106,11 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
      */
     public Project(Workspace w, File projectFile) {
         this.parent = w;
-        loadSpritesheetProperties();
         Map json = FileUtils.mapFromJsonFile(projectFile);
+        loadSpritesheetProperties(); // This needs to be done BEFORE GameSource is instantiated
 
         if(Profiling.LOAD) {
-            Profiling.printf("Loading project %s from %s with source type %s from JSON file...", json.get("name"), projectFile.getPath(), json.get("sourceSetToUse"));
+            Profiling.printf("Opening project %s from %s with source type %s from JSON file...", json.get("name"), projectFile.getPath(), json.get("sourceSetToUse"));
             Profiling.run("Initialize project from json", true, () -> this.fromMap(json));
         } else {
             this.fromMap(json);
@@ -137,11 +137,10 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
      */
     public Project(Workspace w, String name, File source, ResourceSet sourceSet){
         this.parent = w;
-        loadSpritesheetProperties();
         this.name = name;
         this.sourceSetToUse = sourceSet;
 
-        //CREATE PROJECT
+        // Create project
         baseFolder = new File(w.baseFolder, name + File.separator); // workspace + project name + '/'
         try {
             boolean ignored = baseFolder.mkdir();
@@ -150,12 +149,13 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             e.printStackTrace();
         }
 
+        loadSpritesheetProperties(); // This needs to be done BEFORE GameSource is instantiated
         baseContent = new GameSource(source, this);
         alteredContent = new GameSource(this, Type.altered);
         createdContent = new GameSource(this, Type.created);
-        open = true;
-        save(); // Save the new project.json file
-        refreshTransients();
+        this.open(); // Mark as open, so it gets saved in open state
+        this.save(); // Save the new .project.json file
+        refreshTransients(); // Finish initializing projact data directories
     }
 
     @Override
@@ -263,7 +263,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     /**
-     * Set up project data structures, load content, and link it
+     * Set up project data structures, load content from project source directories, and link it
      */
     private void refreshTransients() {
         projectElementListeners = new HashMap<Class<? extends GameDataElement>, List<ProjectElementListener>>();

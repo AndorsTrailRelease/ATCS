@@ -431,10 +431,10 @@ public class Workspace implements ProjectTreeNode, Serializable, JsonSerializabl
     }
 
     private static void deleteProject(ProjectTreeNode projectNode, String projectName, File projectFolder, boolean deleteFolder, String projectKind) {
-        projectNode.childrenRemoved(new ArrayList<ProjectTreeNode>());
         activeWorkspace.projects.remove(projectNode);
         activeWorkspace.projectsOpenByName.remove(projectName);
         activeWorkspace.projectsName.remove(projectName);
+        projectNode.childrenRemoved(new ArrayList<ProjectTreeNode>());
 
         if (deleteFolder) {
             if (projectFolder.exists() && delete(projectFolder)) {

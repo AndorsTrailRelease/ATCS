@@ -695,6 +695,13 @@ public class ProjectsTree extends JPanel {
                 sortedIndex = parent.getIndex((TreeNode) child);
             }
 
+            if (sortedIndex < 0) {
+                for (TreeModelListener l : listeners) {
+                    l.treeStructureChanged(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath().getPath()));
+                }
+                return;
+            }
+
             for (TreeModelListener l : listeners) {
                 l.treeNodesRemoved(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath(),
                                                       new int[]{sortedIndex},
