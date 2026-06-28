@@ -19,6 +19,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 public class DialogueEditor extends JSONElementEditor {
     private static final long serialVersionUID = 4140553240585599873L;
@@ -33,12 +34,12 @@ public class DialogueEditor extends JSONElementEditor {
 
 
     private static final String[] replyTypes = new String[]{
-            "Phrase leads to another without replies.",
-            "NPC replies too.",
-            "Reply ends dialogue.",
-            "Engage fight with NPC.",
-            "Remove NPC from map.",
-            "Start trading with NPC."
+            "Phrase leads to another without replies",
+            "NPC replies too",
+            "Reply ends dialogue",
+            "Engage fight with NPC",
+            "Remove NPC from map",
+            "Start trading with NPC"
     };
     private static final int GO_NEXT_INDEX = 0;
     private static final int STD_REPLY_INDEX = 1;
@@ -216,7 +217,16 @@ public class DialogueEditor extends JSONElementEditor {
         }
 
         if (reward != null) {
-            rewardTypeCombo = addEnumValueBox(pane, "Reward type: ", Dialogue.Reward.RewardType.values(), reward.type, ((Dialogue) target).writable, listener);
+            // Use the modular described-enum combo so items are rendered by description and sorted alphabetically.
+            rewardTypeCombo = addEnumValueBoxWithDescriptions(
+                    pane,
+                    "Reward type: ",
+                    Dialogue.Reward.RewardType.values(),
+                    reward.type,
+                    ((Dialogue) target).writable,
+                    Dialogue.Reward.RewardType::getDescription,
+                    listener
+            );
             rewardsParamsPane = new JPanel();
             rewardsParamsPane.setLayout(new JideBoxLayout(rewardsParamsPane, JideBoxLayout.PAGE_AXIS));
             updateRewardsParamsEditorPane(rewardsParamsPane, reward, listener);
@@ -322,13 +332,16 @@ public class DialogueEditor extends JSONElementEditor {
                     if (!immunity) radioGroup.add(rewardConditionClear);
 
                     if (immunity) {
-                        rewardConditionTimed.setSelected(
-                                reward.reward_value == null || (!reward.reward_value.equals(ActorCondition.DURATION_FOREVER) && !reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR)));
-                        rewardConditionForever.setSelected(reward.reward_value != null && !reward.reward_value.equals(ActorCondition.DURATION_FOREVER));
-                        rewardConditionClear.setSelected(reward.reward_value != null && !reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR));
+                        // For immunity rewards we only offer Timed / Forever (no "clear" option),
+                        // so don't touch rewardConditionClear which is not created in this mode.
+                        boolean isTimed = reward.reward_value == null || (!reward.reward_value.equals(ActorCondition.DURATION_FOREVER) && !reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR));
+                        boolean isForever = reward.reward_value != null && reward.reward_value.equals(ActorCondition.DURATION_FOREVER);
+                        rewardConditionTimed.setSelected(isTimed);
+                        rewardConditionForever.setSelected(isForever);
                     } else {
                         rewardConditionTimed.setSelected(reward.reward_value != null && !reward.reward_value.equals(ActorCondition.DURATION_FOREVER));
                         rewardConditionForever.setSelected(reward.reward_value == null || reward.reward_value.equals(ActorCondition.DURATION_FOREVER));
+                        if (rewardConditionClear != null) rewardConditionClear.setSelected(reward.reward_value != null && reward.reward_value.equals(ActorCondition.MAGNITUDE_CLEAR));
                     }
                     rewardValue.setEnabled(rewardConditionTimed.isSelected());
 
@@ -410,7 +423,7 @@ public class DialogueEditor extends JSONElementEditor {
                     }
                     rewardMap = null;
                     rewardObjId = null;// addTextField(pane, "Skill ID: ", reward.reward_obj_id, writable, listener);
-                    rewardObjIdCombo = addEnumValueBox(pane, "Skill ID: ", Requirement.SkillID.values(), skillId, writable, listener);
+                    rewardObjIdCombo = addEnumValueBoxWithDescriptions(pane, "Skill ID: ", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
                     rewardObj = null;
                     rewardValue = null;
                     break;
@@ -420,6 +433,20 @@ public class DialogueEditor extends JSONElementEditor {
                     rewardObjIdCombo = null;
                     rewardObj = null;
                     rewardValue = addIntegerField(pane, "Icon number: ", reward.reward_value, false, writable, listener);
+                    break;
+                case setNextPhraseID:
+                    // choose initial Dialogue for the dialogue combo from reward.reward_obj or reward.reward_obj_id
+                    Dialogue initialNextPhrase = null;
+                    if (reward.reward_obj instanceof Dialogue) {
+                        initialNextPhrase = (Dialogue) reward.reward_obj;
+                    } else if (reward.reward_obj_id != null) {
+                        initialNextPhrase = ((Dialogue) target).getProject().getDialogue(reward.reward_obj_id);
+                    }
+                    rewardMap = null;
+                    rewardObjId = null;
+                    rewardObjIdCombo = addDialogueBox(pane, ((Dialogue) target).getProject(), "Next phrase: ", initialNextPhrase, writable, listener);
+                    rewardObj = null;
+                    rewardValue = null;
                     break;
 
             }
@@ -436,12 +463,13 @@ public class DialogueEditor extends JSONElementEditor {
             removeElementListener(rewardRequirementObj);
         }
 
-        rewardRequirementTypeCombo = addEnumValueBox(
+        rewardRequirementTypeCombo = addEnumValueBoxWithDescriptions(
                 pane,
                 "Requirement type: ",
                 Requirement.RequirementType.values(),
                 requirement == null ? null : requirement.type,
                 writable,
+                Requirement.RequirementType::getDescription,
                 listener
         );
 
@@ -745,7 +773,7 @@ public class DialogueEditor extends JSONElementEditor {
             removeElementListener(requirementObj);
         }
 
-        requirementTypeCombo = addEnumValueBox(pane, "Requirement type: ", Requirement.RequirementType.values(), requirement == null ? null : requirement.type, writable, listener);
+        requirementTypeCombo = addEnumValueBoxWithDescriptions(pane, "Requirement type: ", Requirement.RequirementType.values(), requirement == null ? null : requirement.type, writable, Requirement.RequirementType::getDescription, listener);
         requirementParamsPane = new JPanel();
         requirementParamsPane.setLayout(new JideBoxLayout(requirementParamsPane, JideBoxLayout.PAGE_AXIS));
         updateRequirementParamsEditorPane(requirementParamsPane, requirement, listener);
@@ -807,7 +835,7 @@ public class DialogueEditor extends JSONElementEditor {
                     } catch (IllegalArgumentException e) {
                     }
                     requirementObj = null;
-                    requirementSkill = addEnumValueBox(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener);
+                    requirementSkill = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
                     break;
@@ -853,7 +881,7 @@ public class DialogueEditor extends JSONElementEditor {
                     } catch (IllegalArgumentException e) {
                     }
                     requirementObj = null;
-                    requirementSkill = addEnumValueBox(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, listener);
+                    requirementSkill = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level up: ", requirement.required_value, false, writable, listener);
                     break;
@@ -1045,6 +1073,10 @@ public class DialogueEditor extends JSONElementEditor {
                     label.setText("Change Icon to " + reward.reward_value + " " + rewardObjDesc);
                     if (reward.reward_obj != null) label.setIcon(new ImageIcon(DefaultIcons.getNPCIcon()));
                     break;
+                case setNextPhraseID:
+                    label.setText("Set next phrase ID to " + rewardObjDesc);
+                    label.setIcon(new ImageIcon(DefaultIcons.getDialogueIcon()));
+                    break;
             }
         } else {
             label.setText("New, undefined reward");
@@ -1198,7 +1230,11 @@ public class DialogueEditor extends JSONElementEditor {
                     return;
                 }
             } else if (source == messageField) {
-                dialogue.message = (String) value;
+                if(((String) value).isEmpty()) {
+                    dialogue.message = null;
+                } else {
+                    dialogue.message = (String) value;
+                }
             } else if (source == switchToNpcBox) {
                 if (dialogue.switch_to_npc != null) {
                     dialogue.switch_to_npc.removeBacklink(dialogue);
@@ -1240,7 +1276,32 @@ public class DialogueEditor extends JSONElementEditor {
                 selectedReward.reward_obj_id = rewardObjId.getText();
                 rewardsListModel.itemChanged(selectedReward);
             } else if (source == rewardObjIdCombo) {
-                selectedReward.reward_obj_id = rewardObjIdCombo.getSelectedItem().toString();
+                Object sel = rewardObjIdCombo.getSelectedItem();
+
+                // Remove backlink from previous reward_obj if any
+                if (selectedReward.reward_obj != null) {
+                    selectedReward.reward_obj.removeBacklink(dialogue);
+                }
+                selectedReward.reward_obj = null;
+                selectedReward.reward_obj_id = null;
+
+                if (sel == null) {
+                    // nothing else to do - both fields cleared
+                } else if (sel instanceof GameDataElement) {
+                    // If the combo contains a GameDataElement (Dialogue, Item, Quest, etc.)
+                    selectedReward.reward_obj = (GameDataElement) sel;
+                    selectedReward.reward_obj_id = selectedReward.reward_obj.id;
+                    selectedReward.reward_obj.addBacklink(dialogue);
+                } else if (sel instanceof Enum) {
+                    // Enum selections (e.g. TMXMap.ColorFilter)
+                    selectedReward.reward_obj_id = ((Enum<?>) sel).name();
+                } else if (sel instanceof String) {
+                    // Plain string selection
+                    selectedReward.reward_obj_id = (String) sel;
+                } else {
+                    // Fallback: store string representation
+                    selectedReward.reward_obj_id = sel.toString();
+                }
                 rewardsListModel.itemChanged(selectedReward);
             } else if (source == rewardObj) {
                 if (selectedReward.reward_obj != null) {

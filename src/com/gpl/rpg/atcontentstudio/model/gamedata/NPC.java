@@ -56,15 +56,25 @@ public class NPC extends JSONElement {
     public Droplist droplist = null;
 
     public enum MonsterClass {
-        humanoid,
-        insect,
-        demon,
-        construct,
-        animal,
-        giant,
-        undead,
-        reptile,
-        ghost
+        humanoid("Humanoid (default people-like NPCs; red blood)"),
+        animal("Animal (beasts and natural creatures; red blood)"),
+        giant("Giant (large brute/troll-like creatures; red blood)"),
+        insect("Insect (bugs/scorpions/amoeba-like creatures; brown splatter)"),
+        reptile("Reptile (snakes/lizards/wyrms; brown splatter)"),
+        undead("Undead (corporeal dead; brown splatter, not crit-immune)"),
+        demon("Demon (supernatural fiends; immune to crits; leaves ash)"),
+        construct("Construct (golems/gargoyles/animated objects; immune to crits; leaves ash)"),
+        ghost("Ghost (incorporeal spirits; immune to crits; leaves ash)");
+
+        private final String description;
+
+        MonsterClass(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     public enum MovementType {

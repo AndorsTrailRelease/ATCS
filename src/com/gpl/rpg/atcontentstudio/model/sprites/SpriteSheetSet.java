@@ -37,7 +37,7 @@ public class SpriteSheetSet implements ProjectTreeNode {
         spritesheets = new ArrayList<Spritesheet>();
         if (this.drawableFolder != null) {
             for (File f : this.drawableFolder.listFiles()) {
-                if (f.getName().endsWith(".png") || f.getName().endsWith(".PNG")) {
+                if (f.getName().toLowerCase().endsWith(".png")) {
                     spritesheets.add(new Spritesheet(this, f));
                 }
             }

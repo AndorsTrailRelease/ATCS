@@ -1,6 +1,7 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
@@ -12,11 +13,73 @@ public class CollapsiblePanel extends JPanel {
     String title;
     TitledBorder border;
 
+    // Simple dashed border painter to match other controls' focus indicator
+        private record DashedBorder(Color color, int thickness, float[] dash) implements Border {
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return new Insets(thickness, thickness, thickness, thickness);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return true;
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                try {
+                    g2.setColor(color);
+                    g2.setStroke(new BasicStroke(thickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, dash, 0f));
+                    int tx = x + thickness / 2;
+                    int ty = y + thickness / 2;
+                    int tw = Math.max(0, width - thickness);
+                    int th = Math.max(0, height - thickness);
+                    g2.drawRect(tx, ty, tw, th);
+                } finally {
+                    g2.dispose();
+                }
+            }
+        }
+
     public CollapsiblePanel(String title) {
         super();
         this.title = title;
         border = BorderFactory.createTitledBorder(title);
         setBorder(border);
+        // Make the titled panel focusable so it can receive focus via tab traversal
+        setFocusable(true);
+        setFocusTraversalKeysEnabled(true);
+        InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle");
+        getActionMap().put("toggle", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                toggleVisibility();
+            }
+        });
+
+        // Highlight border when focused.  This should follow L&F style instead, but I can't figure out how to do that.
+        Color focusColor = UIManager.getColor("TextField.focus");
+        if (focusColor == null) focusColor = new Color(128, 128, 128);
+        final javax.swing.border.Border originalBorder = border;
+        final javax.swing.border.Border dashedFocus = new DashedBorder(focusColor, 1, new float[]{2f,2f});
+        final javax.swing.border.Border focusedBorder = BorderFactory.createCompoundBorder(dashedFocus, originalBorder);
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                setBorder(focusedBorder);
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                setBorder(originalBorder);
+                repaint();
+            }
+        });
+
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
         addMouseListener(mouseListener);
@@ -26,10 +89,11 @@ public class CollapsiblePanel extends JPanel {
         @Override
         public void mouseClicked(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e) && isTitleClick(e)) {
-                toggleVisibility();
+                    requestFocusInWindow();
+                    toggleVisibility();
+                }
             }
-        }
-    };
+        };
 
     private boolean isTitleClick(MouseEvent e) {
         Insets insets = border.getBorderInsets(this);

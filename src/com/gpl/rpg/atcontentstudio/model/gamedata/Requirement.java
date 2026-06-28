@@ -45,45 +45,113 @@ public class Requirement extends JSONElement {
     public GameDataElement required_obj = null;
 
     public enum RequirementType {
-        questProgress,
-        questLatestProgress,
-        inventoryRemove,
-        inventoryKeep,
-        wear,
-        skillLevel,
-        killedMonster,
-        timerElapsed,
-        usedItem,
-        spentGold,
-        consumedBonemeals,
-        hasActorCondition,
-        factionScore,
-        random,
-        factionScoreEquals,
-        wearRemove,
-        date,
-        dateEquals,
-        time,
-        timeEquals,
-        skillIncrease
+        questProgress("Quest stage has been achieved"),
+        questLatestProgress("Quest is now at stage"),
+        inventoryRemove("Hero has item in inventory (and remove it)"),
+        inventoryKeep("Hero has item in inventory"),
+        wear("Hero is wearing item"),
+        skillLevel("Skill level is at least"),
+        killedMonster("Hero has killed monster(s)"),
+        timerElapsed("Timer has elapsed"),
+        usedItem("Hero has used item"),
+        spentGold("Hero has spent gold"),
+        consumedBonemeals("Hero has consumed bonemeal potion(s)"),
+        hasActorCondition("Hero has actor condition"),
+        factionScore("Faction score is at least"),
+        random("Random chance"),
+        factionScoreEquals("Faction score is exactly"),
+        wearRemove("Hero is wearing item (and remove it from inventory)"),
+        date("Date is on or after"),
+        dateEquals("Date is exactly"),
+        time("Time is at least"),
+        timeEquals("Time is exactly"),
+        skillIncrease("Skill increase is available");
+
+        private final String description;
+
+        RequirementType(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     public enum SkillID {
-        weaponChance, weaponDmg, barter, dodge, barkSkin, moreCriticals, betterCriticals, speed                // Raises max ap
-        , coinfinder, moreExp, cleave                // +10ap on kill
-        , eater                // +1hp per kill
-        , fortitude            // +N hp per levelup
-        , evasion            // increase successful flee chance & reduce chance of monster attack
-        , regeneration        // +N hp per round
-        , lowerExploss, magicfinder, resistanceMental    // lowers chance to get negative active conditions by monsters (Mental like Dazed)
-        , resistancePhysical    // lowers chance to get negative active conditions by monsters (Physical Capacity like Minor fatigue)
-        , resistanceBlood    // lowers chance to get negative active conditions by monsters (Blood Disorder like Weak Poison)
-        , shadowBless, sporeImmunity, crit1            // lowers atk ability
-        , crit2            // lowers def ability ,rejuvenation	// Reduces magnitudes of conditions
-        , rejuvenation    // Reduces magnitudes of conditions
-        , taunt            // Causes AP loss of attackers that miss
-        , concussion        // AC loss for monsters with (AC-BC)>N
-        , weaponProficiencyDagger, weaponProficiency1hsword, weaponProficiency2hsword, weaponProficiencyAxe, weaponProficiencyBlunt, weaponProficiencyUnarmed, weaponProficiencyPole, armorProficiencyShield, armorProficiencyUnarmored, armorProficiencyLight, armorProficiencyHeavy, fightstyleDualWield, fightstyle2hand, fightstyleWeaponShield, specializationDualWield, specialization2hand, specializationWeaponShield
+        // Offensive / weapon skills
+        weaponChance("Weapon Accuracy - Increased attack chance"),
+        weaponDmg("Hard Hit - Increased attack damage"),
+
+        // General / utility skills
+        barter("Merchant - Better shop prices"),
+        dodge("Dodge - Increased block chance"),
+        barkSkin("Bark Skin - Damage resistance"),
+        moreCriticals("More Criticals - Increased critical skill"),
+        betterCriticals("Better Criticals - Increased critical damage"),
+        speed("Combat Speed - Increased maximum action points"),
+
+        // Pickup / passive bonuses
+        coinfinder("Treasure Hunter - Higher chance of finding gold"),
+        moreExp("Quick Learner - More experience from monster kills"),
+
+        // Special attack / on-kill effects
+        cleave("Cleave - Recover action points on every kill"),
+
+        // Sustenance / sustain effects
+        eater("Corpse Eater - Recover health points on every kill"),
+
+        // Health / survivability
+        fortitude("Increased Fortitude - Gain health on each level up"),
+        evasion("Evasion - Increased chance of fleeing"),
+        regeneration("Regeneration - Gain health every round"),
+
+        // Misc finders / resistances
+        lowerExploss("Failure Mastery - Decrease amount of lost experience when dying"),
+        magicfinder("Magic Finder - Increased chance of finding magic items"),
+        resistanceMental("Strong Mind - Resistance against mental conditions"),
+        resistancePhysical("Enduring Body - Resistance against physical capacity conditions"),
+        resistanceBlood("Pure Blood - Resistance against blood disorders"),
+
+        // Blessings / immunities / crit modifiers
+        shadowBless("Dark blessing of the Shadow - Resistance against all types of conditions"),
+        sporeImmunity("Spore poison immunity - Full immunity to spore poison"),
+        crit1("Internal bleeding - Chance of internal bleeding"),
+        crit2("Fracture - Chance of bone fracture"),
+        rejuvenation("Rejuvenation - Chance of effect removal"),
+
+        // Crowd-control / disruption
+        taunt("Taunt - Attacker loses AP on miss"),
+        concussion("Concussion - Chance of concussion"),
+
+        // Weapon/armor proficiencies and fighting styles
+        weaponProficiencyDagger("Dagger proficiency - Better at fighting with daggers"),
+        weaponProficiency1hsword("One-handed sword proficiency - Better at fighting with one-handed swords"),
+        weaponProficiency2hsword("Two-handed sword proficiency - Better at fighting with two-handed swords"),
+        weaponProficiencyAxe("Axe proficiency - Better at fighting with axes"),
+        weaponProficiencyBlunt("Blunt weapon proficiency - Better at fighting with blunt weapons"),
+        weaponProficiencyUnarmed("Unarmed fighting - Better at fighting without weapons"),
+        weaponProficiencyPole("Pole weapon proficiency - Better at fighting with pole weapons"),
+        armorProficiencyShield("Shield proficiency - Make better use of shields and parrying weapons"),
+        armorProficiencyUnarmored("Unarmored fighting - Better at fighting without armor"),
+        armorProficiencyLight("Light armor proficiency - Make better use of light armor"),
+        armorProficiencyHeavy("Heavy armor proficiency - Make better use of heavy armor"),
+        fightstyleDualWield("Fighting style: Dual wield - Wield two weapons at the same time"),
+        fightstyle2hand("Fighting style: Two-handed weapon - Make better use of weapons that require both hands"),
+        fightstyleWeaponShield("Fighting style: Weapon and shield - Better at fighting with weapon and shield"),
+        specializationDualWield("Specialization: Dual wield - Expert at dual wielding"),
+        specialization2hand("Specialization: Two-handed weapon - Expert at two-handed weapons"),
+        specializationWeaponShield("Specialization: Weapon and shield - Expert at fighting with weapon and shield");
+
+        private final String description;
+
+        SkillID(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     @Override
@@ -129,7 +197,12 @@ public class Requirement extends JSONElement {
         ensureParseIfNeeded();
         Project proj = getProject();
         if (proj == null) {
-            Notification.addError("Error linking requirement " + getDesc() + ". No parent project found.");
+            Notification.addError("Error linking requirement '%s' from %s.  No parent project found.".formatted(getDesc(), jsonFile));
+            return;
+        }
+
+        if(type == null) {
+            Notification.addError("Error linking requirement '%s' in element '%s' from %s.  Requirement type is null.".formatted(getDesc(), ((GameDataElement) parent).id, jsonFile));
             return;
         }
         switch (type) {

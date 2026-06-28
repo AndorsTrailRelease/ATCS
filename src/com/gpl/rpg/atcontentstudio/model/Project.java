@@ -16,6 +16,7 @@ import com.gpl.rpg.atcontentstudio.model.tools.writermode.WriterModeData;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
 import com.gpl.rpg.atcontentstudio.ui.WorkerDialog;
 import com.gpl.rpg.atcontentstudio.utils.FileUtils;
+import com.gpl.rpg.atcontentstudio.utils.Profiling;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -44,8 +45,6 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
 
     private static final long serialVersionUID = 4807454973303366758L;
     private static final String drawablePath = TMXMapSet.DEFAULT_REL_PATH_TO_DRAWABLE.replace("\\", "/");
-
-
     //Every instance field that is not transient will be saved in this file.
     public static final String SETTINGS_FILE = ".project";
     public static final String SETTINGS_FILE_JSON = ".project.json";
@@ -85,10 +84,11 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         name = (String) map.get("name");
         baseFolder = new File((String) map.get("baseFolder"));
         open = (boolean) map.get("open");
+        sourceSetToUse = Enum.valueOf(ResourceSet.class, (String)map.get("sourceSetToUse"));
 
+        // This will trigger the load of the source set from disk.  Make sure it is last so all params are defined.
         baseContent = new GameSource((Map) map.get("baseContent"), this);
 
-        sourceSetToUse = Enum.valueOf(ResourceSet.class, (String)map.get("sourceSetToUse"));
     }
 
     public static enum ResourceSet {
@@ -99,52 +99,64 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
 
     public ResourceSet sourceSetToUse;
 
+    /**
+     * Create a new Project instance from the saved JSON project definition - used when loading a project
+     * @param w - Workspace we're attaching it to (becomes parent)
+     * @param projectFile - JSON file to load
+     */
     public Project(Workspace w, File projectFile) {
         this.parent = w;
-        loadSpritesheetProperties();
         Map json = FileUtils.mapFromJsonFile(projectFile);
-        this.fromMap(json);
+        loadSpritesheetProperties(); // This needs to be done BEFORE GameSource is instantiated
 
-        initializeData();
-        save();
+        if(Profiling.LOAD) {
+            Profiling.printf("Opening project %s from %s with source type %s from JSON file...", json.get("name"), projectFile.getPath(), json.get("sourceSetToUse"));
+            Profiling.run("Initialize project from json", true, () -> this.fromMap(json));
+        } else {
+            this.fromMap(json);
+        }
+
+        if(Profiling.LOAD) {
+            Profiling.printf("Loading project %s from %s with source type %s...", name, baseFolder, sourceSetToUse);
+            try {
+                Profiling.run("Loading project", true, this::refreshTransients); // Actual loading and linking done here
+            } finally {
+                Profiling.printf("Loaded project %s.", name);
+            }
+        } else {
+            refreshTransients();
+        }
     }
+
+    /**
+     * Create a new Project instance from scratch
+     * @param w - Workspace we're attaching it to (becomes parent)
+     * @param name - Name of the project (string)
+     * @param source - path to gate source repo
+     * @param sourceSet - ResourceSet to use (gameData, debugData, or allFiles)
+     */
     public Project(Workspace w, String name, File source, ResourceSet sourceSet){
         this.parent = w;
         this.name = name;
         this.sourceSetToUse = sourceSet;
 
-        //CREATE PROJECT
-        baseFolder = new File(w.baseFolder, name + File.separator);
+        // Create project
+        baseFolder = new File(w.baseFolder, name + File.separator); // workspace + project name + '/'
         try {
-            baseFolder.mkdir();
+            boolean ignored = baseFolder.mkdir();
         } catch (SecurityException e) {
-            Notification.addError("Eror creating project root folder: " + e.getMessage());
+            Notification.addError("Error creating project root folder: " + e.getMessage());
             e.printStackTrace();
         }
 
-        loadSpritesheetProperties();
+        loadSpritesheetProperties(); // This needs to be done BEFORE GameSource is instantiated
         baseContent = new GameSource(source, this);
-        open = true;
-        initializeData();
-        linkAll();
-        save();
-    }
-
-    private void initializeData() {
-        v = new SavedSlotCollection();
-
         alteredContent = new GameSource(this, Type.altered);
         createdContent = new GameSource(this, Type.created);
-        bookmarks = new BookmarksRoot(this);
-
-
-        v.add(createdContent);
-        v.add(alteredContent);
-//		v.add(referencedContent);
-        v.add(baseContent);
-        v.add(bookmarks);
+        this.open(); // Mark as open, so it gets saved in open state
+        this.save(); // Save the new .project.json file
+        refreshTransients(); // Finish initializing projact data directories
     }
-
 
     @Override
     public TreeNode getChildAt(int childIndex) {
@@ -222,7 +234,14 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         open = true;
     }
 
-
+    /**
+     * Locate project definition .project.json and create a new project instance with it.  If not found, look for and
+     * obsolete .project file, deserialize it to a new Project instance, and save it so we get a new .project.json for
+     * next time.  (TODO: Maybe should delete the obsolete .project file?  JSON format in place since Jun 2025).
+     * @param w - Workspace the project belongs to
+     * @param projRoot - Root folder of the project
+     * @return - loaded Project instance if found, null otherwise
+     */
     public static Project fromFolder(Workspace w, File projRoot) {
         Project p;
 
@@ -240,26 +259,20 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
             }
             p.save();
         }
-        p.refreshTransients(w);
         return p;
     }
 
-    public void refreshTransients(Workspace w) {
-        this.parent = w;
-
+    /**
+     * Set up project data structures, load content from project source directories, and link it
+     */
+    private void refreshTransients() {
         projectElementListeners = new HashMap<Class<? extends GameDataElement>, List<ProjectElementListener>>();
-
-        loadSpritesheetProperties();
 
         if (sourceSetToUse == null) {
             sourceSetToUse = ResourceSet.allFiles;
         }
 
-//		long l = new Date().getTime();
-        baseContent.refreshTransients(this);
-//		l = new Date().getTime() - l;
-//		System.out.println("All initialized in "+l+"ms.");
-//		referencedContent.refreshTransients(this);
+//      baseContent.refreshTransients(this);       // Base content will already be loaded during Project construction
         alteredContent = new GameSource(this, GameSource.Type.altered);
         createdContent = new GameSource(this, GameSource.Type.created);
         bookmarks = new BookmarksRoot(this);
@@ -267,10 +280,8 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         v = new SavedSlotCollection();
         v.add(createdContent);
         v.add(alteredContent);
-//		v.add(referencedContent);
         v.add(baseContent);
         v.add(bookmarks);
-
 
         linkAll();
 
@@ -287,24 +298,49 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     public void linkAll() {
-        linkGameData(baseContent);
-        linkGameData(alteredContent);
-        linkGameData(createdContent);
+        if (!Profiling.LINK) {
+            linkGameData(baseContent);
+            linkGameData(alteredContent);
+            linkGameData(createdContent);
+            return;
+        }
+
+        long start = System.nanoTime();
+        Profiling.run("Linking baseContent", true, () -> linkGameData(baseContent));
+        Profiling.run("Linking alteredContent", true, () -> linkGameData(alteredContent));
+        Profiling.run("Linking createdContent", true, () -> linkGameData(createdContent));
+        Profiling.printf("Total project linking took %d ms", Profiling.elapsedMillis(start));
     }
 
+    /**
+     * Link a GameSource into the project tree and set up backlinks.
+     * TODO: This is a hot path and a candidate for parallelization.
+     * @param source - GameSource container to link
+     */
     private void linkGameData(GameSource source) {
+        int linkedJsonElements = 0;
+        int linkedMaps = 0;
+        int linkedWorldmapSegments = 0;
+
         for (ProjectTreeNode node : source.gameData.v.getNonEmptyIterable()) {
             if (node instanceof GameDataCategory<?>) {
-                for (GameDataElement e : ((GameDataCategory<?>) node).toList()) {
-                    e.link();
-                }
+                List<? extends GameDataElement> elements = ((GameDataCategory<?>) node).toList();
+                String categoryLabel = "Linked category " + node.getDesc();
+                linkedJsonElements += Profiling.runEach(
+                        categoryLabel,
+                        elements,
+                        Profiling.LINK,
+                        GameDataElement::getDesc,
+                        GameDataElement::link
+                );
             }
         }
-        for (TMXMap node : source.gameMaps.tmxMaps) {
-            node.link();
-        }
-        for (WorldmapSegment node : source.worldmap) {
-            node.link();
+        linkedMaps += Profiling.runEach("Linked TMX maps", source.gameMaps.tmxMaps, Profiling.LINK, node -> node.id, TMXMap::link);
+        linkedWorldmapSegments += Profiling.runEach("Linked worldmap segments", source.worldmap, Profiling.LINK, node -> node.id, WorldmapSegment::link);
+
+        if (Profiling.LINK) {
+            Profiling.printf("linkGameData(%s): %d JSON elements, %d TMX maps, %d worldmap segments linked",
+                    source.type.toString(), linkedJsonElements, linkedMaps, linkedWorldmapSegments);
         }
     }
 
@@ -836,7 +872,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     /**
-     * @param node. Before calling this method, make sure that no other node with the same class and id exist in either created or altered.
+     * @param node Before calling this method, make sure that no other node with the same class and id exist in either created or altered.
      */
     public void createElement(JSONElement node) {
         node.writable = true;
@@ -859,7 +895,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     /**
-     * @param node. Before calling this method, make sure that no other node with the same class and id exist in either created or altered.
+     * @param nodes Before calling this method, make sure that no other node with the same class and id exist in either created or altered.
      */
     public void createElements(List<? extends JSONElement> nodes) {
         for (JSONElement node : nodes) {
@@ -886,7 +922,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
     }
 
     /**
-     * @param node. Before calling this method, make sure that no other map with the same id exist in either created or altered.
+     * @param node Before calling this method, make sure that no other map with the same id exist in either created or altered.
      */
     public void createElement(TMXMap node) {
         node.writable = true;
@@ -1070,8 +1106,6 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
                     e.printStackTrace();
                 }
             }
-
-
         });
     }
 

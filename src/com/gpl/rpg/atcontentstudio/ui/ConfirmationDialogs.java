@@ -15,23 +15,33 @@ public final class ConfirmationDialogs {
     }
 
     // Project delete dialogs
-    public static boolean confirmProjectDelete() {
-        return confirmProjectDelete(ATContentStudio.frame);
+    public static Boolean confirmProjectDelete(String projectName) {
+        return confirmProjectDelete(ATContentStudio.frame, projectName);
     }
 
-    public static boolean confirmProjectDelete(Component parent) {
+    /**
+     * @return null if cancelled, false if only the workspace entry should be deleted, true if the project folder
+     *         should also be deleted.
+     */
+    public static Boolean confirmProjectDelete(Component parent, String projectName) {
+        String target = projectName == null || projectName.isEmpty() ? "this project" : "'" + projectName + "'";
         int confirm = JOptionPane.showOptionDialog(
                 parent,
-                "Are you sure you wish to delete this project?\n\nAll files created for it will be deleted too...",
-                "Delete this project ?",
+                "Remove project " + target + " from the workspace?\n\nYou can keep the underlying project folder or delete it too.",
+                "Delete this project?",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.WARNING_MESSAGE,
                 null,
-                new String[]{"Cancel", "Delete"},
+                new String[]{"Cancel", "Remove project only", "Delete project and folder"},
                 "Cancel"
         );
-            return confirm == 1;
-
+        if (confirm == 1) {
+            return Boolean.FALSE;
+        }
+        if (confirm == 2) {
+            return Boolean.TRUE;
+        }
+        return null;
     }
 
     /**
@@ -136,6 +146,4 @@ public final class ConfirmationDialogs {
         return answer == JOptionPane.YES_OPTION;
     }
 }
-
-
 

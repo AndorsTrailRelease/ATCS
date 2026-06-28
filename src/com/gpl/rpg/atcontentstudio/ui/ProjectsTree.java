@@ -304,7 +304,9 @@ public class ProjectsTree extends JPanel {
             return "slot:bookmarks";
         }
         if (node instanceof BookmarkFolder) {
-            return "bookmarkFolder:" + ((BookmarkFolder) node).getDesc();
+            String desc = ((BookmarkFolder) node).getDesc();
+            if (desc != null && desc.startsWith("*")) desc = desc.replaceFirst("^\\*+", "");
+            return "bookmarkFolder:" + desc;
         }
         if (node instanceof BookmarkEntry) {
             BookmarkEntry bookmarkEntry = (BookmarkEntry) node;
@@ -314,7 +316,9 @@ public class ProjectsTree extends JPanel {
             GameDataElement gameDataElement = (GameDataElement) node;
             return "element:" + node.getClass().getName() + ":" + gameDataElement.id;
         }
-        return "node:" + node.getClass().getName() + ":" + node.getDesc();
+        String desc = node.getDesc();
+        if (desc != null && desc.startsWith("*")) desc = desc.replaceFirst("^\\*+", "");
+        return "node:" + node.getClass().getName() + ":" + desc;
     }
 
     private static ProjectTreeNode findChildByTreeStateKey(ProjectTreeNode parent, String key) {
@@ -489,9 +493,17 @@ public class ProjectsTree extends JPanel {
             return Workspace.activeWorkspace;
         }
 
+        /**
+         * Return child according to a sorted view of the parent's children.
+         * @param parent - The note whose children should be returned
+         * @param index - The index of the child to return
+         * @return - The object at the specified index
+         */
         @Override
         public Object getChild(Object parent, int index) {
-            return ((ProjectTreeNode) parent).getChildAt(index);
+            if (!(parent instanceof ProjectTreeNode)) return null;
+            List<ProjectTreeNode> children = sortedChildren((ProjectTreeNode) parent);
+            return (index >= 0 && index < children.size()) ? children.get(index) : null;
         }
 
         @Override
@@ -509,33 +521,200 @@ public class ProjectsTree extends JPanel {
             //Unused
         }
 
+        /**
+         * Cache for sorted children per parent. Use a WeakHashMap so entries can be
+         * GC'd when parent nodes are no longer referenced elsewhere.
+         */
+        private final java.util.Map<ProjectTreeNode, List<ProjectTreeNode>> sortedCache = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<ProjectTreeNode, List<ProjectTreeNode>>());
+
+        /**
+         * Create a comparator for children of the given parent.
+         * <p>
+         * The comparator orders nodes by their {@link ProjectTreeNode#getDesc()} value
+         * using case-insensitive comparison. When descriptions are equal it falls back
+         * to the parent's {@link ProjectTreeNode#getIndex(TreeNode)} value for a
+         * deterministic tie-breaker.
+         *
+         * @param parent the parent whose child indices will be used as a tie-breaker
+         * @return a comparator suitable for sorting the parent's children
+         */
+        private java.util.Comparator<ProjectTreeNode> comparatorForParent(final ProjectTreeNode parent) {
+            return (a, b) -> {
+                String da = a == null ? "" : a.getDesc();
+                String db = b == null ? "" : b.getDesc();
+                if (da == null) da = "";
+                if (db == null) db = "";
+                // Ignore leading '*' markers (modified indicator) when sorting so saving state doesn't change order
+                String na = da.startsWith("*") ? da.replaceFirst("^\\*+", "") : da;
+                String nb = db.startsWith("*") ? db.replaceFirst("^\\*+", "") : db;
+                int r = String.CASE_INSENSITIVE_ORDER.compare(na, nb);
+                if (r != 0) return r;
+                // Tie-breaker: use underlying index so sorting is deterministic
+                return Integer.compare(parent.getIndex((TreeNode) a), parent.getIndex((TreeNode) b));
+            };
+        }
+
+        /**
+         * Return the parent's children as a sorted (and cached) list.
+         * <p>
+         * This method lazily builds a sorted view of {@code parent}'s children the
+         * first time it is requested and stores the result in {@link #sortedCache}.
+         * The cached list is wrapped with {@link java.util.Collections#synchronizedList(List)}
+         * and is intentionally mutable so callers may update it incrementally when
+         * nodes are inserted/removed/changed. The underlying parent's storage is not
+         * modified by this method.
+         *
+         * @param parent the node whose children should be returned in sorted order
+         * @return a mutable, synchronized list of the parent's children in sorted order
+         */
+        private List<ProjectTreeNode> sortedChildren(ProjectTreeNode parent) {
+            List<ProjectTreeNode> cached = sortedCache.get(parent);
+            if (cached != null) return cached;
+
+            List<ProjectTreeNode> result = new ArrayList<ProjectTreeNode>();
+            int n = parent.getChildCount();
+            for (int i = 0; i < n; i++) {
+                TreeNode t = parent.getChildAt(i);
+                if (t instanceof ProjectTreeNode) result.add((ProjectTreeNode) t);
+            }
+            java.util.Comparator<ProjectTreeNode> cmp = comparatorForParent(parent);
+            result.sort(cmp);
+            result = java.util.Collections.synchronizedList(result);
+            sortedCache.put(parent, result);
+            return result;
+        }
+
+        /**
+         * Handle insertion of {@code node} into the tree model.
+         * <p>
+         * Updates the cached sorted list for the node's parent by computing the
+         * insertion index via binary search and inserting the child into the cached
+         * list at that position. Emits a {@link TreeModelEvent} whose index matches
+         * the sorted view so the {@link JTree} updates correctly.
+         *
+         * @param node the inserted node's TreePath (lastPathComponent is the child)
+         */
         public void insertNode(TreePath node) {
+            ProjectTreeNode parent = (ProjectTreeNode) node.getParentPath().getLastPathComponent();
+            ProjectTreeNode child = (ProjectTreeNode) node.getLastPathComponent();
+
+            List<ProjectTreeNode> list = sortedChildren(parent);
+            java.util.Comparator<ProjectTreeNode> cmp = comparatorForParent(parent);
+            int bs = java.util.Collections.binarySearch(list, child, cmp);
+            int sortedIndex;
+            if (bs < 0) {
+                sortedIndex = -bs - 1;
+                // insert into cached list so future accesses are fast
+                list.add(sortedIndex, child);
+            } else {
+                sortedIndex = bs;
+            }
+
             for (TreeModelListener l : listeners) {
                 l.treeNodesInserted(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath().getPath(),
-                                                       new int[]{((ProjectTreeNode) node.getParentPath().getLastPathComponent()).getIndex((ProjectTreeNode) node.getLastPathComponent())},
+                                                       new int[]{sortedIndex},
                                                        new Object[]{node.getLastPathComponent()}));
             }
         }
 
+        /**
+         * Handle a change to {@code node} (for example a rename).
+         * <p>
+         * If the node's position in the sorted order changes, this method emits a
+         * removed event for the old index and an inserted event for the new index so
+         * the {@link JTree} can move the node. If the position does not change a
+         * normal changed event is emitted. The cached sorted list is updated
+         * incrementally.
+         *
+         * @param node the changed node's TreePath
+         */
         public void changeNode(TreePath node) {
-            for (TreeModelListener l : listeners) {
-                l.treeNodesChanged(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath(),
-                                                      new int[]{((ProjectTreeNode) node.getParentPath().getLastPathComponent()).getIndex((ProjectTreeNode) node.getLastPathComponent())},
-                                                      new Object[]{node.getLastPathComponent()}));
+            ProjectTreeNode parent = (ProjectTreeNode) node.getParentPath().getLastPathComponent();
+            ProjectTreeNode child = (ProjectTreeNode) node.getLastPathComponent();
+
+            List<ProjectTreeNode> list = sortedChildren(parent);
+            // find old index by identity
+            int oldIndex = -1;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i) == child) {
+                    oldIndex = i;
+                    break;
+                }
+            }
+
+            // remove old entry if present
+            if (oldIndex >= 0) list.remove(oldIndex);
+
+            java.util.Comparator<ProjectTreeNode> cmp = comparatorForParent(parent);
+            int bs = java.util.Collections.binarySearch(list, child, cmp);
+            int newIndex = bs < 0 ? -bs - 1 : bs;
+            list.add(newIndex, child);
+
+            // If position changed, fire removed + inserted; otherwise fire changed
+            if (oldIndex >= 0 && oldIndex != newIndex) {
+                for (TreeModelListener l : listeners) {
+                    l.treeNodesRemoved(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath(),
+                                                          new int[]{oldIndex},
+                                                          new Object[]{node.getLastPathComponent()}));
+                    l.treeNodesInserted(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath().getPath(),
+                                                           new int[]{newIndex},
+                                                           new Object[]{node.getLastPathComponent()}));
+                }
+            } else {
+                int idx = newIndex >= 0 ? newIndex : (oldIndex >= 0 ? oldIndex : parent.getIndex((TreeNode) child));
+                for (TreeModelListener l : listeners) {
+                    l.treeNodesChanged(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath(),
+                                                          new int[]{idx},
+                                                          new Object[]{node.getLastPathComponent()}));
+                }
             }
         }
 
+        /**
+         * Handle removal of {@code node} from the tree model.
+         * <p>
+         * Attempts to remove the child from the cached sorted list using binary
+         * search; if found the list entry is removed and the removed event uses the
+         * sorted index. If the child is not found in the cache we fall back to the
+         * underlying parent's index for the TreeModelEvent.
+         *
+         * @param node the removed node's TreePath
+         */
         public void removeNode(TreePath node) {
+            ProjectTreeNode parent = (ProjectTreeNode) node.getParentPath().getLastPathComponent();
+            ProjectTreeNode child = (ProjectTreeNode) node.getLastPathComponent();
+
+            List<ProjectTreeNode> list = sortedChildren(parent);
+            java.util.Comparator<ProjectTreeNode> cmp = comparatorForParent(parent);
+            int bs = java.util.Collections.binarySearch(list, child, cmp);
+            int sortedIndex;
+            if (bs >= 0) {
+                sortedIndex = bs;
+                list.remove(bs);
+            } else {
+                sortedIndex = parent.getIndex((TreeNode) child);
+            }
+
+            if (sortedIndex < 0) {
+                for (TreeModelListener l : listeners) {
+                    l.treeStructureChanged(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath().getPath()));
+                }
+                return;
+            }
+
             for (TreeModelListener l : listeners) {
                 l.treeNodesRemoved(new TreeModelEvent(node.getLastPathComponent(), node.getParentPath(),
-                                                      new int[]{((ProjectTreeNode) node.getParentPath().getLastPathComponent()).getIndex((ProjectTreeNode) node.getLastPathComponent())},
+                                                      new int[]{sortedIndex},
                                                       new Object[]{node.getLastPathComponent()}));
             }
         }
 
         @Override
         public int getIndexOfChild(Object parent, Object child) {
-            return ((ProjectTreeNode) parent).getIndex((ProjectTreeNode) child);
+            if (!(parent instanceof ProjectTreeNode)) return -1;
+            List<ProjectTreeNode> children = sortedChildren((ProjectTreeNode) parent);
+            int idx = children.indexOf(child);
+            return idx >= 0 ? idx : ((ProjectTreeNode) parent).getIndex((ProjectTreeNode) child);
         }
 
         List<TreeModelListener> listeners = new CopyOnWriteArrayList<TreeModelListener>();

@@ -1,6 +1,7 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
 import com.gpl.rpg.atcontentstudio.ATContentStudio;
+import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.*;
 import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
@@ -177,12 +178,15 @@ public class WorkspaceActions {
 
     public ATCSAction createProject = new ATCSAction("Create Project...", "Opens the project creation wizard") {
         public void actionPerformed(ActionEvent e) {
-            new ProjectCreationWizard().setVisible(true);
+            if (workspaceBusy) return;
+            // We pass callbacks to set/reset the busy flag when the actual creation occurs, to lock out the tree
+            new ProjectCreationWizard(() -> setWorkspaceBusy(true), () -> setWorkspaceBusy(false)).setVisible(true);
         }
 
     };
 
 
+    // TODO: Fix the memory leak here - it doesn't seem to usually free much of anything
     public ATCSAction closeProject = new ATCSAction("Close Project", "Closes the project, unloading all resources from memory") {
         public void actionPerformed(ActionEvent e) {
             if (!(selectedNode instanceof Project)) return;
@@ -196,28 +200,33 @@ public class WorkspaceActions {
 
     };
 
-
     public ATCSAction openProject = new ATCSAction("Open Project", "Opens the project, loading all necessary resources in memory") {
         public void actionPerformed(ActionEvent e) {
+            if (workspaceBusy) return;
+
             if (!(selectedNode instanceof ClosedProject)) return;
-            Workspace.openProject((ClosedProject) selectedNode);
+
+            setWorkspaceBusy(true);
+            Workspace.openProject((ClosedProject) selectedNode, () -> setWorkspaceBusy(false));
         }
 
         public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
-            setEnabled(selectedNode instanceof ClosedProject);
+            setEnabled(!workspaceBusy && selectedNode instanceof ClosedProject);
         }
 
     };
 
-    public ATCSAction deleteProject = new ATCSAction("Delete Project", "Deletes the project, and all created/altered data, from disk") {
+    public ATCSAction deleteProject = new ATCSAction("Delete Project", "Deletes the project from the workspace, optionally removing its folder from disk") {
         public void actionPerformed(ActionEvent e) {
             if (selectedNode instanceof Project) {
-                if (ConfirmationDialogs.confirmProjectDelete()) {
-                    Workspace.deleteProject((Project) selectedNode);
+                Boolean deleteFolder = ConfirmationDialogs.confirmProjectDelete(((Project) selectedNode).name);
+                if (deleteFolder != null) {
+                    Workspace.deleteProject((Project) selectedNode, deleteFolder);
                 }
             } else if (selectedNode instanceof ClosedProject) {
-                if (ConfirmationDialogs.confirmProjectDelete()) {
-                    Workspace.deleteProject((ClosedProject) selectedNode);
+                Boolean deleteFolder = ConfirmationDialogs.confirmProjectDelete(((ClosedProject) selectedNode).name);
+                if (deleteFolder != null) {
+                    Workspace.deleteProject((ClosedProject) selectedNode, deleteFolder);
                 }
             }
         }
@@ -595,6 +604,21 @@ public class WorkspaceActions {
         }
 
     };
+
+    /**
+     * worspaceBusy routines -
+     * Whether the workspace is currently busy (generally, load operation in progress)
+     */
+    private volatile boolean workspaceBusy = false;
+
+    private boolean isWorkspaceBusy() {
+        return workspaceBusy;
+    }
+
+    public void setWorkspaceBusy(boolean busy) {
+        workspaceBusy = busy;
+        selectionChanged(selectedNode, selectedPaths);
+    }
 
     private void persistUiStateIfPossible() {
         if (ATContentStudio.frame != null) {
