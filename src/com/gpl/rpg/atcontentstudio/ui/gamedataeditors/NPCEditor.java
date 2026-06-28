@@ -133,7 +133,7 @@ public class NPCEditor extends JSONElementEditor {
         experienceField = addIntegerField(pane, "Experience reward: ", npc.getMonsterExperience(), false, false, listener);
         dialogueBox = addDialogueBox(pane, npc.getProject(), "Initial phrase: ", npc.dialogue, npc.writable, listener);
         droplistBox = addDroplistBox(pane, npc.getProject(), "Droplist / Shop inventory: ", npc.droplist, npc.writable, listener);
-        monsterClassBox = addEnumValueBox(pane, "Monster class: ", NPC.MonsterClass.values(), npc.monster_class, npc.writable, listener);
+        monsterClassBox = addEnumValueBoxWithDescriptions(pane, "Monster class: ", NPC.MonsterClass.values(), npc.monster_class, npc.writable, NPC.MonsterClass::getDescription, listener);
         uniqueBox = addIntegerBasedCheckBox(pane, "Unique", npc.unique, npc.writable, listener);
         moveTypeBox = addEnumValueBox(pane, "Movement type: ", NPC.MovementType.values(), npc.movement_type, npc.writable, listener);
         combatTraitPane = new CollapsiblePanel("Combat traits: ");
