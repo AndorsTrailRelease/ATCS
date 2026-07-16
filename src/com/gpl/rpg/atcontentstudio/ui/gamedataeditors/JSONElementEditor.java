@@ -1,6 +1,7 @@
 package com.gpl.rpg.atcontentstudio.ui.gamedataeditors;
 
 import com.gpl.rpg.atcontentstudio.ATContentStudio;
+import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.*;
 import com.gpl.rpg.atcontentstudio.model.gamedata.GameDataCategory;
 import com.gpl.rpg.atcontentstudio.model.gamedata.JSONElement;
@@ -12,6 +13,7 @@ import com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet;
 import com.gpl.rpg.atcontentstudio.ui.*;
 import com.gpl.rpg.atcontentstudio.ui.ScrollablePanel.ScrollableSizeHint;
 import com.gpl.rpg.atcontentstudio.ui.sprites.SpriteChooser;
+import com.gpl.rpg.atcontentstudio.utils.TextUtils;
 import com.jidesoft.swing.JideBoxLayout;
 import com.jidesoft.swing.JideTabbedPane;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -344,5 +346,14 @@ public abstract class JSONElementEditor extends Editor {
             }
         };
         SwingUtilities.invokeLater(revertField);
+    }
+
+    protected boolean validateInternalIdEdit(JTextField idField, String value) {
+        if (TextUtils.isValidInternalId(value)) {
+            return true;
+        }
+        Notification.addError(TextUtils.getInternalIdValidationError());
+        cancelIdEdit(idField);
+        return false;
     }
 }

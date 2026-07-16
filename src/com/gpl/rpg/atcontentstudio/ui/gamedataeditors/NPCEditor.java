@@ -180,6 +180,7 @@ public class NPCEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals((String) value)) return;
+                if (!validateInternalIdEdit(idField, (String) value)) return;
 
                 if (idChanging()) {
                     npc.id = (String) value;

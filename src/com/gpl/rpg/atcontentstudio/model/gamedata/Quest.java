@@ -48,6 +48,7 @@ public class Quest extends JSONElement {
             List quests = (List) parser.parse(reader);
             for (Object obj : quests) {
                 Map questJson = (Map) obj;
+                JSONElement.validateIds(questJson, jsonFile, "");
                 Quest quest = fromJson(questJson);
                 quest.jsonFile = jsonFile;
                 quest.parent = category;

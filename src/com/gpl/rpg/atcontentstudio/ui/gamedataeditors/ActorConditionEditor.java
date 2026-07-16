@@ -152,6 +152,7 @@ public class ActorConditionEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals((String) value)) return;
+                if (!validateInternalIdEdit(idField, (String) value)) return;
 
                 if (idChanging()) {
                     aCond.id = (String) value;

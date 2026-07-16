@@ -149,6 +149,7 @@ public class QuestEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals((String) value)) return;
+                if (!validateInternalIdEdit(idField, (String) value)) return;
 
                 if (idChanging()) {
                     quest.id = (String) value;

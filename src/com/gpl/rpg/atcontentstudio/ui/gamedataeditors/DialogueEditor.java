@@ -1218,6 +1218,7 @@ public class DialogueEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals((String) value)) return;
+                if (!validateInternalIdEdit(idField, (String) value)) return;
 
                 if (idChanging()) {
                     dialogue.id = (String) value;

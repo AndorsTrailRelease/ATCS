@@ -27,6 +27,9 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.gpl.rpg.atcontentstudio.utils.TextUtils.getInternalIdValidationError;
+import static com.gpl.rpg.atcontentstudio.utils.TextUtils.isValidInternalId;
+
 public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
     private static final long serialVersionUID = -8358238912588729094L;
@@ -64,6 +67,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
     JTextField labelIdField;
     JTextField labelNameField;
     JTextField labelTypeField;
+    private boolean skipLabelIdUpdate = false;
 
     public WorldMapEditor(WorldmapSegment worldmap) {
         target = worldmap;
@@ -1106,6 +1110,16 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         WorldmapSegment worldmap = (WorldmapSegment) target;
         boolean changed = false;
         if (source == labelIdField) {
+            if (skipLabelIdUpdate) {
+                skipLabelIdUpdate = false;
+                return;
+            }
+            if (!isValidInternalId((String) value)) {
+                Notification.addError(getInternalIdValidationError());
+                skipLabelIdUpdate = true;
+                labelIdField.setText(selectedLabel.id == null ? "" : selectedLabel.id);
+                return;
+            }
             List<String> coverage;
             if (selectedLabel.id != null) {
                 coverage = worldmap.labelledMaps.get(selectedLabel.id);

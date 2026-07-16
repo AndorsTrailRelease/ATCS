@@ -5,6 +5,7 @@ import com.gpl.rpg.atcontentstudio.model.GameDataElement.State;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
+import com.gpl.rpg.atcontentstudio.utils.TextUtils;
 import com.jidesoft.swing.JideBoxLayout;
 
 import javax.swing.*;
@@ -136,6 +137,10 @@ public class TMXMapCreationWizard extends JDialog {
                     creation = new TMXMap(proj.createdContent.gameMaps, templateFile);
                     creation.parse();
                 }
+                if (!TextUtils.isValidInternalId(idField.getText())) {
+                    updateStatus();
+                    return;
+                }
                 creation.id = idField.getText();
                 creation.tmxFile = new File(creation.id + ".tmx");
                 TMXMapCreationWizard.this.setVisible(false);
@@ -194,6 +199,9 @@ public class TMXMapCreationWizard extends JDialog {
             trouble = true;
         } else if (idField.getText() == null || idField.getText().length() <= 0) {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
+            trouble = true;
+        } else if (!TextUtils.isValidInternalId(idField.getText())) {
+            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
             trouble = true;
         } else if (proj.getMap(idField.getText()) != null) {
             if (proj.getMap(idField.getText()).getDataType() == GameSource.Type.created) {

@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.gpl.rpg.atcontentstudio.utils.TextUtils.isValidInternalId;
+
 public class JSONImportWizard extends JDialog {
 
     private static final long serialVersionUID = 661234868711700156L;
@@ -303,6 +305,10 @@ public class JSONImportWizard extends JDialog {
                                     return;
                             }
                             i++;
+                            if (!isValidInternalId(node.id)) {
+                                Notification.addError("Imported " + node.getClass().getSimpleName() + " #" + i + " has an invalid internal ID: " + node.id + ". Internal IDs may only contain lowercase letters, digits, and underscores.");
+                                continue;
+                            }
                             if (node instanceof JSONElement) {
                                 node.parse(jsonObject);
                                 created.add(node);

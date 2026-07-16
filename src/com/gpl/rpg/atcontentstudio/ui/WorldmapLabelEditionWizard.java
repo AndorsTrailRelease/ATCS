@@ -2,6 +2,7 @@ package com.gpl.rpg.atcontentstudio.ui;
 
 import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.model.maps.WorldmapSegment;
+import com.gpl.rpg.atcontentstudio.utils.TextUtils;
 import com.jidesoft.swing.JideBoxLayout;
 
 import javax.swing.*;
@@ -94,6 +95,10 @@ public class WorldmapLabelEditionWizard extends JDialog {
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (!TextUtils.isValidInternalId(idField.getText())) {
+                    updateStatus();
+                    return;
+                }
                 label.id = idField.getText();
                 label.name = labelField.getText();
                 label.type = labelField.getText();
@@ -150,6 +155,9 @@ public class WorldmapLabelEditionWizard extends JDialog {
         message.setText("<html><font color=\"#00AA00\">Looks OK to me.</font></html>");
         if (idField.getText() == null || idField.getText().length() <= 0) {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
+            trouble = true;
+        } else if (!TextUtils.isValidInternalId(idField.getText())) {
+            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
             trouble = true;
         } else if (segment.labels.get(idField.getText()) != null && segment.labels.get(idField.getText()) != label) {
             message.setText("<html><font color=\"#FF0000\">A worldmap label with the same ID already exists in this worldmap.</font></html>");

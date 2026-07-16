@@ -84,6 +84,7 @@ public class ItemCategoryEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals((String) value)) return;
+                if (!validateInternalIdEdit(idField, (String) value)) return;
 
                 if (idChanging()) {
                     ic.id = (String) value;
