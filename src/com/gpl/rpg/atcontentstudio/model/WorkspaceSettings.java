@@ -24,6 +24,9 @@ public class WorkspaceSettings {
     public Setting<Boolean> useSystemDefaultMapEditor = new PrimitiveSetting<Boolean>("useSystemDefaultMapEditor", DEFAULT_USE_SYS_MAP_EDITOR);
     public static String DEFAULT_MAP_EDITOR_COMMAND = "tiled";
     public Setting<String> mapEditorCommand = new PrimitiveSetting<String>("mapEditorCommand", DEFAULT_MAP_EDITOR_COMMAND);
+    // When enabled, world map zoom only reacts to Ctrl + mouse wheel.
+    public static Boolean DEFAULT_ZOOM_WORLD_MAP_ONLY_WITH_CTRL = false;
+    public Setting<Boolean> zoomWorldMapOnlyWithCtrl = new PrimitiveSetting<Boolean>("zoomWorldMapOnlyWithCtrl", DEFAULT_ZOOM_WORLD_MAP_ONLY_WITH_CTRL);
 
     public static Boolean DEFAULT_USE_SYS_IMG_VIEWER = true;
     public Setting<Boolean> useSystemDefaultImageViewer = new PrimitiveSetting<Boolean>("useSystemDefaultImageViewer", DEFAULT_USE_SYS_IMG_VIEWER);
@@ -46,6 +49,7 @@ public class WorkspaceSettings {
         this.parent = parent;
         settings.add(useSystemDefaultMapEditor);
         settings.add(mapEditorCommand);
+        settings.add(zoomWorldMapOnlyWithCtrl);
         settings.add(useSystemDefaultImageViewer);
         settings.add(useSystemDefaultImageEditor);
         settings.add(imageEditorCommand);

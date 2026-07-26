@@ -54,6 +54,8 @@ public class TMXMap extends GameDataElement {
 
     public boolean changedOnDisk = false;
     public int dismissNextChangeNotif = 0;
+    // Bumps whenever the rendered TMX content changes so view caches can invalidate lazily.
+    private long renderGeneration = 0;
 
     public TMXMap(TMXMapSet parent, File f) {
         this.parent = parent;
@@ -177,6 +179,7 @@ public class TMXMap extends GameDataElement {
 
     @Override
     public void childrenChanged(List<ProjectTreeNode> path) {
+        renderGeneration++;
         path.add(0, this);
         parent.childrenChanged(path);
     }
@@ -339,6 +342,7 @@ public class TMXMap extends GameDataElement {
 
     public void addLayer(tiled.core.MapLayer layer) {
         tmxMap.addLayer(layer);
+        renderGeneration++;
         if (layer instanceof tiled.core.ObjectGroup) {
             groups.add(new MapObjectGroup((tiled.core.ObjectGroup) layer, this));
         }
@@ -346,6 +350,7 @@ public class TMXMap extends GameDataElement {
 
     public void removeLayer(tiled.core.MapLayer layer) {
         tmxMap.removeLayer(tmxMap.getLayerIndex(layer));
+        renderGeneration++;
         if (layer instanceof tiled.core.ObjectGroup) {
             MapObjectGroup toRemove = null;
             for (MapObjectGroup group : groups) {
@@ -405,6 +410,7 @@ public class TMXMap extends GameDataElement {
 
     public void reload() {
         tmxMap = null;
+        renderGeneration++;
         for (Spritesheet s : usedSpritesheets) {
             s.elementChanged(this, null);
         }
@@ -447,6 +453,15 @@ public class TMXMap extends GameDataElement {
         for (MapChangedOnDiskListener l : listeners) {
             l.mapReloaded();
         }
+    }
+
+    /**
+     * Returns the current render generation for cache invalidation.
+     *
+     * @return monotonically increasing render generation
+     */
+    public long getRenderGeneration() {
+        return renderGeneration;
     }
 
     public void mapChangedOnDisk() {
