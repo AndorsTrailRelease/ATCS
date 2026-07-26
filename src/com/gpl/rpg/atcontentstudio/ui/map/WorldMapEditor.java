@@ -5,6 +5,7 @@ import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.ProjectTreeNode;
+import com.gpl.rpg.atcontentstudio.model.Workspace;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
 import com.gpl.rpg.atcontentstudio.model.maps.Worldmap;
 import com.gpl.rpg.atcontentstudio.model.maps.WorldmapSegment;
@@ -335,8 +336,29 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         };
 
         zoomSlider.addChangeListener(zoomChangeListener);
-        mapScroller.setWheelScrollingEnabled(false);
-        vPort.addMouseWheelListener(e -> {
+        mapScroller.setWheelScrollingEnabled(true);
+
+        // Remove any existing wheel listener on mapscroller
+        MouseWheelListener defaultWheelListener = null;
+        MouseWheelListener[] wheelListeners = mapScroller.getMouseWheelListeners();
+        if (wheelListeners.length > 0) {
+            defaultWheelListener = wheelListeners[0];
+            mapScroller.removeMouseWheelListener(defaultWheelListener);
+        }
+
+        // Set a new wheel listener on the mapscroller that checks Prefs option for control, and if
+        // not, pass the event on so the scroller moves up/down)
+        final MouseWheelListener finalDefaultWheelListener = defaultWheelListener;
+        mapScroller.addMouseWheelListener(e -> {
+            // Read the preference at event time so changes apply without reopening the editor.
+            boolean ctrlRequired = Workspace.activeWorkspace != null
+                    && Workspace.activeWorkspace.settings.zoomWorldMapOnlyWithCtrl.getCurrentValue();
+            if (ctrlRequired && !e.isControlDown()) {
+                if (finalDefaultWheelListener != null) {
+                    finalDefaultWheelListener.mouseWheelMoved(e);
+                }
+                return;
+            }
             int newZoom = zoomSlider.getValue() - (e.getWheelRotation() * WorldMapView.INC_ZOOM);
             newZoom = Math.clamp(newZoom, zoomSlider.getMinimum(), WorldMapView.MAX_ZOOM);
             if (newZoom != zoomSlider.getValue()) {
