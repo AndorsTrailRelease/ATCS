@@ -22,8 +22,8 @@ public class WorldMapView extends JComponent implements Scrollable {
     private static final long serialVersionUID = -4111374378777093799L;
 
     public static final int TILE_SIZE = 32;
-    public static final int MIN_ZOOM = 5;
-    public static final int MAX_ZOOM = 250;
+    public static final int MIN_ZOOM = 1;
+    public static final int MAX_ZOOM = 500;
     public static final int INC_ZOOM = 5;
     public static final float ZOOM_RATIO = 0.01f;
 
