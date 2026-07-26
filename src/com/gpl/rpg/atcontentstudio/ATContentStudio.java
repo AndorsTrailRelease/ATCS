@@ -621,7 +621,7 @@ public class ATContentStudio {
                     "Notes:",
                     "  - If <target> ends with .zip, ATCS exports a zip package.",
                     "  - Otherwise, <target> must be an existing game-source directory.",
-                    "  - --show-console allocates and attaches a Windows console window.",
+                    "  - --show-console allocates and attaches a console window (Windows platform only).",
                     "  - --skip-lock-check bypasses single-instance workspace locking.",
                     "  - --ignore-config ignores saved global config and behaves like a fresh install for this run.",
             }
