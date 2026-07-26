@@ -42,6 +42,8 @@ public class WorldMapView extends JComponent implements Scrollable {
     int sizeX = 0, sizeY = 0;
     int offsetX = 0, offsetY = 0;
 
+    // Cached native-resolution renders for each TMX map, keyed by map id.
+    private final Map<String, CachedMapRender> renderedMapCache = new HashMap<String, CachedMapRender>();
 
     static final Color selectOutlineColor = new Color(255, 0, 0);
     static final Stroke selectOutlineStroke = new BasicStroke(4f);
@@ -148,7 +150,7 @@ public class WorldMapView extends JComponent implements Scrollable {
         return event.getPoint();
     }
 
-    private void paintOnGraphics(Graphics2D g2) {
+    private void paintOnGraphics(Graphics2D g2, Rectangle clip) {
         g2.setPaint(new Color(100, 100, 100));
         g2.fillRect(0, 0, sizeX, sizeY);
 
@@ -165,25 +167,28 @@ public class WorldMapView extends JComponent implements Scrollable {
         FontMetrics mifm = g2.getFontMetrics();
         int mapIdLabelHeight = mifm.getHeight();
 
-        for (String s : new HashSet<String>(mapLocations.keySet())) {
+        // Convert the screen clip to world coordinates so we only composite visible maps.
+        Rectangle visibleWorld = getVisibleWorldBounds(clip);
 
-            int x = mapLocations.get(s).x;
-            int y = mapLocations.get(s).y;
+        for (Map.Entry<String, Rectangle> entry : mapLocations.entrySet()) {
+            Rectangle bounds = entry.getValue();
+            if (visibleWorld != null && !visibleWorld.intersects(bounds)) continue;
 
-            TMXMap map = proj.getMap(s);
-            if (map == null) continue;
+            TMXMap map = proj.getMap(entry.getKey());
+            if (map == null || map.tmxMap == null) continue;
 
-            BufferedImage offscreen = renderMapOffscreen(map, g2);
-            g2.drawImage(offscreen, x, y, null);
-
+            BufferedImage offscreen = getRenderedMapImage(map, g2);
+            if (offscreen != null) {
+                g2.drawImage(offscreen, bounds.x, bounds.y, null);
+            }
         }
 
         if (highlightedListModel != null) {
-            outlineFromListModel(g2, highlightedListModel, null, highlightOutlineColor, highlightOutlineStroke, mapIdFont, mapIdLabelHeight);
+            outlineFromListModel(g2, highlightedListModel, null, highlightOutlineColor, highlightOutlineStroke, mapIdFont, mapIdLabelHeight, visibleWorld);
         }
 
         if (selectedListModel != null && selectedSelectionModel != null) {
-            outlineFromListModel(g2, selectedListModel, selectedSelectionModel, selectOutlineColor, selectOutlineStroke, mapIdFont, mapIdLabelHeight);
+            outlineFromListModel(g2, selectedListModel, selectedSelectionModel, selectOutlineColor, selectOutlineStroke, mapIdFont, mapIdLabelHeight, visibleWorld);
         }
 
 
@@ -236,6 +241,29 @@ public class WorldMapView extends JComponent implements Scrollable {
         }
 
         return offscreen;
+    }
+
+    /**
+     * Returns the cached render for a TMX map, rebuilding it when the map generation changes.
+     *
+     * @param map the map to render
+     * @param templateGraphics graphics context used to copy rendering hints
+     * @return a cached or freshly rendered image for the map
+     */
+    private BufferedImage getRenderedMapImage(TMXMap map, Graphics2D templateGraphics) {
+        CachedMapRender cached = renderedMapCache.get(map.id);
+        long generation = map.getRenderGeneration();
+        int mapWidth = Math.max(1, map.tmxMap.getWidth() * map.tmxMap.getTileWidth());
+        int mapHeight = Math.max(1, map.tmxMap.getHeight() * map.tmxMap.getTileHeight());
+
+        if (cached != null && cached.generation == generation && cached.image != null &&
+                cached.image.getWidth() == mapWidth && cached.image.getHeight() == mapHeight) {
+            return cached.image;
+        }
+
+        BufferedImage rendered = renderMapOffscreen(map, templateGraphics);
+        renderedMapCache.put(map.id, new CachedMapRender(generation, rendered));
+        return rendered;
     }
 
     /**
@@ -307,13 +335,16 @@ public class WorldMapView extends JComponent implements Scrollable {
         g2d.drawImage(object.getIcon(), object.x + 2, object.y + 2, null);
     }
 
-    private void outlineFromListModel(Graphics2D g2, ListModel<TMXMap> listModel, ListSelectionModel selectionModel, Color outlineColor, Stroke outlineStroke, Font mapIdFont, int mapIdLabelHeight) {
+    private void outlineFromListModel(Graphics2D g2, ListModel<TMXMap> listModel, ListSelectionModel selectionModel, Color outlineColor, Stroke outlineStroke, Font mapIdFont, int mapIdLabelHeight, Rectangle visibleWorld) {
         for (int i = 0; i < listModel.getSize(); i++) {
             //No selection model ? We want to highlight the whole list.
             if (selectionModel == null || selectionModel.isSelectedIndex(i)) {
                 TMXMap map = listModel.getElementAt(i);
-                int x = mapLocations.get(map.id).x;
-                int y = mapLocations.get(map.id).y;
+                Rectangle bounds = mapLocations.get(map.id);
+                if (bounds == null) continue;
+                if (visibleWorld != null && !visibleWorld.intersects(bounds)) continue;
+                int x = bounds.x;
+                int y = bounds.y;
 
                 g2.translate(x, y);
 
@@ -351,8 +382,7 @@ public class WorldMapView extends JComponent implements Scrollable {
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             g2.scale(zoomLevel, zoomLevel);
-//			g2.drawImage(img, 0, 0, null);
-            paintOnGraphics(g2);
+            paintOnGraphics(g2, g.getClipBounds());
 
         } finally {
             g2.dispose();
@@ -460,6 +490,7 @@ public class WorldMapView extends JComponent implements Scrollable {
 
     public void updateFromModel() {
         mapLocations.clear();
+        renderedMapCache.clear();
         sizeX = sizeY = 0;
         offsetX = worldmap.segmentX * TILE_SIZE;
         offsetY = worldmap.segmentY * TILE_SIZE;
@@ -478,6 +509,23 @@ public class WorldMapView extends JComponent implements Scrollable {
 
             mapLocations.put(s, new Rectangle(x, y, w, h));
         }
+    }
+
+    /**
+     * Converts a screen-space clip rectangle into world coordinates.
+     *
+     * @param clip the component clip in screen coordinates
+     * @return the corresponding world-space bounds
+     */
+    private Rectangle getVisibleWorldBounds(Rectangle clip) {
+        if (clip == null) {
+            clip = new Rectangle(0, 0, Math.max(1, getWidth()), Math.max(1, getHeight()));
+        }
+        int x = (int) Math.floor(clip.x / zoomLevel);
+        int y = (int) Math.floor(clip.y / zoomLevel);
+        int w = (int) Math.ceil((clip.x + clip.width) / zoomLevel) - x;
+        int h = (int) Math.ceil((clip.y + clip.height) / zoomLevel) - y;
+        return new Rectangle(x, y, Math.max(1, w), Math.max(1, h));
     }
 
     public void pushToModel() {
@@ -504,6 +552,18 @@ public class WorldMapView extends JComponent implements Scrollable {
                 continue;
             }
             worldmap.getProject().getMap(id).addBacklink(worldmap);
+        }
+    }
+
+    private static final class CachedMapRender {
+        // Render version taken from TMXMap#getRenderGeneration().
+        private final long generation;
+        // Native-resolution map bitmap reused across paints.
+        private final BufferedImage image;
+
+        private CachedMapRender(long generation, BufferedImage image) {
+            this.generation = generation;
+            this.image = image;
         }
     }
 

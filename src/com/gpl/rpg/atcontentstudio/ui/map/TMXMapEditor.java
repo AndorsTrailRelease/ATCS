@@ -1852,7 +1852,6 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 if (selectedLayer instanceof tiled.core.ObjectGroup) {
                     map.getGroup((tiled.core.ObjectGroup) selectedLayer).visible = layerVisibleBox.isSelected();
                 }
-                modified = false;
                 tmxViewer.revalidate();
                 tmxViewer.repaint();
             } else if (source == groupActiveForNewGame) {
