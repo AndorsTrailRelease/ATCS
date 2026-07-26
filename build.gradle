@@ -32,6 +32,7 @@ repositories {
 // Local jars are checked into lib/ and used as implementation/test dependencies.
 dependencies {
     implementation fileTree(dir: 'lib', include: ['*.jar'], exclude: ['junit-*.jar', '*-sources.jar'])
+    implementation 'net.java.dev.jna:jna:5.15.0' // Needed for Windows console support
 
     testImplementation files('lib/junit-4.10.jar')
 }

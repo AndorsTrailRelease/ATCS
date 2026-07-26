@@ -56,6 +56,8 @@ Or run the built jar directly:
 java -jar build/libs/ATContentStudio-<version>-all.jar
 ```
 
+On Windows, add `--show-console` to allocate and attach a console window.
+
 ## Build
 
 On Linux/macOS:
