@@ -787,7 +787,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         gdePane.setLayout(new JideBoxLayout(gdePane, JideBoxLayout.LINE_AXIS, 6));
         JLabel gdeLabel = new JLabel(label);
         gdePane.add(gdeLabel, JideBoxLayout.FIX);
-        final SortedGDEComboModel<? extends GameDataElement> wrappedModel = new SortedGDEComboModel<>(comboModel);
+        final SortedGDEComboModel<? extends GameDataElement> wrappedModel = new SortedGDEComboModel<>(comboModel, createGDEComboSections());
         final MyComboBox gdeBox = new MyComboBox(dataClass, wrappedModel);
         gdeBox.setRenderer(new GDERenderer(false, writable));
         new ComboBoxSearchable(gdeBox) {
@@ -994,7 +994,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         private final List<Row<E>> rows = new ArrayList<Row<E>>();
 
         /**
-         * Creates the default two-section view: Project, and Game Source.
+         * Creates a single-section view with no header row.
          */
         public SortedGDEComboModel(GDEComboModel<E> source) {
             this(source, defaultSections());
@@ -1229,32 +1229,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         }
 
         /**
-         * Returns the section definitions used by the default model.
-         */
-        private static <E extends GameDataElement> List<Section<E>> defaultSections() {
-            Comparator<E> comparator = buildComparator();
-            List<Section<E>> result = new ArrayList<Section<E>>();
-            result.add(new Section<E>(PROJECT_HEADER, e -> e.getDataType() == GameSource.Type.altered  || e.getDataType() == GameSource.Type.created, comparator, e -> {
-                String desc = normalizeDesc(e.getDesc());
-                desc = switch (e.getDataType()) {
-                    case created -> desc + " (C)";
-                    case altered -> desc + " (A)";
-                    default -> desc;
-                };
-                return desc;
-            }));
-            //result.add(new Section<E>(GAME_SOURCE_HEADER, e -> e.getDataType() == GameSource.Type.source || e.getDataType() == GameSource.Type.altered, comparator, e -> {
-            result.add(new Section<E>(GAME_SOURCE_HEADER, e -> true, comparator, e -> {
-                String desc = normalizeDesc(e.getDesc());
-                return e.getDataType() == GameSource.Type.altered ? desc + " (A)" : desc;
-            }));
-            return result;
-        }
-
-        /**
          * Builds a locale-aware comparator for normalized element descriptions.
          */
-        private static <E extends GameDataElement> Comparator<E> buildComparator() {
+        static <E extends GameDataElement> Comparator<E> buildComparator() {
             final Collator collator = Collator.getInstance(Locale.getDefault());
             collator.setStrength(Collator.PRIMARY);
             return (o1, o2) -> {
@@ -1283,11 +1260,23 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                     }
                 }
                 sectionRows.sort(section.comparator);
-                rows.add(Row.header(section.headerLabel));
+                if (section.headerLabel != null && !section.headerLabel.isEmpty()) {
+                    rows.add(Row.header(section.headerLabel));
+                }
                 for (E item : sectionRows) {
                     rows.add(Row.item(item, section.displayTextMapper.apply(item)));
                 }
             }
+        }
+
+        /**
+         * Returns the default single-section view used when no custom sections are provided.
+         */
+        private static <E extends GameDataElement> List<Section<E>> defaultSections() {
+            Comparator<E> comparator = buildComparator();
+            List<Section<E>> result = new ArrayList<Section<E>>();
+            result.add(new Section<E>(null, e -> true, comparator, e -> normalizeDesc(e.getDesc())));
+            return result;
         }
 
         /**
@@ -1321,7 +1310,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         /**
          * Normalizes a description for stable alphabetical ordering.
          */
-        private static String normalizeDesc(String desc) {
+        static String normalizeDesc(String desc) {
             if (desc == null) return "";
             String d = desc.trim();
             // strip leading markers like '*' that indicate modified/unsaved
@@ -1426,6 +1415,8 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     public static class GDERenderer extends DefaultListCellRenderer {
 
         private static final long serialVersionUID = 6819681566800482793L;
+        private static final Color ALTERED_HIGHLIGHT = new Color(255, 255, 0, 48);
+        private static final Color CREATED_HIGHLIGHT = new Color(0, 255, 0, 48);
 
         private boolean includeType;
         private boolean writable;
@@ -1458,6 +1449,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 }
             }
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            label.setOpaque(true);
             if (value == null) {
                 label.setText("None set" + (writable ? "... Click on the button to create one." : ""));
             } else {
@@ -1487,10 +1479,48 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 } else {
                     label.setIcon(new ImageIcon(((GameDataElement) value).getIcon()));
                 }
+                applyTypeHighlight(label, (GameDataElement) value, isSelected);
             }
             return label;
         }
 
+        private void applyTypeHighlight(JLabel label, GameDataElement value, boolean isSelected) {
+            if (isSelected) return;
+            if (value.getDataType() == GameSource.Type.altered) {
+                label.setBackground(ALTERED_HIGHLIGHT);
+            } else if (value.getDataType() == GameSource.Type.created) {
+                label.setBackground(CREATED_HIGHLIGHT);
+            }
+        }
+
+    }
+
+    /**
+     * Builds the default GDE combo sections used by the shared editors.
+     */
+    static <E extends GameDataElement> List<SortedGDEComboModel.Section<E>> createGDEComboSections() {
+        Comparator<E> comparator = SortedGDEComboModel.buildComparator();
+        List<SortedGDEComboModel.Section<E>> result = new ArrayList<SortedGDEComboModel.Section<E>>();
+        result.add(new SortedGDEComboModel.Section<E>(SortedGDEComboModel.PROJECT_HEADER,
+                e -> e.getDataType() == GameSource.Type.altered || e.getDataType() == GameSource.Type.created,
+                comparator,
+                e -> {
+                    String desc = SortedGDEComboModel.normalizeDesc(e.getDesc());
+                    return switch (e.getDataType()) {
+                        case created -> desc; //+ " (C)";
+                        case altered -> desc; //+ " (A)";
+                        default -> desc;
+                    };
+                }));
+        result.add(new SortedGDEComboModel.Section<E>(SortedGDEComboModel.GAME_SOURCE_HEADER,
+                e -> true,
+                comparator,
+                e -> {
+                    String desc = SortedGDEComboModel.normalizeDesc(e.getDesc());
+                    //return e.getDataType() == GameSource.Type.altered ? desc + " (A)" : desc;
+                    return desc;
+                }));
+        return result;
     }
 
     /**
