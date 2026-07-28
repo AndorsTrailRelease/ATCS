@@ -3,6 +3,7 @@ package com.gpl.rpg.atcontentstudio.ui;
 import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
+import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.ProjectElementListener;
 import com.gpl.rpg.atcontentstudio.model.SaveEvent;
@@ -26,6 +27,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.text.Collator;
@@ -928,6 +930,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         return list;
     }
 
+    /**
+     * Base combo model for selecting project {@link GameDataElement}s with a null row at index 0.
+     */
     public static abstract class GDEComboModel<E extends GameDataElement> extends AbstractListModel<E> implements ComboBoxModel<E> {
 
         private static final long serialVersionUID = -5854574666510314715L;
@@ -975,25 +980,37 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     }
 
     /**
-     * Wrapper around a GDEComboModel that presents the same elements but
-     * sorted by their description (as returned by getDesc()).
-     *
-     * This keeps the same ComboBoxModel API so callers (e.g. MyComboBox)
-     * can cast to GDEComboModel and call itemAdded/itemRemoved; the wrapper
-     * rebuilds a sorted view and fires change events when the underlying
-     * model changes.
+     * Presents a grouped, sorted view of a {@link GDEComboModel} without changing the
+     * underlying project order.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static class SortedGDEComboModel<E extends GameDataElement> extends GDEComboModel<E> {
 
         private static final long serialVersionUID = 1L;
+        public static final String PROJECT_HEADER = "Project Elements";
+        public static final String GAME_SOURCE_HEADER = "Game Source Elements";
 
         private final GDEComboModel<E> source;
-        private final java.util.List<E> sorted = new ArrayList<E>();
+        private final List<Section<E>> sections;
+        private final List<Row<E>> rows = new ArrayList<Row<E>>();
 
+        /**
+         * Creates the default two-section view: Project, and Game Source.
+         */
         public SortedGDEComboModel(GDEComboModel<E> source) {
+            this(source, defaultSections());
+        }
+
+        /**
+         * Creates a grouped view using the supplied section definitions.
+         *
+         * @param source the underlying combo model
+         * @param sections ordered section definitions to flatten into rows
+         */
+        public SortedGDEComboModel(GDEComboModel<E> source, List<Section<E>> sections) {
             super(source.project, source.selected);
             this.source = source;
+            this.sections = new ArrayList<Section<E>>(sections);
             rebuild();
 
             // Listen to the source model so we rebuild when it changes indirectly.
@@ -1001,41 +1018,278 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 @Override
                 public void intervalAdded(javax.swing.event.ListDataEvent e) {
                     rebuild();
-                    fireContentsChanged(SortedGDEComboModel.this, 0, getSize() - 1);
+                    fireContentsChanged(SortedGDEComboModel.this, 0, Math.max(0, getSize() - 1));
                 }
 
                 @Override
                 public void intervalRemoved(javax.swing.event.ListDataEvent e) {
                     rebuild();
-                    fireContentsChanged(SortedGDEComboModel.this, 0, getSize() - 1);
+                    fireContentsChanged(SortedGDEComboModel.this, 0, Math.max(0, getSize() - 1));
                 }
 
                 @Override
                 public void contentsChanged(javax.swing.event.ListDataEvent e) {
                     rebuild();
-                    fireContentsChanged(SortedGDEComboModel.this, 0, getSize() - 1);
+                    fireContentsChanged(SortedGDEComboModel.this, 0, Math.max(0, getSize() - 1));
                 }
             });
         }
 
-        private void rebuild() {
-            sorted.clear();
-            int s = source.getSize();
-            for (int i = 1; i < s; i++) {
-                E e = source.getElementAt(i);
-                if (e != null) sorted.add(e);
+        /**
+         * Describes one headered group in the flattened combo view.
+         * Each section controls membership, ordering, and display text for its rows.
+         */
+        public static class Section<E extends GameDataElement> {
+
+            private final String headerLabel;
+            private final Predicate<? super E> filter;
+            private final Comparator<? super E> comparator;
+            private final Function<? super E, String> displayTextMapper;
+
+            /**
+             * Defines one headered section in the flattened combo model.
+             *
+             * @param headerLabel the row text shown before the section contents
+             * @param filter which elements belong to this section
+             * @param comparator ordering used within the section
+             * @param displayTextMapper display label used for the row
+             */
+            public Section(String headerLabel,
+                           Predicate<? super E> filter,
+                           Comparator<? super E> comparator,
+                           Function<? super E, String> displayTextMapper) {
+                this.headerLabel = headerLabel;
+                this.filter = filter;
+                this.comparator = comparator;
+                this.displayTextMapper = displayTextMapper;
             }
-            // Locale-aware comparison on a normalized description key.
+        }
+
+        /**
+         * Internal flattened row representation used by the sorted combo model.
+         */
+        private static final class Row<E extends GameDataElement> {
+            private final GameDataElement element;
+            private final E item;
+            private final boolean selectable;
+
+            private Row(GameDataElement element, E item, boolean selectable) {
+                this.element = element;
+                this.item = item;
+                this.selectable = selectable;
+            }
+
+            /**
+             * Returns a non-selectable header row.
+             */
+            private static <E extends GameDataElement> Row<E> header(String headerLabel) {
+                return new Row<E>(new HeaderElement(headerLabel), null, false);
+            }
+
+            /**
+             * Returns a selectable row for a real element.
+             */
+            private static <E extends GameDataElement> Row<E> item(E item, String displayLabel) {
+                return new Row<E>(new ItemElement(item, displayLabel), item, true);
+            }
+
+            /**
+             * Returns the object exposed to the combo box for this row.
+             */
+            private GameDataElement asComboValue() {
+                return element;
+            }
+        }
+
+        /**
+         * Lightweight wrapper used for synthetic combo rows.
+         * Headers and display-label overrides live here, while most behavior delegates to the real element.
+         */
+        private static abstract class DelegatingElement extends GameDataElement {
+
+            private static final long serialVersionUID = 1L;
+            protected final GameDataElement delegate;
+            private final String desc;
+
+            /**
+             * Creates a lightweight row wrapper around a real element.
+             */
+            private DelegatingElement(GameDataElement delegate, String desc) {
+                this.delegate = delegate;
+                this.desc = desc == null ? "" : desc;
+            }
+
+            /**
+             * Returns the underlying row label.
+             */
+            @Override
+            public String getDesc() {
+                return desc;
+            }
+
+            @Override
+            public void parse() {
+            }
+
+            @Override
+            public void link() {
+            }
+
+            @Override
+            public GameDataElement clone() {
+                return delegate == null ? this : delegate.clone();
+            }
+
+            @Override
+            public void elementChanged(GameDataElement oldOne, GameDataElement newOne) {
+            }
+
+            @Override
+            public String getProjectFilename() {
+                return delegate == null ? "" : delegate.getProjectFilename();
+            }
+
+            @Override
+            public com.gpl.rpg.atcontentstudio.model.gamedata.GameDataSet getDataSet() {
+                return delegate == null ? null : delegate.getDataSet();
+            }
+
+            @Override
+            public void save() {
+                if (delegate != null) delegate.save();
+            }
+
+            @Override
+            public List<SaveEvent> attemptSave() {
+                return delegate == null ? null : delegate.attemptSave();
+            }
+
+            @Override
+            public GameSource.Type getDataType() {
+                return delegate == null ? null : delegate.getDataType();
+            }
+
+            @Override
+            public Image getIcon() {
+                return delegate == null ? null : delegate.getIcon();
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return delegate != null && delegate.isEmpty();
+            }
+        }
+
+        /**
+         * Non-selectable row used as a section header in the combo popup.
+         */
+        private static final class HeaderElement extends DelegatingElement {
+
+            private static final long serialVersionUID = 1L;
+
+            private HeaderElement(String label) {
+                super(null, label);
+            }
+        }
+
+        /**
+         * Selectable row wrapper for a real project element.
+         */
+        private static final class ItemElement extends DelegatingElement {
+
+            private static final long serialVersionUID = 1L;
+            private final boolean alteredMarker;
+
+            private ItemElement(GameDataElement delegate, String label) {
+                super(delegate, label);
+                this.alteredMarker = label != null && label.startsWith("*");
+            }
+
+            @Override
+            public void save() {
+                if (delegate != null) delegate.save();
+            }
+
+            @Override
+            public List<SaveEvent> attemptSave() {
+                return delegate == null ? null : delegate.attemptSave();
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return delegate != null && delegate.isEmpty();
+            }
+
+            public boolean isAlteredMarker() {
+                return alteredMarker;
+            }
+        }
+
+        /**
+         * Returns the section definitions used by the default model.
+         */
+        private static <E extends GameDataElement> List<Section<E>> defaultSections() {
+            Comparator<E> comparator = buildComparator();
+            List<Section<E>> result = new ArrayList<Section<E>>();
+            result.add(new Section<E>(PROJECT_HEADER, e -> e.getDataType() == GameSource.Type.altered  || e.getDataType() == GameSource.Type.created, comparator, e -> {
+                String desc = normalizeDesc(e.getDesc());
+                desc = switch (e.getDataType()) {
+                    case created -> desc + " (C)";
+                    case altered -> desc + " (A)";
+                    default -> desc;
+                };
+                return desc;
+            }));
+            result.add(new Section<E>(GAME_SOURCE_HEADER, e -> e.getDataType() == GameSource.Type.source || e.getDataType() == GameSource.Type.altered, comparator, e -> {
+                String desc = normalizeDesc(e.getDesc());
+                return e.getDataType() == GameSource.Type.altered ? desc + " (A)" : desc;
+            }));
+            return result;
+        }
+
+        /**
+         * Builds a locale-aware comparator for normalized element descriptions.
+         */
+        private static <E extends GameDataElement> Comparator<E> buildComparator() {
             final Collator collator = Collator.getInstance(Locale.getDefault());
-            collator.setStrength(Collator.PRIMARY); // basic comparison (ignore case/diacritics)
-            sorted.sort((o1, o2) -> {
+            collator.setStrength(Collator.PRIMARY);
+            return (o1, o2) -> {
                 String a = normalizeDesc(o1 == null ? null : o1.getDesc());
                 String b = normalizeDesc(o2 == null ? null : o2.getDesc());
                 return collator.compare(a, b);
-            });
+            };
         }
 
-        private String normalizeDesc(String desc) {
+        /**
+         * Rebuilds the flattened row list from the source model.
+         */
+        private void rebuild() {
+            rows.clear();
+            int s = source.getSize();
+            List<E> all = new ArrayList<E>();
+            for (int i = 1; i < s; i++) {
+                E e = source.getElementAt(i);
+                if (e != null) all.add(e);
+            }
+            for (Section<E> section : sections) {
+                List<E> sectionRows = new ArrayList<E>();
+                for (E item : all) {
+                    if (section.filter.test(item)) {
+                        sectionRows.add(item);
+                    }
+                }
+                sectionRows.sort(section.comparator);
+                rows.add(Row.header(section.headerLabel));
+                for (E item : sectionRows) {
+                    rows.add(Row.item(item, section.displayTextMapper.apply(item)));
+                }
+            }
+        }
+
+        /**
+         * Normalizes a description for stable alphabetical ordering.
+         */
+        private static String normalizeDesc(String desc) {
             if (desc == null) return "";
             String d = desc.trim();
             // strip leading markers like '*' that indicate modified/unsaved
@@ -1047,50 +1301,81 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             return d;
         }
 
+        /**
+         * Returns the row count including the null sentinel at index 0.
+         */
         @Override
         public int getSize() {
-            // +1 for the null sentinel at index 0
-            return sorted.size() + 1;
+            return rows.size() + 1;
         }
 
+        /**
+         * Returns the row at the specified combo-box index.
+         */
         @Override
         public E getElementAt(int index) {
             if (index == 0) return null;
-            return sorted.get(index - 1);
+            return (E) rows.get(index - 1).asComboValue();
         }
 
+        /**
+         * Returns the underlying selectable element for the row index.
+         */
         @Override
         public E getTypedElementAt(int index) {
-            return sorted.get(index);
+            Row<E> row = rows.get(index);
+            return row.selectable ? row.item : null;
         }
 
+        /**
+         * Updates the selected item while ignoring header rows.
+         */
         @Override
         public void setSelectedItem(Object anItem) {
+            if (anItem instanceof HeaderElement) {
+                fireContentsChanged(this, -1, -1);
+                return;
+            }
+            if (anItem instanceof ItemElement) {
+                anItem = ((ItemElement) anItem).delegate;
+            }
             // delegate selection to the source model so external callers see the same selected item
             source.setSelectedItem(anItem);
             this.selected = (E) anItem;
             fireContentsChanged(this, -1, -1);
         }
 
+        /**
+         * Returns the selected underlying element from the source model.
+         */
         @Override
         public Object getSelectedItem() {
             return source.getSelectedItem();
         }
 
+        /**
+         * Rebuilds the view when the source model adds an item.
+         */
         @Override
         public void itemAdded(E item, int index) {
             // when underlying content changes, rebuild sorted view and notify listeners
             rebuild();
-            fireContentsChanged(this, 0, getSize() - 1);
+            fireContentsChanged(this, 0, Math.max(0, getSize() - 1));
         }
 
+        /**
+         * Rebuilds the view when the source model removes an item.
+         */
         @Override
         public void itemRemoved(E item, int index) {
             rebuild();
-            fireContentsChanged(this, 0, getSize() - 1);
+            fireContentsChanged(this, 0, Math.max(0, getSize() - 1));
         }
     }
 
+    /**
+     * Renders GDE combo rows, including null entries, section headers, icons, and type labels.
+     */
     public static class GDERenderer extends DefaultListCellRenderer {
 
         private static final long serialVersionUID = 6819681566800482793L;
@@ -1098,18 +1383,36 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         private boolean includeType;
         private boolean writable;
 
+        /**
+         * Creates a renderer that can optionally prefix entries with their type.
+         */
         public GDERenderer(boolean includeType, boolean writable) {
             super();
             this.includeType = includeType;
             this.writable = writable;
         }
 
+        /**
+         * Renders header rows distinctly from normal combo-box items.
+         */
         @SuppressWarnings("rawtypes")
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            if (value instanceof SortedGDEComboModel.DelegatingElement) {
+                SortedGDEComboModel.DelegatingElement row = (SortedGDEComboModel.DelegatingElement) value;
+                if (row instanceof SortedGDEComboModel.HeaderElement) {
+                    JLabel header = new JLabel(row.getDesc());
+                    header.setOpaque(true);
+                    header.setBackground(UIManager.getColor("ComboBox.background"));
+                    header.setForeground(UIManager.getColor("Label.disabledForeground"));
+                    header.setFont(header.getFont().deriveFont(Font.BOLD));
+                    header.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+                    return header;
+                }
+            }
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value == null) {
-                label.setText("None" + (writable ? ". Click on the button to create one." : ""));
+                label.setText("None set." + (writable ? ". Click on the button to create one." : ""));
             } else {
                 if (includeType && ((GameDataElement) value).getDataType() != null) {
                     if (value instanceof QuestStage) {
@@ -1143,6 +1446,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     }
 
+    /**
+     * Combo model for the stages of the currently selected quest.
+     */
     public static class QuestStageComboModel extends AbstractListModel<QuestStage> implements ComboBoxModel<QuestStage> {
 
         private static final long serialVersionUID = -5854574666510314715L;
@@ -1201,6 +1507,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     }
 
 
+    /**
+     * List model backed by the backlink set of a single {@link GameDataElement}.
+     */
     public static class GDEBacklinksListModel implements ListenerCollectionModel<GameDataElement> {
 
         GameDataElement source;
@@ -1236,6 +1545,9 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
+    /**
+     * Combo box that listens for project element add/remove events and forwards them to its model.
+     */
     public class MyComboBox extends JComboBox implements ProjectElementListener {
 
         private static final long serialVersionUID = -4184228604170642567L;
