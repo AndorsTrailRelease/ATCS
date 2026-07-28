@@ -787,8 +787,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         gdePane.setLayout(new JideBoxLayout(gdePane, JideBoxLayout.LINE_AXIS, 6));
         JLabel gdeLabel = new JLabel(label);
         gdePane.add(gdeLabel, JideBoxLayout.FIX);
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        final GDEComboModel wrappedModel = new SortedGDEComboModel(comboModel);
+        final SortedGDEComboModel<? extends GameDataElement> wrappedModel = new SortedGDEComboModel<>(comboModel);
         final MyComboBox gdeBox = new MyComboBox(dataClass, wrappedModel);
         gdeBox.setRenderer(new GDERenderer(false, writable));
         new ComboBoxSearchable(gdeBox) {
@@ -805,10 +804,10 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         goToGde.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                GameDataElement selected = ((GameDataElement) comboModel.getSelectedItem());
+                GameDataElement selected = wrappedModel.getSelectedDelegate();
                 if (selected != null) {
-                    ATContentStudio.frame.openEditor(((GameDataElement) comboModel.getSelectedItem()));
-                    ATContentStudio.frame.selectInTree((GameDataElement) comboModel.getSelectedItem());
+                    ATContentStudio.frame.openEditor(selected);
+                    ATContentStudio.frame.selectInTree(selected);
                 } else if (writable) {
                     JSONCreationWizard wizard = new JSONCreationWizard(((GameDataElement) target).getProject(), dataClass);
                     wizard.addCreationListener(new JSONCreationWizard.CreationCompletedListener() {
@@ -826,14 +825,14 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         gdeBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (gdeBox.getModel().getSelectedItem() == null) {
+                if (wrappedModel.getSelectedDelegate() == null) {
                     goToGde.setIcon((writable ? new ImageIcon(DefaultIcons.getCreateIcon()) : null));
                     goToGde.setEnabled(writable);
                 } else {
-                    goToGde.setIcon(new ImageIcon(((GameDataElement) comboModel.getSelectedItem()).getIcon()));
+                    goToGde.setIcon(new ImageIcon(wrappedModel.getSelectedDelegate().getIcon()));
                     goToGde.setEnabled(true);
                 }
-                listener.valueChanged(gdeBox, gdeBox.getModel().getSelectedItem());
+                listener.valueChanged(gdeBox, wrappedModel.getSelectedDelegate());
             }
         });
         JButton nullify = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
@@ -988,7 +987,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
         private static final long serialVersionUID = 1L;
         public static final String PROJECT_HEADER = "Project Elements";
-        public static final String GAME_SOURCE_HEADER = "Game Source Elements";
+        public static final String GAME_SOURCE_HEADER = "All Elements";
 
         private final GDEComboModel<E> source;
         private final List<Section<E>> sections;
@@ -1012,24 +1011,28 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             this.source = source;
             this.sections = new ArrayList<Section<E>>(sections);
             rebuild();
+            syncSelectedRowFromSource();
 
             // Listen to the source model so we rebuild when it changes indirectly.
             source.addListDataListener(new javax.swing.event.ListDataListener() {
                 @Override
                 public void intervalAdded(javax.swing.event.ListDataEvent e) {
                     rebuild();
+                    syncSelectedRowFromSource();
                     fireContentsChanged(SortedGDEComboModel.this, 0, Math.max(0, getSize() - 1));
                 }
 
                 @Override
                 public void intervalRemoved(javax.swing.event.ListDataEvent e) {
                     rebuild();
+                    syncSelectedRowFromSource();
                     fireContentsChanged(SortedGDEComboModel.this, 0, Math.max(0, getSize() - 1));
                 }
 
                 @Override
                 public void contentsChanged(javax.swing.event.ListDataEvent e) {
                     rebuild();
+                    syncSelectedRowFromSource();
                     fireContentsChanged(SortedGDEComboModel.this, 0, Math.max(0, getSize() - 1));
                 }
             });
@@ -1240,7 +1243,8 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 };
                 return desc;
             }));
-            result.add(new Section<E>(GAME_SOURCE_HEADER, e -> e.getDataType() == GameSource.Type.source || e.getDataType() == GameSource.Type.altered, comparator, e -> {
+            //result.add(new Section<E>(GAME_SOURCE_HEADER, e -> e.getDataType() == GameSource.Type.source || e.getDataType() == GameSource.Type.altered, comparator, e -> {
+            result.add(new Section<E>(GAME_SOURCE_HEADER, e -> true, comparator, e -> {
                 String desc = normalizeDesc(e.getDesc());
                 return e.getDataType() == GameSource.Type.altered ? desc + " (A)" : desc;
             }));
@@ -1284,6 +1288,34 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                     rows.add(Row.item(item, section.displayTextMapper.apply(item)));
                 }
             }
+        }
+
+        /**
+         * Re-syncs the selected row object from the source model's underlying element.
+         */
+        private void syncSelectedRowFromSource() {
+            this.selected = findRowValue(source.getSelectedItem());
+        }
+
+        /**
+         * Finds the exposed row object for a real element from the source model.
+         */
+        private E findRowValue(Object item) {
+            Row<E> row = findRow(item);
+            return row == null ? null : (E) row.asComboValue();
+        }
+
+        /**
+         * Finds the row wrapper that corresponds to the supplied item or wrapper.
+         */
+        private Row<E> findRow(Object item) {
+            if (item == null) return null;
+            for (Row<E> row : rows) {
+                if (row.element == item || row.item == item) {
+                    return row;
+                }
+            }
+            return null;
         }
 
         /**
@@ -1336,12 +1368,20 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 fireContentsChanged(this, -1, -1);
                 return;
             }
-            if (anItem instanceof ItemElement) {
-                anItem = ((ItemElement) anItem).delegate;
+            Row<E> row = findRow(anItem);
+            if (row != null && row.selectable) {
+                source.setSelectedItem(row.item);
+                this.selected = (E) row.asComboValue();
+                fireContentsChanged(this, -1, -1);
+                return;
             }
-            // delegate selection to the source model so external callers see the same selected item
-            source.setSelectedItem(anItem);
-            this.selected = (E) anItem;
+            if (anItem == null) {
+                source.setSelectedItem(null);
+                this.selected = null;
+            } else {
+                source.setSelectedItem(anItem);
+                this.selected = findRowValue(anItem);
+            }
             fireContentsChanged(this, -1, -1);
         }
 
@@ -1350,7 +1390,14 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          */
         @Override
         public Object getSelectedItem() {
-            return source.getSelectedItem();
+            return selected;
+        }
+
+        /**
+         * Returns the real underlying element selected in the source model.
+         */
+        public E getSelectedDelegate() {
+            return source.selected;
         }
 
         /**
@@ -1412,7 +1459,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             }
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value == null) {
-                label.setText("None set." + (writable ? ". Click on the button to create one." : ""));
+                label.setText("None set" + (writable ? "... Click on the button to create one." : ""));
             } else {
                 if (includeType && ((GameDataElement) value).getDataType() != null) {
                     if (value instanceof QuestStage) {
