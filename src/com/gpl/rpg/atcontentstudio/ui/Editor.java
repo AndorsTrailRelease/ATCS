@@ -1396,6 +1396,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         public void itemAdded(E item, int index) {
             // when underlying content changes, rebuild sorted view and notify listeners
             rebuild();
+            syncSelectedRowFromSource();
             fireContentsChanged(this, 0, Math.max(0, getSize() - 1));
         }
 
@@ -1405,6 +1406,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         @Override
         public void itemRemoved(E item, int index) {
             rebuild();
+            syncSelectedRowFromSource();
             fireContentsChanged(this, 0, Math.max(0, getSize() - 1));
         }
     }
