@@ -22,6 +22,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -1110,6 +1111,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          */
         private static abstract class DelegatingElement extends GameDataElement {
 
+            @Serial
             private static final long serialVersionUID = 1L;
             protected final GameDataElement delegate;
             private final String desc;
@@ -1188,6 +1190,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          */
         private static final class HeaderElement extends DelegatingElement {
 
+            @Serial
             private static final long serialVersionUID = 1L;
 
             private HeaderElement(String label) {
@@ -1200,32 +1203,13 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          */
         private static final class ItemElement extends DelegatingElement {
 
+            @Serial
             private static final long serialVersionUID = 1L;
-            private final boolean alteredMarker;
 
             private ItemElement(GameDataElement delegate, String label) {
                 super(delegate, label);
-                this.alteredMarker = label != null && label.startsWith("*");
             }
 
-            @Override
-            public void save() {
-                if (delegate != null) delegate.save();
-            }
-
-            @Override
-            public List<SaveEvent> attemptSave() {
-                return delegate == null ? null : delegate.attemptSave();
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return delegate != null && delegate.isEmpty();
-            }
-
-            public boolean isAlteredMarker() {
-                return alteredMarker;
-            }
         }
 
         /**
@@ -1435,7 +1419,6 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         /**
          * Renders header rows distinctly from normal combo-box items.
          */
-        @SuppressWarnings("rawtypes")
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value instanceof SortedGDEComboModel.DelegatingElement) {
