@@ -20,6 +20,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -48,6 +50,7 @@ public class ATContentStudio {
     private static final String QUIET_ARGUMENT = "--quiet";
     private static final String SKIP_LOCK_CHECK_ARGUMENT = "--skip-lock-check";
     private static final String IGNORE_EXISTING_CONFIG_ARGUMENT = "--ignore-config";
+    private static final String SHOW_CONSOLE_ARGUMENT = "--show-console";
     private static final String RESTART_HELPER_ARGUMENT = "--restart-helper";
     private static final String WAIT_FOR_PID_ARGUMENT = "--wait-for-pid";
     private static final String HELP_ARGUMENT = "--help";
@@ -105,6 +108,16 @@ public class ATContentStudio {
             printCommandLineUsage(System.out);
             System.exit(0);
             return;
+        }
+
+        if (startupArguments.showConsole) {
+            if (isWindows()) {
+                if (!enableWindowsConsole()) {
+                    System.err.println("Failed to allocate a console window.");
+                }
+            } else {
+                System.err.println("--show-console is only supported on Windows.");
+            }
         }
 
         if (startupArguments.isHeadlessExportRequested()) {
@@ -558,20 +571,57 @@ public class ATContentStudio {
         ConfigCache.setLatestWorkspace(workspaceRoot);
     }
 
+    private static boolean enableWindowsConsole() {
+        if (WindowsConsole.KERNEL32.AttachConsole(WindowsConsole.ATTACH_PARENT_PROCESS) || WindowsConsole.KERNEL32.AllocConsole()) {
+            redirectStandardStreamsToConsole();
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    }
+
+    private static void redirectStandardStreamsToConsole() {
+        try {
+            PrintStream consoleOut = new PrintStream(new FileOutputStream("CONOUT$"), true);
+            System.setOut(consoleOut);
+            System.setErr(consoleOut);
+            System.setIn(new FileInputStream("CONIN$"));
+        } catch (IOException e) {
+            throw new IllegalStateException("Console was allocated but standard streams could not be redirected.", e);
+        }
+    }
+
+    private static final class WindowsConsole {
+        private static final int ATTACH_PARENT_PROCESS = -1;
+        private static final Kernel32 KERNEL32 = com.sun.jna.Native.load("kernel32", Kernel32.class);
+
+        private WindowsConsole() {
+        }
+
+        private interface Kernel32 extends com.sun.jna.Library {
+            boolean AttachConsole(int dwProcessId);
+            boolean AllocConsole();
+        }
+    }
+
     @Command(
             name = "ATContentStudio",
             sortOptions = false,
             customSynopsis = {
                     "  GUI mode:",
-                    "    ATContentStudio [--help] [--workspace <workspace>] [--export-target <path>] [--skip-lock-check] [--ignore-config]",
+                    "    ATContentStudio [--help] [--show-console] [--workspace <workspace>] [--export-target <path>] [--skip-lock-check] [--ignore-config]",
                     "  Headless export mode:",
-                    "    ATContentStudio [--help] --workspace <workspace> --project <project-name> --export-target <target> [-q|--quiet] [--skip-lock-check] [--ignore-config]"
+                    "    ATContentStudio [--help] [--show-console] --workspace <workspace> --project <project-name> --export-target <target> [-q|--quiet] [--skip-lock-check] [--ignore-config]"
             },
             description = "Launches Andor's Trail Content Studio in GUI mode or headless export mode.",
             footer = {
                     "Notes:",
                     "  - If <target> ends with .zip, ATCS exports a zip package.",
                     "  - Otherwise, <target> must be an existing game-source directory.",
+                    "  - --show-console allocates and attaches a console window (Windows platform only).",
                     "  - --skip-lock-check bypasses single-instance workspace locking.",
                     "  - --ignore-config ignores saved global config and behaves like a fresh install for this run.",
             }
@@ -594,6 +644,9 @@ public class ATContentStudio {
 
         @Option(names = IGNORE_EXISTING_CONFIG_ARGUMENT, description = "Ignores saved global config and behaves like a fresh install for this run.")
         private boolean ignoreExistingConfig;
+
+        @Option(names = SHOW_CONSOLE_ARGUMENT, description = "Allocates and attaches a Windows console window.")
+        private boolean showConsole;
 
         @Option(names = RESTART_HELPER_ARGUMENT, hidden = true)
         private boolean restartHelper;

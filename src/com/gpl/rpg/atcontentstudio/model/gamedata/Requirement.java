@@ -45,7 +45,7 @@ public class Requirement extends JSONElement {
     public GameDataElement required_obj = null;
 
     public enum RequirementType {
-        questProgress("Quest stage has been achieved"),
+        questProgress("Quest max stage ever achieved"),
         questLatestProgress("Quest is now at stage"),
         inventoryRemove("Hero has item in inventory (and remove it)"),
         inventoryKeep("Hero has item in inventory"),
