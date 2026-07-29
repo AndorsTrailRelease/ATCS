@@ -19,7 +19,7 @@ public class WorkspaceSettingsEditor extends JDialog {
     JTextField mapEditorCommandField;
     // Checkbox for the world map Ctrl-only zoom preference.
     JCheckBox zoomWorldMapOnlyWithCtrlBox;
-    JCheckBox useEnumValuesInComboboxes;
+    JCheckBox showEnumNamesInComboboxes;
 
     JRadioButton useSystemDefaultImageViewerButton, useSystemDefaultImageEditorButton, useCustomImageEditorButton;
     JTextField imageEditorCommandField;
@@ -201,8 +201,8 @@ public class WorkspaceSettingsEditor extends JDialog {
         zoomWorldMapOnlyWithCtrlBox = new JCheckBox("Use Ctrl+Wheel to zoom World Map");
         pane.add(zoomWorldMapOnlyWithCtrlBox, JideBoxLayout.FIX);
 
-        useEnumValuesInComboboxes = new JCheckBox("Use Enum Values in Requirement, Reward, and Skill Comboboxes");
-        pane.add(useEnumValuesInComboboxes, JideBoxLayout.FIX);
+        showEnumNamesInComboboxes = new JCheckBox("Show Enum Names in Requirement, Reward, and Skill Comboboxes");
+        pane.add(showEnumNamesInComboboxes, JideBoxLayout.FIX);
 
         return pane;
     }
@@ -213,7 +213,7 @@ public class WorkspaceSettingsEditor extends JDialog {
         useCustomMapEditorButton.setSelected(!settings.useSystemDefaultMapEditor.getCurrentValue());
         mapEditorCommandField.setText(settings.mapEditorCommand.getCurrentValue());
         zoomWorldMapOnlyWithCtrlBox.setSelected(settings.zoomWorldMapOnlyWithCtrl.getCurrentValue());
-        useEnumValuesInComboboxes.setSelected(settings.useEnumValuesInComboboxes.getCurrentValue());
+        showEnumNamesInComboboxes.setSelected(settings.showEnumNamesInComboboxes.getCurrentValue());
         //Images
         useSystemDefaultImageViewerButton.setSelected(settings.useSystemDefaultImageViewer.getCurrentValue());
         useSystemDefaultImageEditorButton.setSelected(settings.useSystemDefaultImageEditor.getCurrentValue());
@@ -240,7 +240,7 @@ public class WorkspaceSettingsEditor extends JDialog {
         settings.useSystemDefaultMapEditor.setCurrentValue(useSystemDefaultMapEditorButton.isSelected());
         settings.mapEditorCommand.setCurrentValue(mapEditorCommandField.getText());
         settings.zoomWorldMapOnlyWithCtrl.setCurrentValue(zoomWorldMapOnlyWithCtrlBox.isSelected());
-        settings.useEnumValuesInComboboxes.setCurrentValue(useEnumValuesInComboboxes.isSelected());
+        settings.showEnumNamesInComboboxes.setCurrentValue(showEnumNamesInComboboxes.isSelected());
         //Images
         settings.useSystemDefaultImageViewer.setCurrentValue(useSystemDefaultImageViewerButton.isSelected());
         settings.useSystemDefaultImageEditor.setCurrentValue(useSystemDefaultImageEditorButton.isSelected());

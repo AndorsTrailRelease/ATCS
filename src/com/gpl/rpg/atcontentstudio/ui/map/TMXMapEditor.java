@@ -618,7 +618,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                             Requirement.SkillID.values(),
                             skillId,
                             writable,
-                            Requirement.SkillID::getDescription,
+                            getEnumLabelGetter(Requirement.SkillID::getDescription),
                             listener
                     );
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
