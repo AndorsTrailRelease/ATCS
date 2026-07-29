@@ -92,6 +92,29 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         }
     }
 
+    public static boolean useEnumValuesInComboboxes() {
+        return Workspace.activeWorkspace != null
+                && Workspace.activeWorkspace.settings != null
+                && Boolean.TRUE.equals(Workspace.activeWorkspace.settings.useEnumValuesInComboboxes.getCurrentValue());
+    }
+
+    /**
+     * Returns a function that generates labels for enum values based on the current workspace settings.
+     * If the setting to use enum values in comboboxes is enabled, the label will include both the enum name and its description.
+     * Otherwise, it will only use the description.
+     *
+     * @param <E> The type of the enum.
+     * @param descriptionGetter A function that provides the description for each enum value.
+     * @return A function that generates labels for enum values.
+     */
+    public static <E extends Enum<E>> Function<E, String> getEnumLabelGetter(Function<E, String> descriptionGetter) {
+        if (useEnumValuesInComboboxes()) {
+            return e -> e == null ? null : e.name() + " - " + descriptionGetter.apply(e);
+        } else {
+            return descriptionGetter;
+        }
+    }
+
 
     public static JTextField addLabelField(JPanel pane, String label, String value) {
         return addTextField(pane, label, value, false, nullListener);
