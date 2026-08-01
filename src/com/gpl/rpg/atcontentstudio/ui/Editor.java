@@ -982,32 +982,32 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         public static final String PROJECT_HEADER = "Project Elements";
         public static final String GAME_SOURCE_HEADER = "All Elements";
 
-        private final GDEComboModel<E> source;
+        private final GDEComboModel<E> baseComboModel;
         private final List<Section<E>> sections;
         private final List<Row<E>> rows = new ArrayList<Row<E>>();
 
         /**
          * Creates a single-section view with no header row.
          */
-        public SortedGDEComboModel(GDEComboModel<E> source) {
-            this(source, defaultSections());
+        public SortedGDEComboModel(GDEComboModel<E> baseComboModel) {
+            this(baseComboModel, defaultSections());
         }
 
         /**
          * Creates a grouped view using the supplied section definitions.
          *
-         * @param source the underlying combo model
+         * @param baseComboModel the underlying combo model
          * @param sections ordered section definitions to flatten into rows
          */
-        public SortedGDEComboModel(GDEComboModel<E> source, List<Section<E>> sections) {
-            super(source.project, source.selected);
-            this.source = source;
+        public SortedGDEComboModel(GDEComboModel<E> baseComboModel, List<Section<E>> sections) {
+            super(baseComboModel.project, baseComboModel.selected);
+            this.baseComboModel = baseComboModel;
             this.sections = new ArrayList<Section<E>>(sections);
             rebuild();
             syncSelectedRowFromSource();
 
             // Listen to the source model so we rebuild when it changes indirectly.
-            source.addListDataListener(new javax.swing.event.ListDataListener() {
+            baseComboModel.addListDataListener(new javax.swing.event.ListDataListener() {
                 @Override
                 public void intervalAdded(javax.swing.event.ListDataEvent e) {
                     rebuild();
@@ -1222,10 +1222,10 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          */
         private void rebuild() {
             rows.clear();
-            int s = source.getSize();
+            int s = baseComboModel.getSize();
             List<E> all = new ArrayList<E>();
             for (int i = 1; i < s; i++) {
-                E e = source.getElementAt(i);
+                E e = baseComboModel.getElementAt(i);
                 if (e != null) all.add(e);
             }
             for (Section<E> section : sections) {
@@ -1259,7 +1259,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          * Re-syncs the selected row object from the source model's underlying element.
          */
         private void syncSelectedRowFromSource() {
-            Row<E> row = findRowByDelegate(source.selected);
+            Row<E> row = findRowByDelegate(baseComboModel.selected);
             this.selected = row == null ? null : (E) row.asComboValue();
         }
 
@@ -1336,7 +1336,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         @Override
         public void setSelectedItem(Object anItem) {
             if (anItem == null) {
-                source.setSelectedItem(null);
+                baseComboModel.setSelectedItem(null);
                 this.selected = null;
                 fireContentsChanged(this, -1, -1);
                 return;
@@ -1347,7 +1347,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             }
             Row<E> row = findRowByWrappedValue((DelegatingElement) anItem);
             if (row != null && row.selectable) {
-                source.setSelectedItem(row.item);
+                baseComboModel.setSelectedItem(row.item);
                 this.selected = (E) row.asComboValue();
                 fireContentsChanged(this, -1, -1);
             }
@@ -1385,7 +1385,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
          * Returns the real underlying element selected in the source model.
          */
         public E getSelectedDelegate() {
-            return source.selected;
+            return baseComboModel.selected;
         }
 
         /**
