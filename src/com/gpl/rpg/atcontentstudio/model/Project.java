@@ -378,6 +378,9 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         if (gdeClass == Droplist.class) {
             return getDroplist(id);
         }
+        if (gdeClass == ItemFilter.class) {
+            return getItemFilter(id);
+        }
         if (gdeClass == ItemCategory.class) {
             return getItemCategory(id);
         }
@@ -402,6 +405,9 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         }
         if (gdeClass == Droplist.class) {
             return getDroplistCount();
+        }
+        if (gdeClass == ItemFilter.class) {
+            return getItemFilterCount();
         }
         if (gdeClass == ItemCategory.class) {
             return getItemCategoryCount();
@@ -428,6 +434,9 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         }
         if (gdeClass == Droplist.class) {
             return getDroplistIndex((Droplist) node);
+        }
+        if (gdeClass == ItemFilter.class) {
+            return getItemFilterIndex((ItemFilter) node);
         }
         if (gdeClass == ItemCategory.class) {
             return getItemCategoryIndex((ItemCategory) node);
@@ -509,8 +518,19 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         return gde;
     }
 
+    public ItemFilter getItemFilter(String id) {
+        ItemFilter gde = createdContent.gameData.getItemFilter(id);
+        if (gde == null) gde = alteredContent.gameData.getItemFilter(id);
+        if (gde == null) gde = baseContent.gameData.getItemFilter(id);
+        return gde;
+    }
+
     public int getDroplistCount() {
         return createdContent.gameData.droplists.size() + baseContent.gameData.droplists.size();
+    }
+
+    public int getItemFilterCount() {
+        return createdContent.gameData.itemFilters.size() + baseContent.gameData.itemFilters.size();
     }
 
     public Droplist getDroplist(int index) {
@@ -522,11 +542,28 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         return null;
     }
 
+    public ItemFilter getItemFilter(int index) {
+        if (index < createdContent.gameData.itemFilters.size()) {
+            return createdContent.gameData.itemFilters.get(index);
+        } else if (index < getItemFilterCount()) {
+            return getItemFilter(baseContent.gameData.itemFilters.get(index - createdContent.gameData.itemFilters.size()).id);
+        }
+        return null;
+    }
+
     public int getDroplistIndex(Droplist droplist) {
         if (droplist.getDataType() == GameSource.Type.created) {
             return createdContent.gameData.droplists.getIndex(droplist);
         } else {
             return createdContent.gameData.droplists.size() + baseContent.gameData.droplists.indexOf(baseContent.gameData.getDroplist(droplist.id));
+        }
+    }
+
+    public int getItemFilterIndex(ItemFilter itemFilter) {
+        if (itemFilter.getDataType() == GameSource.Type.created) {
+            return createdContent.gameData.itemFilters.getIndex(itemFilter);
+        } else {
+            return createdContent.gameData.itemFilters.size() + baseContent.gameData.itemFilters.indexOf(baseContent.gameData.getItemFilter(itemFilter.id));
         }
     }
 
@@ -1174,6 +1211,8 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         writtenFilesPerDataType.put(Dialogue.class, writtenFiles);
         writtenFiles = writeDataDeltaForDataType(createdContent.gameData.droplists, alteredContent.gameData.droplists, baseContent.gameData.droplists, Droplist.class, tmpJsonDataDir);
         writtenFilesPerDataType.put(Droplist.class, writtenFiles);
+        writtenFiles = writeDataDeltaForDataType(createdContent.gameData.itemFilters, alteredContent.gameData.itemFilters, baseContent.gameData.itemFilters, ItemFilter.class, tmpJsonDataDir);
+        writtenFilesPerDataType.put(ItemFilter.class, writtenFiles);
         writtenFiles = writeDataDeltaForDataType(createdContent.gameData.itemCategories, alteredContent.gameData.itemCategories, baseContent.gameData.itemCategories, ItemCategory.class,
                                                  tmpJsonDataDir);
         writtenFilesPerDataType.put(ItemCategory.class, writtenFiles);
@@ -1290,6 +1329,7 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         classNamesByArrayNames.put("loadresource_actorconditions", ActorCondition.class);
         classNamesByArrayNames.put("loadresource_items", Item.class);
         classNamesByArrayNames.put("loadresource_droplists", Droplist.class);
+        classNamesByArrayNames.put("loadresource_itemfilters", ItemFilter.class);
         classNamesByArrayNames.put("loadresource_quests", Quest.class);
         classNamesByArrayNames.put("loadresource_conversationlists", Dialogue.class);
         classNamesByArrayNames.put("loadresource_monsters", NPC.class);

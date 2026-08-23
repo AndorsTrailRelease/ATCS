@@ -10,6 +10,7 @@ import com.gpl.rpg.atcontentstudio.model.gamedata.ActorCondition;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Dialogue;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Droplist;
 import com.gpl.rpg.atcontentstudio.model.gamedata.GameDataSet;
+import com.gpl.rpg.atcontentstudio.model.gamedata.ItemFilter;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Item;
 import com.gpl.rpg.atcontentstudio.model.gamedata.ItemCategory;
 import com.gpl.rpg.atcontentstudio.model.gamedata.NPC;
@@ -42,6 +43,7 @@ public class EditorsAreaOpenEditorStateTest {
         idsByTargetType.put(Preferences.OpenEditorState.TargetType.actorCondition, "poisoned");
         idsByTargetType.put(Preferences.OpenEditorState.TargetType.dialogue, "intro_001");
         idsByTargetType.put(Preferences.OpenEditorState.TargetType.droplist, "bandit_loot");
+        idsByTargetType.put(Preferences.OpenEditorState.TargetType.itemFilter, "meat_items");
         idsByTargetType.put(Preferences.OpenEditorState.TargetType.itemCategory, "weapons");
         idsByTargetType.put(Preferences.OpenEditorState.TargetType.item, "longsword");
         idsByTargetType.put(Preferences.OpenEditorState.TargetType.npc, "rat_king");
@@ -95,6 +97,7 @@ public class EditorsAreaOpenEditorStateTest {
         private ActorCondition actorCondition;
         private Dialogue dialogue;
         private Droplist droplist;
+        private ItemFilter itemFilter;
         private ItemCategory itemCategory;
         private Item item;
         private NPC npc;
@@ -131,6 +134,10 @@ public class EditorsAreaOpenEditorStateTest {
                         droplist = allocate(Droplist.class);
                         droplist.id = id;
                         return droplist;
+                    case itemFilter:
+                        itemFilter = allocate(ItemFilter.class);
+                        itemFilter.id = id;
+                        return itemFilter;
                     case itemCategory:
                         itemCategory = allocate(ItemCategory.class);
                         itemCategory.id = id;
@@ -184,6 +191,11 @@ public class EditorsAreaOpenEditorStateTest {
         @Override
         public Droplist getDroplist(String id) {
             return droplist;
+        }
+
+        @Override
+        public ItemFilter getItemFilter(String id) {
+            return itemFilter;
         }
 
         @Override
@@ -338,5 +350,4 @@ public class EditorsAreaOpenEditorStateTest {
         }
     }
 }
-
 
