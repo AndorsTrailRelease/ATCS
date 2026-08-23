@@ -52,7 +52,12 @@ public class ItemFilterEditor extends JSONElementEditor {
         CollapsiblePanel itemsPane = UiUtils.getCollapsibleItemList(
                 listener,
                 itemsListModel,
-                () -> selectedItem = null,
+                () -> {
+                    if (this.selectedItem != null) {
+                        filter.removeItemBacklink(this.selectedItem);
+                    }
+                    this.selectedItem = null;
+                },
                 (selectedItem) -> this.selectedItem = selectedItem,
                 () -> this.selectedItem,
                 (selectedItem) -> {
@@ -155,16 +160,10 @@ public class ItemFilterEditor extends JSONElementEditor {
             } else if (source == itemCombo) {
                 if (updatingIncludeItemBox) return;
                 if (selectedItem != null) {
-                    if (selectedItem.item != null) {
-                        selectedItem.item.removeBacklink(filter);
-                    }
+                    filter.removeItemBacklink(selectedItem);
                     selectedItem.item = (Item) value;
-                    if (selectedItem.item != null) {
-                        selectedItem.item_id = selectedItem.item.id;
-                        selectedItem.item.addBacklink(filter);
-                    } else {
-                        selectedItem.item_id = null;
-                    }
+                    selectedItem.item_id = selectedItem.item == null ? null : selectedItem.item.id;
+                    filter.addItemBacklink(selectedItem);
                     itemsListModel.itemChanged(selectedItem);
                     markModified(filter);
                 }

@@ -115,9 +115,7 @@ public class ItemFilter extends JSONElement {
                 if (filteredItem.item_id != null) {
                     filteredItem.item = proj.getItem(filteredItem.item_id);
                 }
-                if (filteredItem.item != null) {
-                    filteredItem.item.addBacklink(this);
-                }
+                addItemBacklink(filteredItem);
             }
         }
         state = State.linked;
@@ -131,15 +129,16 @@ public class ItemFilter extends JSONElement {
         if (include != null) {
             List includeJson = new ArrayList();
             List itemsJson = new ArrayList();
-            json.put("include", includeJson); // TODO: Remove after schema change complete
-            json.put("items", itemsJson);
+            json.put("include", includeJson);
+//             For possible future schema change to item list instead of raw IDs
+//             json.put("items", itemsJson);
             for (FilteredItem filteredItem : include) {
                 String itemId = filteredItem.item != null ? filteredItem.item.id : filteredItem.item_id;
-                includeJson.add(itemId); // TODO: Remove after schema change complete
+                includeJson.add(itemId);
 
-                Map itemJson = new LinkedHashMap();
-                itemJson.put("itemID", itemId);
-                itemsJson.add(itemJson);
+//                Map itemJson = new LinkedHashMap();
+//                itemJson.put("itemID", itemId);
+//                itemsJson.add(itemJson);
             }
         }
         return json;
@@ -171,13 +170,23 @@ public class ItemFilter extends JSONElement {
         if (include != null) {
             for (FilteredItem filteredItem : include) {
                 if (filteredItem.item == oldOne) {
-                    oldOne.removeBacklink(this);
+                    removeItemBacklink(filteredItem);
                     filteredItem.item = (Item) newOne;
-                    if (newOne != null) {
-                        newOne.addBacklink(this);
-                    }
+                    addItemBacklink(filteredItem);
                 }
             }
+        }
+    }
+
+    public void addItemBacklink(FilteredItem filteredItem) {
+        if (filteredItem != null && filteredItem.item != null) {
+            filteredItem.item.addBacklink(this);
+        }
+    }
+
+    public void removeItemBacklink(FilteredItem filteredItem) {
+        if (filteredItem != null && filteredItem.item != null) {
+            filteredItem.item.removeBacklink(this);
         }
     }
 
@@ -188,6 +197,6 @@ public class ItemFilter extends JSONElement {
 
     @Override
     public Image getIcon() {
-        return DefaultIcons.getJsonClosedIcon();
+        return DefaultIcons.getContainerIcon();
     }
 }

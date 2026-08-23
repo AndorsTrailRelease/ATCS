@@ -542,10 +542,11 @@ public class JSONCreationWizard extends JDialog {
     }
 
     public static class DataTypeComboCellRenderer extends DefaultListCellRenderer {
+        @Serial
         private static final long serialVersionUID = 5621373849299980998L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 ((JLabel) c).setText(JSONCreationWizard.dataTypeDesc((DataType) value));
@@ -556,12 +557,13 @@ public class JSONCreationWizard extends JDialog {
                     case dialogue:
                         ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getDialogueIcon()));
                         break;
-                    case droplist:
-                        ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getDroplistIcon()));
-                        break;
                     case item:
                         ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getItemIcon()));
                         break;
+                    case itemFilter:
+                        ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getContainerIcon()));
+                        break;
+                    case droplist:
                     case itemCategory:
                         ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getDroplistIcon()));
                         break;
