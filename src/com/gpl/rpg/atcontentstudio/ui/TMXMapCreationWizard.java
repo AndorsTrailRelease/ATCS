@@ -201,7 +201,7 @@ public class TMXMapCreationWizard extends JDialog {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
             trouble = true;
         } else if (!Validation.isValidInternalId(idField.getText())) {
-            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
+            message.setText("<html><font color=\"#FF0000\">" + Validation.getInternalIdValidationError() + "</font></html>");
             trouble = true;
         } else if (proj.getMap(idField.getText()) != null) {
             if (proj.getMap(idField.getText()).getDataType() == GameSource.Type.created) {

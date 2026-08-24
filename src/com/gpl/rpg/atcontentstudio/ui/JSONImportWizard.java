@@ -305,13 +305,12 @@ public class JSONImportWizard extends JDialog {
                                         return;
                                 }
                             } catch (ClassCastException ex) { // Catch situations where a numberic boolean value is used as an internal ID.
-                                i++;
-                                errors.add("Imported " + dataTypeCombo.getSelectedItem() + " #" + i + " has an invalid internal ID. Internal IDs must be strings containing lowercase letters, digits, and underscores.");
+                                errors.add("Imported " + dataTypeCombo.getSelectedItem() + " #" + (i + 1) + " has an invalid internal ID: " + Validation.getInternalIdValidationError());
                                 continue;
                             }
                             i++;
                             if (!Validation.isValidInternalId(node.id)) {
-                                errors.add("Imported " + node.getClass().getSimpleName() + " #" + i + " has an invalid internal ID: " + node.id + ". Internal IDs may only contain lowercase letters, digits, and underscores.");
+                                errors.add("Imported " + node.getClass().getSimpleName() + " #" + i + " has an invalid internal ID: " + node.id + ". " + Validation.getInternalIdValidationError());
                                 continue;
                             }
                             if (node instanceof JSONElement) {
@@ -333,7 +332,7 @@ public class JSONImportWizard extends JDialog {
                         }
                     }
                 }
-                if (errors.isEmpty() && warnings.isEmpty()) {
+                if (!created.isEmpty() && errors.isEmpty() && warnings.isEmpty()) {
                     showImportPreviewScreen(created);
                 } else if (!errors.isEmpty()) {
                     showErrorScreen(errors);

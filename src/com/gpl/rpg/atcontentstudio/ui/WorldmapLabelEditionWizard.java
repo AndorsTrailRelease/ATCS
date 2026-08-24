@@ -157,7 +157,7 @@ public class WorldmapLabelEditionWizard extends JDialog {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
             trouble = true;
         } else if (!Validation.isValidInternalId(idField.getText())) {
-            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
+            message.setText("<html><font color=\"#FF0000\">" + Validation.getInternalIdValidationError() + "</font></html>");
             trouble = true;
         } else if (segment.labels.get(idField.getText()) != null && segment.labels.get(idField.getText()) != label) {
             message.setText("<html><font color=\"#FF0000\">A worldmap label with the same ID already exists in this worldmap.</font></html>");
