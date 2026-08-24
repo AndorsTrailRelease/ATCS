@@ -348,12 +348,12 @@ public abstract class JSONElementEditor extends Editor {
         SwingUtilities.invokeLater(revertField);
     }
 
-    protected boolean validateInternalIdEdit(JTextField idField, String value) {
+    protected boolean isInvalidInternalId(JTextField idField, String value) {
         if (Validation.isValidInternalId(value)) {
-            return true;
+            return false;
         }
         Notification.addError(Validation.getInternalIdValidationError());
         cancelIdEdit(idField);
-        return false;
+        return true;
     }
 }

@@ -308,7 +308,7 @@ public class ItemEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals((String) value)) return;
-                if (!validateInternalIdEdit(idField, (String) value)) return;
+                if (isInvalidInternalId(idField, (String) value)) return;
 
                 if (idChanging()) {
                     item.id = (String) value;
