@@ -69,9 +69,6 @@ public class ItemFilterEditor extends JSONElementEditor {
                 "Items matching this filter: ",
                 (x) -> x.item
         ).collapsiblePanel;
-        if (filter.include == null || filter.include.isEmpty()) {
-            itemsPane.collapse();
-        }
         pane.add(itemsPane, JideBoxLayout.FIX);
     }
 
