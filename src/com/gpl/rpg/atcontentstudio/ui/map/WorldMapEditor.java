@@ -24,14 +24,14 @@ import java.awt.event.*;
 import javax.swing.plaf.basic.BasicSliderUI;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.gpl.rpg.atcontentstudio.utils.TextUtils.getInternalIdValidationError;
-import static com.gpl.rpg.atcontentstudio.utils.TextUtils.isValidInternalId;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 
 public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
+    @Serial
     private static final long serialVersionUID = -8358238912588729094L;
 
 
@@ -1166,8 +1166,8 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                 skipLabelIdUpdate = false;
                 return;
             }
-            if (!isValidInternalId((String) value)) {
-                Notification.addError(getInternalIdValidationError());
+            if (!Validation.isValidInternalId((String) value)) {
+                Notification.addError(Validation.getInternalIdValidationError());
                 skipLabelIdUpdate = true;
                 labelIdField.setText(selectedLabel.id == null ? "" : selectedLabel.id);
                 return;

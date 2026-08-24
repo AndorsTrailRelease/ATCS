@@ -5,7 +5,7 @@ import com.gpl.rpg.atcontentstudio.io.JsonPrettyWriter;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.SaveEvent;
 import com.gpl.rpg.atcontentstudio.utils.FileUtils;
-import com.gpl.rpg.atcontentstudio.utils.TextUtils;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -76,7 +76,7 @@ public abstract class JSONElement extends GameDataElement {
             Map map = (Map) value;
             if (map.containsKey("id")) {
                 Object id = map.get("id");
-                if (!TextUtils.isValidInternalId(id == null ? null : id.toString())) {
+                if (!Validation.isValidInternalId(id == null ? null : id.toString())) {
                     Notification.addError("Invalid internal ID in " + sourceFile.getAbsolutePath() + path + ": " + id + ". Internal IDs may only contain lowercase letters, digits, and underscores.");
                 }
             }

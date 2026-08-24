@@ -13,7 +13,7 @@ import com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet;
 import com.gpl.rpg.atcontentstudio.ui.*;
 import com.gpl.rpg.atcontentstudio.ui.ScrollablePanel.ScrollableSizeHint;
 import com.gpl.rpg.atcontentstudio.ui.sprites.SpriteChooser;
-import com.gpl.rpg.atcontentstudio.utils.TextUtils;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 import com.jidesoft.swing.JideBoxLayout;
 import com.jidesoft.swing.JideTabbedPane;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -349,10 +349,10 @@ public abstract class JSONElementEditor extends Editor {
     }
 
     protected boolean validateInternalIdEdit(JTextField idField, String value) {
-        if (TextUtils.isValidInternalId(value)) {
+        if (Validation.isValidInternalId(value)) {
             return true;
         }
-        Notification.addError(TextUtils.getInternalIdValidationError());
+        Notification.addError(Validation.getInternalIdValidationError());
         cancelIdEdit(idField);
         return false;
     }
