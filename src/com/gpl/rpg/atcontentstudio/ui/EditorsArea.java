@@ -299,6 +299,9 @@ public class EditorsArea extends JPanel {
         if (Droplist.class.isAssignableFrom(targetClass)) {
             return TargetType.droplist;
         }
+        if (ItemFilter.class.isAssignableFrom(targetClass)) {
+            return TargetType.itemFilter;
+        }
         if (ItemCategory.class.isAssignableFrom(targetClass)) {
             return TargetType.itemCategory;
         }
@@ -351,6 +354,8 @@ public class EditorsArea extends JPanel {
                 return project.getDialogue(openEditorState.targetId);
             case droplist:
                 return project.getDroplist(openEditorState.targetId);
+            case itemFilter:
+                return project.getItemFilter(openEditorState.targetId);
             case itemCategory:
                 return project.getItemCategory(openEditorState.targetId);
             case item:
@@ -420,6 +425,8 @@ public class EditorsArea extends JPanel {
             openEditor(new DialogueEditor((Dialogue) node));
         } else if (node instanceof Droplist) {
             openEditor(new DroplistEditor((Droplist) node));
+        } else if (node instanceof ItemFilter) {
+            openEditor(new ItemFilterEditor((ItemFilter) node));
         } else if (node instanceof ActorCondition) {
             openEditor(new ActorConditionEditor((ActorCondition) node));
         } else if (node instanceof ItemCategory) {

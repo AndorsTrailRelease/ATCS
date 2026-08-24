@@ -18,12 +18,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.io.Serial;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class JSONCreationWizard extends JDialog {
 
+    @Serial
     private static final long serialVersionUID = -5744628699021314026L;
 
     public static enum DataType {
@@ -31,6 +32,7 @@ public class JSONCreationWizard extends JDialog {
         actorCondition,
         dialogue,
         droplist,
+        itemFilter,
         item,
         itemCategory,
         npc,
@@ -54,6 +56,8 @@ public class JSONCreationWizard extends JDialog {
             dataTypeCombo.setSelectedItem(DataType.dialogue);
         } else if (dataClass == Droplist.class) {
             dataTypeCombo.setSelectedItem(DataType.droplist);
+        } else if (dataClass == ItemFilter.class) {
+            dataTypeCombo.setSelectedItem(DataType.itemFilter);
         } else if (dataClass == Item.class) {
             dataTypeCombo.setSelectedItem(DataType.item);
         } else if (dataClass == ItemCategory.class) {
@@ -111,66 +115,67 @@ public class JSONCreationWizard extends JDialog {
         pane.add(iconPane, JideBoxLayout.FIX);
         iconPane.setVisible(true);
 
-        dataTypeCombo.addItemListener(new ItemListener() {
-
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    idPane.setVisible(true);
-                    switch ((DataType) e.getItem()) {
-                        case actorCondition:
-                            iconPane.setVisible(true);
-                            namePane.setVisible(true);
-                            iconButton.setIcon(new ImageIcon(DefaultIcons.getActorConditionImage()));
-                            creation = new ActorCondition();
-                            break;
-                        case dialogue:
-                            iconPane.setVisible(false);
-                            namePane.setVisible(false);
-                            creation = new Dialogue();
-                            break;
-                        case droplist:
-                            iconPane.setVisible(false);
-                            namePane.setVisible(false);
-                            creation = new Droplist();
-                            break;
-                        case item:
-                            iconPane.setVisible(true);
-                            namePane.setVisible(true);
-                            creation = new Item();
-                            iconButton.setIcon(new ImageIcon(DefaultIcons.getItemImage()));
-                            break;
-                        case itemCategory:
-                            iconPane.setVisible(false);
-                            namePane.setVisible(true);
-                            creation = new ItemCategory();
-                            break;
-                        case npc:
-                            iconPane.setVisible(true);
-                            namePane.setVisible(true);
-                            creation = new NPC();
-                            iconButton.setIcon(new ImageIcon(DefaultIcons.getNPCImage()));
-                            break;
-                        case quest:
-                            iconPane.setVisible(false);
-                            namePane.setVisible(true);
-                            creation = new Quest();
-                            break;
-                        default:
-                            idPane.setVisible(false);
-                            iconPane.setVisible(false);
-                            namePane.setVisible(false);
-                            creation = null;
-                            break;
-                    }
-                    updateStatus();
-                    idPane.revalidate();
-                    namePane.revalidate();
-                    iconPane.revalidate();
-                    idPane.repaint();
-                    namePane.repaint();
-                    iconPane.repaint();
+        dataTypeCombo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                idPane.setVisible(true);
+                switch ((DataType) e.getItem()) {
+                    case actorCondition:
+                        iconPane.setVisible(true);
+                        namePane.setVisible(true);
+                        iconButton.setIcon(new ImageIcon(DefaultIcons.getActorConditionImage()));
+                        creation = new ActorCondition();
+                        break;
+                    case dialogue:
+                        iconPane.setVisible(false);
+                        namePane.setVisible(false);
+                        creation = new Dialogue();
+                        break;
+                    case droplist:
+                        iconPane.setVisible(false);
+                        namePane.setVisible(false);
+                        creation = new Droplist();
+                        break;
+                    case itemFilter:
+                        iconPane.setVisible(false);
+                        namePane.setVisible(false);
+                        creation = new ItemFilter();
+                        break;
+                    case item:
+                        iconPane.setVisible(true);
+                        namePane.setVisible(true);
+                        creation = new Item();
+                        iconButton.setIcon(new ImageIcon(DefaultIcons.getItemImage()));
+                        break;
+                    case itemCategory:
+                        iconPane.setVisible(false);
+                        namePane.setVisible(true);
+                        creation = new ItemCategory();
+                        break;
+                    case npc:
+                        iconPane.setVisible(true);
+                        namePane.setVisible(true);
+                        creation = new NPC();
+                        iconButton.setIcon(new ImageIcon(DefaultIcons.getNPCImage()));
+                        break;
+                    case quest:
+                        iconPane.setVisible(false);
+                        namePane.setVisible(true);
+                        creation = new Quest();
+                        break;
+                    default:
+                        idPane.setVisible(false);
+                        iconPane.setVisible(false);
+                        namePane.setVisible(false);
+                        creation = null;
+                        break;
                 }
+                updateStatus();
+                idPane.revalidate();
+                namePane.revalidate();
+                iconPane.revalidate();
+                idPane.repaint();
+                namePane.repaint();
+                iconPane.repaint();
             }
         });
 
@@ -186,6 +191,8 @@ public class JSONCreationWizard extends JDialog {
                     case dialogue:
                         break;
                     case droplist:
+                        break;
+                    case itemFilter:
                         break;
                     case item:
                         cat = Spritesheet.Category.item;
@@ -219,6 +226,7 @@ public class JSONCreationWizard extends JDialog {
                                     break;
                                 case dialogue:
                                 case droplist:
+                                case itemFilter:
                                 case itemCategory:
                                 case quest:
                                 default:
@@ -248,49 +256,45 @@ public class JSONCreationWizard extends JDialog {
         pane.add(new JPanel(), JideBoxLayout.VARY);
         pane.add(buttonPane, JideBoxLayout.FIX);
 
-        ok.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                switch ((DataType) dataTypeCombo.getSelectedItem()) {
-                    case actorCondition:
-                        ((ActorCondition) creation).display_name = nameField.getText();
-                        break;
-                    case item:
-                        ((Item) creation).name = nameField.getText();
-                        break;
-                    case npc:
-                        ((NPC) creation).name = nameField.getText();
-                        break;
-                    case dialogue:
-                    case droplist:
-                        break;
-                    case itemCategory:
-                        ((ItemCategory) creation).name = nameField.getText();
-                        break;
-                    case quest:
-                        ((Quest) creation).name = nameField.getText();
-                        break;
-                    default:
-                        return;
-                }
-                creation.id = idField.getText();
-                JSONCreationWizard.this.setVisible(false);
-                JSONCreationWizard.this.dispose();
-                creation.state = State.created;
-                proj.createElement(creation);
-                notifyCreated();
-                ATContentStudio.frame.selectInTree(creation);
-                ATContentStudio.frame.openEditor(creation);
+        ok.addActionListener(e -> {
+            switch ((DataType) dataTypeCombo.getSelectedItem()) {
+                case actorCondition:
+                    ((ActorCondition) creation).display_name = nameField.getText();
+                    break;
+                case item:
+                    ((Item) creation).name = nameField.getText();
+                    break;
+                case npc:
+                    ((NPC) creation).name = nameField.getText();
+                    break;
+                case dialogue:
+                case droplist:
+                    break;
+                case itemFilter:
+                    break;
+                case itemCategory:
+                    ((ItemCategory) creation).name = nameField.getText();
+                    break;
+                case quest:
+                    ((Quest) creation).name = nameField.getText();
+                    break;
+                default:
+                    return;
             }
+            creation.id = idField.getText();
+            JSONCreationWizard.this.setVisible(false);
+            JSONCreationWizard.this.dispose();
+            creation.state = State.created;
+            proj.createElement(creation);
+            notifyCreated();
+            ATContentStudio.frame.selectInTree(creation);
+            ATContentStudio.frame.openEditor(creation);
         });
 
-        cancel.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                creation = null;
-                JSONCreationWizard.this.setVisible(false);
-                JSONCreationWizard.this.dispose();
-            }
+        cancel.addActionListener(e -> {
+            creation = null;
+            JSONCreationWizard.this.setVisible(false);
+            JSONCreationWizard.this.dispose();
         });
 
         DocumentListener statusUpdater = new DocumentListener() {
@@ -420,6 +424,19 @@ public class JSONCreationWizard extends JDialog {
                         }
                     }
                     break;
+                case itemFilter:
+                    if (proj.getItemFilter(idField.getText()) != null) {
+                        if (proj.getItemFilter(idField.getText()).getDataType() == GameSource.Type.created) {
+                            message.setText("<html><font color=\"#FF0000\">An item filter with the same ID was already created in this project.</font></html>");
+                            trouble = true;
+                        } else if (proj.getItemFilter(idField.getText()).getDataType() == GameSource.Type.altered) {
+                            message.setText("<html><font color=\"#FF0000\">An item filter with the same ID exists in the game and is already altered in this project.</font></html>");
+                            trouble = true;
+                        } else if (proj.getItemFilter(idField.getText()).getDataType() == GameSource.Type.source) {
+                            message.setText("<html><font color=\"#FF9000\">An item filter with the same ID exists in the game. It will be added under \"altered\".</font></html>");
+                        }
+                    }
+                    break;
                 case itemCategory:
                     if (nameField.getText() == null || nameField.getText().length() <= 0) {
                         message.setText("<html><font color=\"#FF0000\">An item category must have a name.</font></html>");
@@ -471,6 +488,8 @@ public class JSONCreationWizard extends JDialog {
                 return "Dialogue";
             case droplist:
                 return "Droplist";
+            case itemFilter:
+                return "Item Filter";
             case item:
                 return "Item";
             case itemCategory:
@@ -523,10 +542,11 @@ public class JSONCreationWizard extends JDialog {
     }
 
     public static class DataTypeComboCellRenderer extends DefaultListCellRenderer {
+        @Serial
         private static final long serialVersionUID = 5621373849299980998L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 ((JLabel) c).setText(JSONCreationWizard.dataTypeDesc((DataType) value));
@@ -537,12 +557,13 @@ public class JSONCreationWizard extends JDialog {
                     case dialogue:
                         ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getDialogueIcon()));
                         break;
-                    case droplist:
-                        ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getDroplistIcon()));
-                        break;
                     case item:
                         ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getItemIcon()));
                         break;
+                    case itemFilter:
+                        ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getContainerIcon()));
+                        break;
+                    case droplist:
                     case itemCategory:
                         ((JLabel) c).setIcon(new ImageIcon(DefaultIcons.getDroplistIcon()));
                         break;

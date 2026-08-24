@@ -24,6 +24,7 @@ public class Preferences implements Serializable, JsonSerializable {
             actorCondition,
             dialogue,
             droplist,
+            itemFilter,
             itemCategory,
             item,
             npc,

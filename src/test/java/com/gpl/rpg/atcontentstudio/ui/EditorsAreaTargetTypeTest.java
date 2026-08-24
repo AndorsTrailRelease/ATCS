@@ -4,6 +4,7 @@ import com.gpl.rpg.atcontentstudio.model.Preferences;
 import com.gpl.rpg.atcontentstudio.model.gamedata.ActorCondition;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Dialogue;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Droplist;
+import com.gpl.rpg.atcontentstudio.model.gamedata.ItemFilter;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Item;
 import com.gpl.rpg.atcontentstudio.model.gamedata.ItemCategory;
 import com.gpl.rpg.atcontentstudio.model.gamedata.NPC;
@@ -24,6 +25,7 @@ public class EditorsAreaTargetTypeTest {
         assertEquals(Preferences.OpenEditorState.TargetType.actorCondition, EditorsArea.getTargetType(ActorCondition.class));
         assertEquals(Preferences.OpenEditorState.TargetType.dialogue, EditorsArea.getTargetType(Dialogue.class));
         assertEquals(Preferences.OpenEditorState.TargetType.droplist, EditorsArea.getTargetType(Droplist.class));
+        assertEquals(Preferences.OpenEditorState.TargetType.itemFilter, EditorsArea.getTargetType(ItemFilter.class));
         assertEquals(Preferences.OpenEditorState.TargetType.itemCategory, EditorsArea.getTargetType(ItemCategory.class));
         assertEquals(Preferences.OpenEditorState.TargetType.item, EditorsArea.getTargetType(Item.class));
         assertEquals(Preferences.OpenEditorState.TargetType.npc, EditorsArea.getTargetType(NPC.class));
@@ -35,4 +37,3 @@ public class EditorsAreaTargetTypeTest {
         assertNull(EditorsArea.getTargetType(Preferences.class));
     }
 }
-

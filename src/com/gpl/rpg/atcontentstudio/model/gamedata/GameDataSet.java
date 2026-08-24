@@ -29,6 +29,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
     public static final String GAME_AC_ARRAY_NAME = "loadresource_actorconditions";
     public static final String GAME_DIALOGUES_ARRAY_NAME = "loadresource_conversationlists";
     public static final String GAME_DROPLISTS_ARRAY_NAME = "loadresource_droplists";
+    public static final String GAME_ITEMFILTERS_ARRAY_NAME = "loadresource_itemfilters";
     public static final String GAME_ITEMS_ARRAY_NAME = "loadresource_items";
     public static final String GAME_ITEMCAT_ARRAY_NAME = "loadresource_itemcategories";
     public static final String GAME_NPC_ARRAY_NAME = "loadresource_monsters";
@@ -42,6 +43,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
     public GameDataCategory<ActorCondition> actorConditions;
     public GameDataCategory<Dialogue> dialogues;
     public GameDataCategory<Droplist> droplists;
+    public GameDataCategory<ItemFilter> itemFilters;
     public GameDataCategory<Item> items;
     public GameDataCategory<ItemCategory> itemCategories;
     public GameDataCategory<NPC> npcs;
@@ -67,6 +69,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
         actorConditions = new GameDataCategory<ActorCondition>(this, ActorCondition.getStaticDesc());
         dialogues = new GameDataCategory<Dialogue>(this, Dialogue.getStaticDesc());
         droplists = new GameDataCategory<Droplist>(this, Droplist.getStaticDesc());
+        itemFilters = new GameDataCategory<ItemFilter>(this, ItemFilter.getStaticDesc());
         items = new GameDataCategory<Item>(this, Item.getStaticDesc());
         itemCategories = new GameDataCategory<ItemCategory>(this, ItemCategory.getStaticDesc());
         npcs = new GameDataCategory<NPC>(this, NPC.getStaticDesc());
@@ -75,6 +78,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
         v.add(actorConditions);
         v.add(dialogues);
         v.add(droplists);
+        v.add(itemFilters);
         v.add(items);
         v.add(itemCategories);
         v.add(npcs);
@@ -92,6 +96,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
             filesLoaded += loadReferencedJson(GAME_AC_ARRAY_NAME + suffix, actorConditions, ActorCondition::fromJson, "actor conditions");
             filesLoaded += loadReferencedJson(GAME_DIALOGUES_ARRAY_NAME + suffix, dialogues, Dialogue::fromJson, "dialogues");
             filesLoaded += loadReferencedJson(GAME_DROPLISTS_ARRAY_NAME + suffix, droplists, Droplist::fromJson, "droplists");
+            filesLoaded += loadReferencedJson(GAME_ITEMFILTERS_ARRAY_NAME + suffix, itemFilters, ItemFilter::fromJson, "item filters");
             filesLoaded += loadReferencedJson(GAME_ITEMS_ARRAY_NAME + suffix, items, Item::fromJson, "items");
             filesLoaded += loadReferencedJson(GAME_ITEMCAT_ARRAY_NAME + suffix, itemCategories, ItemCategory::fromJson, "item categories");
             filesLoaded += loadReferencedJson(GAME_NPC_ARRAY_NAME + suffix, npcs, NPC::fromJson, "NPCs");
@@ -115,6 +120,7 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
                 if (loadSingleFile(f, actorConditions, "actorconditions_", ActorCondition::fromJson)) filesLoaded++;
                 else if (loadSingleFile(f, dialogues, "conversationlist_", Dialogue::fromJson)) filesLoaded++;
                 else if (loadSingleFile(f, droplists, "droplists_", Droplist::fromJson)) filesLoaded++;
+                else if (loadSingleFile(f, itemFilters, "itemfilters_", ItemFilter::fromJson)) filesLoaded++;
                 else if (loadSingleFile(f, items, "itemlist_", Item::fromJson)) filesLoaded++;
                 else if (loadSingleFile(f, itemCategories, "itemcategories_", ItemCategory::fromJson)) filesLoaded++;
                 else if (loadSingleFile(f, npcs, "monsterlist_", NPC::fromJson)) filesLoaded++;
@@ -286,6 +292,11 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
         return droplists.get(id);
     }
 
+    public ItemFilter getItemFilter(String id) {
+        if (itemFilters == null) return null;
+        return itemFilters.get(id);
+    }
+
     public Item getItem(String id) {
         if (items == null) return null;
         return items.get(id);
@@ -357,6 +368,10 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
             if (droplists.isEmpty() && higherEmptyParent == null) higherEmptyParent = droplists;
             droplists.add((Droplist) node);
             node.parent = droplists;
+        } else if (node instanceof ItemFilter) {
+            if (itemFilters.isEmpty() && higherEmptyParent == null) higherEmptyParent = itemFilters;
+            itemFilters.add((ItemFilter) node);
+            node.parent = itemFilters;
         } else if (node instanceof Item) {
             if (items.isEmpty() && higherEmptyParent == null) higherEmptyParent = items;
             items.add((Item) node);
@@ -414,6 +429,9 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
         if (gdeClass == Droplist.class) {
             return getDroplist(id);
         }
+        if (gdeClass == ItemFilter.class) {
+            return getItemFilter(id);
+        }
         if (gdeClass == ItemCategory.class) {
             return getItemCategory(id);
         }
@@ -438,6 +456,9 @@ public class GameDataSet implements ProjectTreeNode, Serializable {
         }
         if (gdeClass == Droplist.class) {
             return droplists;
+        }
+        if (gdeClass == ItemFilter.class) {
+            return itemFilters;
         }
         if (gdeClass == ItemCategory.class) {
             return itemCategories;
