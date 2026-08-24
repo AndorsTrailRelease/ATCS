@@ -1,5 +1,6 @@
 package com.gpl.rpg.atcontentstudio.model.gamedata;
 
+import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.Project;
@@ -9,16 +10,20 @@ import org.json.simple.parser.ParseException;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ItemFilter extends JSONElement {
 
     @Serial
     private static final long serialVersionUID = 6141158246270055121L;
+    private static final Logger LOG = Logger.getLogger(ItemFilter.class.getName());
 
     public List<FilteredItem> include = new ArrayList<>();
 
@@ -36,6 +41,7 @@ public class ItemFilter extends JSONElement {
         return (needsSaving() ? "*" : "") + id;
     }
 
+    @SuppressWarnings("rawtypes")
     public static void fromJson(File jsonFile, GameDataCategory<ItemFilter> category) {
         try (java.io.FileReader reader = new java.io.FileReader(jsonFile)) {
             @SuppressWarnings("unchecked")
@@ -51,24 +57,10 @@ public class ItemFilter extends JSONElement {
                 filter.parse(filterJson);
                 category.add(filter);
             }
-        } catch (java.io.FileNotFoundException e) {
-            com.gpl.rpg.atcontentstudio.Notification.addError("Error while parsing JSON file " + jsonFile.getAbsolutePath() + ": " + e.getMessage());
-            e.printStackTrace();
-        } catch (java.io.IOException e) {
-            com.gpl.rpg.atcontentstudio.Notification.addError("Error while parsing JSON file " + jsonFile.getAbsolutePath() + ": " + e.getMessage());
-            e.printStackTrace();
-        } catch (ParseException e) {
-            com.gpl.rpg.atcontentstudio.Notification.addError("Error while parsing JSON file " + jsonFile.getAbsolutePath() + ": " + e.getMessage());
-            e.printStackTrace();
+        } catch (IOException | ParseException e) {
+            Notification.addError("Error while parsing JSON file " + jsonFile.getAbsolutePath() + ": " + e.getMessage());
+            LOG.log(Level.SEVERE, "Failed to parse " + jsonFile.getAbsolutePath(), e);
         }
-    }
-
-    @SuppressWarnings("rawtypes")
-    public static ItemFilter fromJson(String jsonString) throws ParseException {
-        Map json = (Map) new JSONParser().parse(jsonString);
-        ItemFilter filter = fromJson(json);
-        filter.parse(json);
-        return filter;
     }
 
     @SuppressWarnings("rawtypes")
@@ -107,7 +99,7 @@ public class ItemFilter extends JSONElement {
         ensureParseIfNeeded();
         Project proj = getProject();
         if (proj == null) {
-            com.gpl.rpg.atcontentstudio.Notification.addError("Error linking item filter " + id + ". No parent project found.");
+            Notification.addError("Error linking item filter " + id + ". No parent project found.");
             return;
         }
         if (include != null) {
@@ -128,7 +120,7 @@ public class ItemFilter extends JSONElement {
         json.put("id", id);
         if (include != null) {
             List includeJson = new ArrayList();
-            List itemsJson = new ArrayList();
+//            List itemsJson = new ArrayList();
             json.put("include", includeJson);
 //             For possible future schema change to item list instead of raw IDs
 //             json.put("items", itemsJson);
