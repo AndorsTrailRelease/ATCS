@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 
 public class JSONImportWizard extends JDialog {
 
@@ -270,39 +271,48 @@ public class JSONImportWizard extends JDialog {
                         JSONElement existingNode;
                         int i = 0;
                         for (Map jsonObject : jsonObjects) {
-                            switch ((DataType) dataTypeCombo.getSelectedItem()) {
-                                case actorCondition:
-                                    node = ActorCondition.fromJson(jsonObject);
-                                    existingNode = proj.getActorCondition(node.id);
-                                    break;
-                                case item:
-                                    node = Item.fromJson(jsonObject);
-                                    existingNode = proj.getItem(node.id);
-                                    break;
-                                case npc:
-                                    node = NPC.fromJson(jsonObject);
-                                    existingNode = proj.getNPC(node.id);
-                                    break;
-                                case dialogue:
-                                    node = Dialogue.fromJson(jsonObject);
-                                    existingNode = proj.getDialogue(node.id);
-                                    break;
-                                case droplist:
-                                    node = Droplist.fromJson(jsonObject);
-                                    existingNode = proj.getDroplist(node.id);
-                                    break;
-                                case itemCategory:
-                                    node = ItemCategory.fromJson(jsonObject);
-                                    existingNode = proj.getItemCategory(node.id);
-                                    break;
-                                case quest:
-                                    node = Quest.fromJson(jsonObject);
-                                    existingNode = proj.getQuest(node.id);
-                                    break;
-                                default:
-                                    return;
+                            try {
+                                switch ((DataType) dataTypeCombo.getSelectedItem()) {
+                                    case actorCondition:
+                                        node = ActorCondition.fromJson(jsonObject);
+                                        existingNode = proj.getActorCondition(node.id);
+                                        break;
+                                    case item:
+                                        node = Item.fromJson(jsonObject);
+                                        existingNode = proj.getItem(node.id);
+                                        break;
+                                    case npc:
+                                        node = NPC.fromJson(jsonObject);
+                                        existingNode = proj.getNPC(node.id);
+                                        break;
+                                    case dialogue:
+                                        node = Dialogue.fromJson(jsonObject);
+                                        existingNode = proj.getDialogue(node.id);
+                                        break;
+                                    case droplist:
+                                        node = Droplist.fromJson(jsonObject);
+                                        existingNode = proj.getDroplist(node.id);
+                                        break;
+                                    case itemCategory:
+                                        node = ItemCategory.fromJson(jsonObject);
+                                        existingNode = proj.getItemCategory(node.id);
+                                        break;
+                                    case quest:
+                                        node = Quest.fromJson(jsonObject);
+                                        existingNode = proj.getQuest(node.id);
+                                        break;
+                                    default:
+                                        return;
+                                }
+                            } catch (ClassCastException ex) { // Catch situations where a numberic boolean value is used as an internal ID.
+                                errors.add("Imported " + dataTypeCombo.getSelectedItem() + " #" + (i + 1) + " has an invalid internal ID: " + Validation.getInternalIdValidationError());
+                                continue;
                             }
                             i++;
+                            if (!Validation.isValidInternalId(node.id)) {
+                                errors.add("Imported " + node.getClass().getSimpleName() + " #" + i + " has an invalid internal ID: " + node.id + ". " + Validation.getInternalIdValidationError());
+                                continue;
+                            }
                             if (node instanceof JSONElement) {
                                 node.parse(jsonObject);
                                 created.add(node);
@@ -322,7 +332,7 @@ public class JSONImportWizard extends JDialog {
                         }
                     }
                 }
-                if (errors.isEmpty() && warnings.isEmpty()) {
+                if (!created.isEmpty() && errors.isEmpty() && warnings.isEmpty()) {
                     showImportPreviewScreen(created);
                 } else if (!errors.isEmpty()) {
                     showErrorScreen(errors);
