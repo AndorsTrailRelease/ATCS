@@ -6,6 +6,7 @@ import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.gamedata.Dialogue;
 import com.gpl.rpg.atcontentstudio.model.tools.writermode.WriterModeData;
 import com.jidesoft.swing.JideBoxLayout;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -62,6 +63,10 @@ public class WriterSketchCreationWizard extends JDialog {
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (!Validation.isValidInternalId(idField.getText())) {
+                    updateStatus();
+                    return;
+                }
                 WriterSketchCreationWizard.this.setVisible(false);
                 WriterSketchCreationWizard.this.dispose();
                 if (dialogue == null) {
@@ -124,8 +129,11 @@ public class WriterSketchCreationWizard extends JDialog {
         if (idField.getText() == null || idField.getText().length() <= 0) {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
             trouble = true;
+        } else if (!Validation.isValidInternalId(idField.getText())) {
+            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
+            trouble = true;
         } else if (proj.getWriterSketch(idField.getText()) != null) {
-            message.setText("<html><font color=\"#FF0000\">An item with the same ID was already created in this project.</font></html>");
+            message.setText("<html><font color=\"#FF0000\">A dialogue sketch with the same ID was already created in this project.</font></html>");
             trouble = true;
         }
 

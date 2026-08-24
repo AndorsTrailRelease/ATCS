@@ -1289,10 +1289,15 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                 skipLabelIdUpdate = false;
                 return;
             }
+            if ((selectedLabel.id == null && value == null) || (selectedLabel.id != null && selectedLabel.id.equals(value))) {
+                return;
+            }
             if (!Validation.isValidInternalId((String) value)) {
                 Notification.addError(Validation.getInternalIdValidationError());
-                skipLabelIdUpdate = true;
-                labelIdField.setText(selectedLabel.id == null ? "" : selectedLabel.id);
+                SwingUtilities.invokeLater(() -> {
+                    skipLabelIdUpdate = true;
+                    labelIdField.setText(selectedLabel.id == null ? "" : selectedLabel.id);
+                });
                 return;
             }
             List<String> coverage;

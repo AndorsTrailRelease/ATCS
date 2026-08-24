@@ -271,41 +271,47 @@ public class JSONImportWizard extends JDialog {
                         JSONElement existingNode;
                         int i = 0;
                         for (Map jsonObject : jsonObjects) {
-                            switch ((DataType) dataTypeCombo.getSelectedItem()) {
-                                case actorCondition:
-                                    node = ActorCondition.fromJson(jsonObject);
-                                    existingNode = proj.getActorCondition(node.id);
-                                    break;
-                                case item:
-                                    node = Item.fromJson(jsonObject);
-                                    existingNode = proj.getItem(node.id);
-                                    break;
-                                case npc:
-                                    node = NPC.fromJson(jsonObject);
-                                    existingNode = proj.getNPC(node.id);
-                                    break;
-                                case dialogue:
-                                    node = Dialogue.fromJson(jsonObject);
-                                    existingNode = proj.getDialogue(node.id);
-                                    break;
-                                case droplist:
-                                    node = Droplist.fromJson(jsonObject);
-                                    existingNode = proj.getDroplist(node.id);
-                                    break;
-                                case itemCategory:
-                                    node = ItemCategory.fromJson(jsonObject);
-                                    existingNode = proj.getItemCategory(node.id);
-                                    break;
-                                case quest:
-                                    node = Quest.fromJson(jsonObject);
-                                    existingNode = proj.getQuest(node.id);
-                                    break;
-                                default:
-                                    return;
+                            try {
+                                switch ((DataType) dataTypeCombo.getSelectedItem()) {
+                                    case actorCondition:
+                                        node = ActorCondition.fromJson(jsonObject);
+                                        existingNode = proj.getActorCondition(node.id);
+                                        break;
+                                    case item:
+                                        node = Item.fromJson(jsonObject);
+                                        existingNode = proj.getItem(node.id);
+                                        break;
+                                    case npc:
+                                        node = NPC.fromJson(jsonObject);
+                                        existingNode = proj.getNPC(node.id);
+                                        break;
+                                    case dialogue:
+                                        node = Dialogue.fromJson(jsonObject);
+                                        existingNode = proj.getDialogue(node.id);
+                                        break;
+                                    case droplist:
+                                        node = Droplist.fromJson(jsonObject);
+                                        existingNode = proj.getDroplist(node.id);
+                                        break;
+                                    case itemCategory:
+                                        node = ItemCategory.fromJson(jsonObject);
+                                        existingNode = proj.getItemCategory(node.id);
+                                        break;
+                                    case quest:
+                                        node = Quest.fromJson(jsonObject);
+                                        existingNode = proj.getQuest(node.id);
+                                        break;
+                                    default:
+                                        return;
+                                }
+                            } catch (ClassCastException ex) { // Catch situations where a numberic boolean value is used as an internal ID.
+                                i++;
+                                errors.add("Imported " + dataTypeCombo.getSelectedItem() + " #" + i + " has an invalid internal ID. Internal IDs must be strings containing lowercase letters, digits, and underscores.");
+                                continue;
                             }
                             i++;
                             if (!Validation.isValidInternalId(node.id)) {
-                                Notification.addError("Imported " + node.getClass().getSimpleName() + " #" + i + " has an invalid internal ID: " + node.id + ". Internal IDs may only contain lowercase letters, digits, and underscores.");
+                                errors.add("Imported " + node.getClass().getSimpleName() + " #" + i + " has an invalid internal ID: " + node.id + ". Internal IDs may only contain lowercase letters, digits, and underscores.");
                                 continue;
                             }
                             if (node instanceof JSONElement) {
