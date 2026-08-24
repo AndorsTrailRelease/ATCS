@@ -130,7 +130,6 @@ public class Dialogue extends JSONElement {
             List dialogues = (List) parser.parse(reader);
             for (Object obj : dialogues) {
                 Map dialogueJson = (Map) obj;
-                JSONElement.validateIds(dialogueJson, jsonFile, "");
                 Dialogue dialogue = fromJson(dialogueJson);
                 dialogue.jsonFile = jsonFile;
                 dialogue.parent = category;

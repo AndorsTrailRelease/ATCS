@@ -106,7 +106,6 @@ public class ActorCondition extends JSONElement {
             List actorConditions = (List) parser.parse(reader);
             for (Object obj : actorConditions) {
                 Map aCondJson = (Map) obj;
-                JSONElement.validateIds(aCondJson, jsonFile, "");
                 ActorCondition aCond = fromJson(aCondJson);
                 aCond.jsonFile = jsonFile;
                 aCond.parent = category;

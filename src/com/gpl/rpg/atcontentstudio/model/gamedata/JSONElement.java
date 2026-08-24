@@ -5,7 +5,6 @@ import com.gpl.rpg.atcontentstudio.io.JsonPrettyWriter;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.SaveEvent;
 import com.gpl.rpg.atcontentstudio.utils.FileUtils;
-import com.gpl.rpg.atcontentstudio.utils.Validation;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -35,7 +34,6 @@ public abstract class JSONElement extends GameDataElement {
                 Map jsonObj = (Map) obj;
                 String id = (String) jsonObj.get("id");
                 try {
-                    validateIds(jsonObj, jsonFile, "");
                     if (id != null && id.equals(this.id)) {
                         this.parse(jsonObj);
                         this.state = State.parsed;
@@ -68,29 +66,6 @@ public abstract class JSONElement extends GameDataElement {
                 }
         }
 
-    }
-
-    @SuppressWarnings("rawtypes")
-    public static void validateIds(Object value, File sourceFile, String path) {
-        if (value instanceof Map) {
-            Map map = (Map) value;
-            if (map.containsKey("id")) {
-                Object id = map.get("id");
-                if (!Validation.isValidInternalId(id == null ? null : id.toString())) {
-                    Notification.addError("Invalid internal ID in " + sourceFile.getAbsolutePath() + path + ": " + id + ". Internal IDs may only contain lowercase letters, digits, and underscores.");
-                }
-            }
-            for (Object entryObj : map.entrySet()) {
-                Map.Entry entry = (Map.Entry) entryObj;
-                String childPath = path + "/" + entry.getKey();
-                validateIds(entry.getValue(), sourceFile, childPath);
-            }
-        } else if (value instanceof List) {
-            List list = (List) value;
-            for (int i = 0; i < list.size(); i++) {
-                validateIds(list.get(i), sourceFile, path + "[" + i + "]");
-            }
-        }
     }
 
     public abstract void parse(@SuppressWarnings("rawtypes") Map jsonObj);

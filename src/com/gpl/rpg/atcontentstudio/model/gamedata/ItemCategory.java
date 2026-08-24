@@ -114,7 +114,6 @@ public class ItemCategory extends JSONElement {
             List itemCategories = (List) parser.parse(reader);
             for (Object obj : itemCategories) {
                 Map itemCatJson = (Map) obj;
-                JSONElement.validateIds(itemCatJson, jsonFile, "");
                 ItemCategory itemCat = fromJson(itemCatJson);
                 itemCat.jsonFile = jsonFile;
                 itemCat.parent = category;

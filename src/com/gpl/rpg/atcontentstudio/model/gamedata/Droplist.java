@@ -61,7 +61,6 @@ public class Droplist extends JSONElement {
             List droplists = (List) parser.parse(reader);
             for (Object obj : droplists) {
                 Map droplistJson = (Map) obj;
-                JSONElement.validateIds(droplistJson, jsonFile, "");
                 Droplist droplist = fromJson(droplistJson);
                 droplist.jsonFile = jsonFile;
                 droplist.parent = category;

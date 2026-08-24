@@ -104,7 +104,6 @@ public class NPC extends JSONElement {
             List npcs = (List) parser.parse(reader);
             for (Object obj : npcs) {
                 Map npcJson = (Map) obj;
-                JSONElement.validateIds(npcJson, jsonFile, "");
                 NPC npc = fromJson(npcJson);
                 npc.jsonFile = jsonFile;
                 npc.parent = category;
