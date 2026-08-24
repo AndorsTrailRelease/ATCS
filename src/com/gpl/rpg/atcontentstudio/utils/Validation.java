@@ -13,6 +13,6 @@ public final class Validation {
     }
 
     public static String getInternalIdValidationError() {
-        return "Internal IDs may only contain letters, digits, and underscores.";
+        return "Internal IDs may only contain lowercase letters, digits, and underscores.";
     }
 }
