@@ -50,8 +50,7 @@ public class ItemFilter extends JSONElement {
                 ItemFilter filter = fromJson(filterJson);
                 filter.jsonFile = jsonFile;
                 filter.parent = category;
-                        if (filter.getDataType() == GameSource.Type.created
-                                || filter.getDataType() == GameSource.Type.altered) {
+                if (filter.getDataType() == GameSource.Type.created || filter.getDataType() == GameSource.Type.altered) {
                     filter.writable = true;
                 }
                 filter.parse(filterJson);

@@ -488,7 +488,7 @@ public class JSONImportWizard extends JDialog {
         }
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value == null) {
                 label.setText("none");
@@ -533,7 +533,7 @@ public class JSONImportWizard extends JDialog {
         private static final long serialVersionUID = -4265342800284721660L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 ((JLabel) c).setIcon(NotificationsPane.icons.get(Notification.Type.ERROR));
@@ -547,7 +547,7 @@ public class JSONImportWizard extends JDialog {
         private static final long serialVersionUID = -3836045237946111606L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 ((JLabel) c).setIcon(NotificationsPane.icons.get(Notification.Type.WARN));
