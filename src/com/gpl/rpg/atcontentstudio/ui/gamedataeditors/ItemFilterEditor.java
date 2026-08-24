@@ -143,6 +143,7 @@ public class ItemFilterEditor extends JSONElementEditor {
                     return;
                 }
                 if (target.id.equals(value)) return;
+                if (isInvalidInternalId(idField, (String) value)) return;
                 if (idChanging()) {
                     filter.id = (String) value;
                     ItemFilterEditor.this.name = filter.getDesc();
