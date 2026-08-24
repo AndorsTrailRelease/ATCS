@@ -296,6 +296,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         // Bind Tab and Shift+Tab to focus traversal actions (transferFocus/transferFocusBackward)
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "focusNextComponent");
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK), "focusPreviousComponent");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), "insertNewLine");
         tfArea.getActionMap().put("focusNextComponent", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) { tfArea.transferFocus(); }
@@ -303,6 +304,10 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         tfArea.getActionMap().put("focusPreviousComponent", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) { tfArea.transferFocusBackward(); }
+        });
+        tfArea.getActionMap().put("insertNewLine", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { tfArea.replaceSelection("\n"); }
         });
 
         addTextComponent(pane, label, editable, listener, tfArea, true, true);

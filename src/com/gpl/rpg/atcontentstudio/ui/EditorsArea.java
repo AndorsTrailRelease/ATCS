@@ -113,10 +113,13 @@ public class EditorsArea extends JPanel {
             if(ATContentStudio.frame == null) return; // Not initialized yet
             updateCurrentEditorActions();
             updateSavedOpenEditorStates();
+            if (selected instanceof WorldMapEditor) {
+                ((WorldMapEditor) selected).requestMapFocus();
+            }
             if (selected instanceof Editor) {
-                Object target = ((Editor) selected).target;
-                if (target instanceof ProjectTreeNode) {
-                    if(!ATContentStudio.frame.selectInTreeIfBranchExpanded((ProjectTreeNode) target)) {
+                ProjectTreeNode target = ((Editor) selected).target;
+                if (target != null) {
+                    if(!ATContentStudio.frame.selectInTreeIfBranchExpanded(target)) {
                         ATContentStudio.frame.selectInTree(null);
                     }
                 }
@@ -140,7 +143,7 @@ public class EditorsArea extends JPanel {
                 }
 
                 GameDataElement target = ((Editor) component).target;
-                if (target instanceof ProjectTreeNode) {
+                if (target != null) {
                     ATContentStudio.frame.selectInTree((ProjectTreeNode) target);
                 }
             }

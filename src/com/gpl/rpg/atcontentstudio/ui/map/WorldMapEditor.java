@@ -115,6 +115,17 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         editorPane.setText(text);
     }
 
+    /**
+     * Requests keyboard focus for the world map view.
+     */
+    public void requestMapFocus() {
+        if (mapView == null) {
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> mapView.requestFocusInWindow());
+    }
+
     private void applyZoom(JViewport viewport, JLabel zoomValueLabel, int newZoom, Point anchorPoint) {
         Point viewPosition = viewport.getViewPosition();
         float oldZoomLevel = mapView.zoomLevel;
@@ -175,6 +186,114 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                 WorldMapView.MAX_ZOOM);
     }
 
+    /**
+     * Scrolls the viewport by a fixed pixel delta.
+     *
+     * @param viewport the viewport to move
+     * @param deltaX horizontal scroll amount in pixels
+     * @param deltaY vertical scroll amount in pixels
+     */
+    private void panViewport(JViewport viewport, int deltaX, int deltaY) {
+        Rectangle view = viewport.getViewRect();
+        view.translate(deltaX, deltaY);
+        mapView.scrollRectToVisible(view);
+    }
+
+    /**
+     * Installs keyboard navigation bindings for the world map.
+     *
+     * <p>Supports arrow keys, numeric keypad directions, and zoom shortcuts.</p>
+     *
+     * @param component the component that should receive the bindings
+     * @param viewport the viewport to pan when navigation keys are pressed
+     * @param zoomSlider the zoom slider to update from keyboard shortcuts
+     * @param zoomValueLabel the label that displays the current zoom value
+     */
+    private void installMapNavigationBindings(JComponent component, JViewport viewport, JSlider zoomSlider, JLabel zoomValueLabel) {
+        InputMap inputMap = component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actionMap = component.getActionMap();
+        int menuShortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "worldmap-pan-left");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "worldmap-pan-right");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "worldmap-pan-up");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "worldmap-pan-down");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD4, 0), "worldmap-pan-left");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD6, 0), "worldmap-pan-right");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD8, 0), "worldmap-pan-up");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD2, 0), "worldmap-pan-down");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD7, 0), "worldmap-pan-up-left");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD9, 0), "worldmap-pan-up-right");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD1, 0), "worldmap-pan-down-left");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMPAD3, 0), "worldmap-pan-down-right");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, 0), "worldmap-zoom-in");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0), "worldmap-zoom-in");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), "worldmap-zoom-in");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0), "worldmap-zoom-out");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), "worldmap-zoom-out");
+
+        actionMap.put("worldmap-pan-left", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, -WorldMapView.TILE_SIZE, 0);
+            }
+        });
+        actionMap.put("worldmap-pan-right", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, WorldMapView.TILE_SIZE, 0);
+            }
+        });
+        actionMap.put("worldmap-pan-up", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, 0, -WorldMapView.TILE_SIZE);
+            }
+        });
+        actionMap.put("worldmap-pan-down", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, 0, WorldMapView.TILE_SIZE);
+            }
+        });
+        actionMap.put("worldmap-pan-up-left", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, -WorldMapView.TILE_SIZE, -WorldMapView.TILE_SIZE);
+            }
+        });
+        actionMap.put("worldmap-pan-up-right", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, WorldMapView.TILE_SIZE, -WorldMapView.TILE_SIZE);
+            }
+        });
+        actionMap.put("worldmap-pan-down-left", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, -WorldMapView.TILE_SIZE, WorldMapView.TILE_SIZE);
+            }
+        });
+        actionMap.put("worldmap-pan-down-right", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panViewport(viewport, WorldMapView.TILE_SIZE, WorldMapView.TILE_SIZE);
+            }
+        });
+        actionMap.put("worldmap-zoom-in", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                zoomSlider.setValue(Math.clamp(zoomSlider.getValue() + WorldMapView.INC_ZOOM, zoomSlider.getMinimum(), zoomSlider.getMaximum()));
+            }
+        });
+        actionMap.put("worldmap-zoom-out", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                zoomSlider.setValue(Math.clamp(zoomSlider.getValue() - WorldMapView.INC_ZOOM, zoomSlider.getMinimum(), zoomSlider.getMaximum()));
+            }
+        });
+    }
+
 
     @SuppressWarnings("unchecked")
     private JPanel buildSegmentTab(final WorldmapSegment worldmap) {
@@ -183,6 +302,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
         addLabelField(pane, "Worldmap File: ", ((Worldmap) worldmap.getParent()).worldmapFile.getAbsolutePath());
         mapView = new WorldMapView(worldmap);
+        mapView.setFocusable(true);
         JScrollPane mapScroller = new JScrollPane(mapView);
         final JViewport vPort = mapScroller.getViewport();
 
@@ -209,6 +329,8 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         zoomSliderPane.add(zoomSlider, JideBoxLayout.VARY);
         zoomSliderPane.add(zoomValueLabel, JideBoxLayout.FIX);
         zoomSliderPane.add(new JLabel(new ImageIcon(DefaultIcons.getZoomIcon())), JideBoxLayout.FIX);
+        installMapNavigationBindings(mapScroller, vPort, zoomSlider, zoomValueLabel);
+        requestMapFocus();
 
         JPanel headerPane = new JPanel(new BorderLayout(6, 0));
         headerPane.add(createButtonPane(worldmap), BorderLayout.CENTER);
@@ -410,6 +532,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                mapView.requestFocusInWindow();
                 String selectedMap = null;
 //				boolean update = false;
                 int x = (int) (e.getX() / mapView.zoomLevel);
