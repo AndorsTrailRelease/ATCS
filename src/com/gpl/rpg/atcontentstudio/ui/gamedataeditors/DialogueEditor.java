@@ -223,7 +223,7 @@ public class DialogueEditor extends JSONElementEditor {
                     Dialogue.Reward.RewardType.values(),
                     reward.type,
                     ((Dialogue) target).writable,
-                    Dialogue.Reward.RewardType::getDescription,
+                    getEnumLabelGetter(Dialogue.Reward.RewardType::getDescription),
                     listener
             );
             rewardsParamsPane = new JPanel();
@@ -422,7 +422,15 @@ public class DialogueEditor extends JSONElementEditor {
                     }
                     rewardMap = null;
                     rewardObjId = null;// addTextField(pane, "Skill ID: ", reward.reward_obj_id, writable, listener);
-                    rewardObjIdCombo = addEnumValueBoxWithDescriptions(pane, "Skill ID: ", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
+                    rewardObjIdCombo = addEnumValueBoxWithDescriptions(
+                            pane,
+                            "Skill ID: ",
+                            Requirement.SkillID.values(),
+                            skillId,
+                            writable,
+                            getEnumLabelGetter(Requirement.SkillID::getDescription),
+                            listener
+                    );
                     rewardObj = null;
                     rewardValue = null;
                     break;
@@ -468,7 +476,7 @@ public class DialogueEditor extends JSONElementEditor {
                 Requirement.RequirementType.values(),
                 requirement == null ? null : requirement.type,
                 writable,
-                Requirement.RequirementType::getDescription,
+                getEnumLabelGetter(Requirement.RequirementType::getDescription),
                 listener
         );
 
@@ -772,7 +780,15 @@ public class DialogueEditor extends JSONElementEditor {
             removeElementListener(requirementObj);
         }
 
-        requirementTypeCombo = addEnumValueBoxWithDescriptions(pane, "Requirement type: ", Requirement.RequirementType.values(), requirement == null ? null : requirement.type, writable, Requirement.RequirementType::getDescription, listener);
+        requirementTypeCombo = addEnumValueBoxWithDescriptions(
+                pane,
+                "Requirement type: ",
+                Requirement.RequirementType.values(),
+                requirement == null ? null : requirement.type,
+                writable,
+                getEnumLabelGetter(Requirement.RequirementType::getDescription),
+                listener
+        );
         requirementParamsPane = new JPanel();
         requirementParamsPane.setLayout(new JideBoxLayout(requirementParamsPane, JideBoxLayout.PAGE_AXIS));
         updateRequirementParamsEditorPane(requirementParamsPane, requirement, listener);
@@ -834,7 +850,15 @@ public class DialogueEditor extends JSONElementEditor {
                     } catch (IllegalArgumentException e) {
                     }
                     requirementObj = null;
-                    requirementSkill = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
+                    requirementSkill = addEnumValueBoxWithDescriptions(
+                            pane,
+                            "Skill ID:",
+                            Requirement.SkillID.values(),
+                            skillId,
+                            writable,
+                            getEnumLabelGetter(Requirement.SkillID::getDescription),
+                            listener
+                    );
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
                     break;
@@ -880,7 +904,15 @@ public class DialogueEditor extends JSONElementEditor {
                     } catch (IllegalArgumentException e) {
                     }
                     requirementObj = null;
-                    requirementSkill = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
+                    requirementSkill = addEnumValueBoxWithDescriptions(
+                            pane,
+                            "Skill ID:",
+                            Requirement.SkillID.values(),
+                            skillId,
+                            writable,
+                            getEnumLabelGetter(Requirement.SkillID::getDescription),
+                            listener
+                    );
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level up: ", requirement.required_value, false, writable, listener);
                     break;

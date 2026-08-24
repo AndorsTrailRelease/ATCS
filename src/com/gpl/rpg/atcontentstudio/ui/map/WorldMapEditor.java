@@ -5,7 +5,7 @@ import com.gpl.rpg.atcontentstudio.Notification;
 import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.ProjectTreeNode;
-import com.gpl.rpg.atcontentstudio.model.SaveEvent;
+import com.gpl.rpg.atcontentstudio.model.Workspace;
 import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
 import com.gpl.rpg.atcontentstudio.model.maps.Worldmap;
 import com.gpl.rpg.atcontentstudio.model.maps.WorldmapSegment;
@@ -48,6 +48,12 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
     public String mapBeingAddedID = null;
     WorldMapView mapView = null;
     WorldmapSegment.NamedArea selectedLabel = null;
+
+    // Log-scale zoom endpoints expressed as actual zoom factors.
+    private static final float MIN_ZOOM_LEVEL = WorldMapView.MIN_ZOOM * WorldMapView.ZOOM_RATIO;
+    private static final float MAX_ZOOM_LEVEL = WorldMapView.MAX_ZOOM * WorldMapView.ZOOM_RATIO;
+    // Current lower zoom bound; updated after fitting the map to the viewport.
+    private float zoomFloor = MIN_ZOOM_LEVEL;
 
     MapSegmentMapsListModel msmListModel = null;
     ListSelectionModel msmListSelectionModel = null;
@@ -116,7 +122,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
     private void applyZoom(JViewport viewport, JLabel zoomValueLabel, int newZoom, Point anchorPoint) {
         Point viewPosition = viewport.getViewPosition();
         float oldZoomLevel = mapView.zoomLevel;
-        mapView.zoomLevel = newZoom * WorldMapView.ZOOM_RATIO;
+        mapView.zoomLevel = sliderValueToZoom(newZoom);
         zoomValueLabel.setText(String.format(java.util.Locale.ROOT, "%.2fx", mapView.zoomLevel));
 
         // Use the anchor point to keep the same point in the map under the mouse cursor after zooming
@@ -147,6 +153,32 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         mapView.repaint();
     }
 
+    /**
+     * Converts a slider position to a logarithmically scaled zoom factor.
+     *
+     * @param sliderValue the current zoom slider value
+     * @return the zoom factor to apply to the world view
+     */
+    private float sliderValueToZoom(int sliderValue) {
+        float clamped = Math.clamp(sliderValue, WorldMapView.MIN_ZOOM, WorldMapView.MAX_ZOOM);
+        double t = (clamped - WorldMapView.MIN_ZOOM) / (double) (WorldMapView.MAX_ZOOM - WorldMapView.MIN_ZOOM);
+        return (float) (zoomFloor * Math.pow(MAX_ZOOM_LEVEL / zoomFloor, t));
+    }
+
+    /**
+     * Converts a zoom factor back into the matching slider position.
+     *
+     * @param zoomLevel the zoom factor currently applied
+     * @return the slider value that represents the zoom factor
+     */
+    private int zoomToSliderValue(float zoomLevel) {
+        float clamped = Math.clamp(zoomLevel, zoomFloor, MAX_ZOOM_LEVEL);
+        double t = Math.log(clamped / zoomFloor) / Math.log(MAX_ZOOM_LEVEL / zoomFloor);
+        return Math.clamp((int) Math.round(WorldMapView.MIN_ZOOM + t * (WorldMapView.MAX_ZOOM - WorldMapView.MIN_ZOOM)),
+                WorldMapView.MIN_ZOOM,
+                WorldMapView.MAX_ZOOM);
+    }
+
 
     @SuppressWarnings("unchecked")
     private JPanel buildSegmentTab(final WorldmapSegment worldmap) {
@@ -158,7 +190,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         JScrollPane mapScroller = new JScrollPane(mapView);
         final JViewport vPort = mapScroller.getViewport();
 
-        final JSlider zoomSlider = new JSlider(WorldMapView.MIN_ZOOM, WorldMapView.MAX_ZOOM, (int) (mapView.zoomLevel / WorldMapView.ZOOM_RATIO));
+        final JSlider zoomSlider = new JSlider(WorldMapView.MIN_ZOOM, WorldMapView.MAX_ZOOM, zoomToSliderValue(mapView.zoomLevel));
         zoomSlider.setSnapToTicks(true);
         zoomSlider.setMinorTickSpacing(WorldMapView.INC_ZOOM);
         zoomSlider.setPaintTicks(false);
@@ -308,8 +340,29 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         };
 
         zoomSlider.addChangeListener(zoomChangeListener);
-        mapScroller.setWheelScrollingEnabled(false);
-        vPort.addMouseWheelListener(e -> {
+        mapScroller.setWheelScrollingEnabled(true);
+
+        // Remove any existing wheel listener on mapscroller
+        MouseWheelListener defaultWheelListener = null;
+        MouseWheelListener[] wheelListeners = mapScroller.getMouseWheelListeners();
+        if (wheelListeners.length > 0) {
+            defaultWheelListener = wheelListeners[0];
+            mapScroller.removeMouseWheelListener(defaultWheelListener);
+        }
+
+        // Set a new wheel listener on the mapscroller that checks Prefs option for control, and if
+        // not, pass the event on so the scroller moves up/down)
+        final MouseWheelListener finalDefaultWheelListener = defaultWheelListener;
+        mapScroller.addMouseWheelListener(e -> {
+            // Read the preference at event time so changes apply without reopening the editor.
+            boolean ctrlRequired = Workspace.activeWorkspace != null
+                    && Workspace.activeWorkspace.settings.zoomWorldMapOnlyWithCtrl.getCurrentValue();
+            if (ctrlRequired && !e.isControlDown()) {
+                if (finalDefaultWheelListener != null) {
+                    finalDefaultWheelListener.mouseWheelMoved(e);
+                }
+                return;
+            }
             int newZoom = zoomSlider.getValue() - (e.getWheelRotation() * WorldMapView.INC_ZOOM);
             newZoom = Math.clamp(newZoom, zoomSlider.getMinimum(), WorldMapView.MAX_ZOOM);
             if (newZoom != zoomSlider.getValue()) {
@@ -344,12 +397,11 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                     }
 
                     float zoom = Math.min(extent.width / (float) mapView.sizeX, extent.height / (float) mapView.sizeY);
-                    zoom = Math.clamp(zoom, WorldMapView.MIN_ZOOM * WorldMapView.ZOOM_RATIO, WorldMapView.MAX_ZOOM * WorldMapView.ZOOM_RATIO);
+                    zoom = Math.clamp(zoom, MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL);
 
                     fitted = true;
-                    int fittedZoom = Math.clamp((int) Math.floor(zoom / WorldMapView.ZOOM_RATIO), WorldMapView.MIN_ZOOM, WorldMapView.MAX_ZOOM);
-                    zoomSlider.setMinimum(fittedZoom);
-                    zoomSlider.setValue(fittedZoom);
+                    zoomFloor = zoom;
+                    zoomSlider.setValue(zoomSlider.getMinimum());
                 }));
             }
         });

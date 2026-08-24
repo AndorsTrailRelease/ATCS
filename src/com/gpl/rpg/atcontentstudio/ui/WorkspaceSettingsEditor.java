@@ -17,6 +17,9 @@ public class WorkspaceSettingsEditor extends JDialog {
 
     JRadioButton useSystemDefaultMapEditorButton, useCustomMapEditorButton;
     JTextField mapEditorCommandField;
+    // Checkbox for the world map Ctrl-only zoom preference.
+    JCheckBox zoomWorldMapOnlyWithCtrlBox;
+    JCheckBox showEnumNamesInComboboxes;
 
     JRadioButton useSystemDefaultImageViewerButton, useSystemDefaultImageEditorButton, useCustomImageEditorButton;
     JTextField imageEditorCommandField;
@@ -44,6 +47,7 @@ public class WorkspaceSettingsEditor extends JDialog {
 
 
         pane.add(getExternalToolsPane(), JideBoxLayout.FIX);
+        pane.add(getEditorBehaviorPane(), JideBoxLayout.FIX);
         pane.add(getInternetPane(), JideBoxLayout.FIX);
         pane.add(new JPanel(), JideBoxLayout.VARY);
 
@@ -190,11 +194,26 @@ public class WorkspaceSettingsEditor extends JDialog {
         return pane;
     }
 
+    public JPanel getEditorBehaviorPane() {
+        CollapsiblePanel pane = new CollapsiblePanel("Editor behavior");
+        pane.setLayout(new JideBoxLayout(pane, JideBoxLayout.PAGE_AXIS));
+
+        zoomWorldMapOnlyWithCtrlBox = new JCheckBox("Use Ctrl+Wheel to zoom World Map");
+        pane.add(zoomWorldMapOnlyWithCtrlBox, JideBoxLayout.FIX);
+
+        showEnumNamesInComboboxes = new JCheckBox("Show Enum Names in Requirement, Reward, and Skill Comboboxes");
+        pane.add(showEnumNamesInComboboxes, JideBoxLayout.FIX);
+
+        return pane;
+    }
+
     public void loadFromModel() {
         //Tiled
         useSystemDefaultMapEditorButton.setSelected(settings.useSystemDefaultMapEditor.getCurrentValue());
         useCustomMapEditorButton.setSelected(!settings.useSystemDefaultMapEditor.getCurrentValue());
         mapEditorCommandField.setText(settings.mapEditorCommand.getCurrentValue());
+        zoomWorldMapOnlyWithCtrlBox.setSelected(settings.zoomWorldMapOnlyWithCtrl.getCurrentValue());
+        showEnumNamesInComboboxes.setSelected(settings.showEnumNamesInComboboxes.getCurrentValue());
         //Images
         useSystemDefaultImageViewerButton.setSelected(settings.useSystemDefaultImageViewer.getCurrentValue());
         useSystemDefaultImageEditorButton.setSelected(settings.useSystemDefaultImageEditor.getCurrentValue());
@@ -220,6 +239,8 @@ public class WorkspaceSettingsEditor extends JDialog {
         //Tiled
         settings.useSystemDefaultMapEditor.setCurrentValue(useSystemDefaultMapEditorButton.isSelected());
         settings.mapEditorCommand.setCurrentValue(mapEditorCommandField.getText());
+        settings.zoomWorldMapOnlyWithCtrl.setCurrentValue(zoomWorldMapOnlyWithCtrlBox.isSelected());
+        settings.showEnumNamesInComboboxes.setCurrentValue(showEnumNamesInComboboxes.isSelected());
         //Images
         settings.useSystemDefaultImageViewer.setCurrentValue(useSystemDefaultImageViewerButton.isSelected());
         settings.useSystemDefaultImageEditor.setCurrentValue(useSystemDefaultImageEditorButton.isSelected());

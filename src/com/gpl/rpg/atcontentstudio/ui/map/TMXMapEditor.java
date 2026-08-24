@@ -386,7 +386,15 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         } else if (selected instanceof KeyArea) {
             areaField = addTextField(pane, "Area ID: ", ((KeyArea) selected).name, ((TMXMap) target).writable, listener);
             dialogueBox = addDialogueBox(pane, ((TMXMap) target).getProject(), "Message when locked: ", ((KeyArea) selected).dialogue, ((TMXMap) target).writable, listener);
-            requirementTypeCombo = addEnumValueBoxWithDescriptions(pane, "Requirement type: ", Requirement.RequirementType.values(), ((KeyArea) selected).requirement.type, ((TMXMap) target).writable, Requirement.RequirementType::getDescription, listener);
+            requirementTypeCombo = addEnumValueBoxWithDescriptions(
+                    pane,
+                    "Requirement type: ",
+                    Requirement.RequirementType.values(),
+                    ((KeyArea) selected).requirement.type,
+                    ((TMXMap) target).writable,
+                    getEnumLabelGetter(Requirement.RequirementType::getDescription),
+                    listener
+            );
             requirementParamsPane = new JPanel();
             requirementParamsPane.setLayout(new JideBoxLayout(requirementParamsPane, JideBoxLayout.PAGE_AXIS, 6));
             pane.add(requirementParamsPane, JideBoxLayout.FIX);
@@ -450,7 +458,15 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             // Area ID field
             areaField = addTextField(pane, "Area ID: ", ((ReplaceArea) selected).name, ((TMXMap) target).writable, listener);
             // Requirement Type combobox
-            requirementTypeCombo = addEnumValueBoxWithDescriptions(pane, "Requirement type: ", Requirement.RequirementType.values(), ((ReplaceArea) selected).requirement.type, ((TMXMap) target).writable, Requirement.RequirementType::getDescription, listener);
+            requirementTypeCombo = addEnumValueBoxWithDescriptions(
+                    pane,
+                    "Requirement type: ",
+                    Requirement.RequirementType.values(),
+                    ((ReplaceArea) selected).requirement.type,
+                    ((TMXMap) target).writable,
+                    getEnumLabelGetter(Requirement.RequirementType::getDescription),
+                    listener
+            );
             // Set pane for variable requirement parameters (populated by updateRequirementParamsPane())
             requirementParamsPane = new JPanel();
             requirementParamsPane.setLayout(new JideBoxLayout(requirementParamsPane, JideBoxLayout.PAGE_AXIS, 6));
@@ -596,7 +612,15 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                         skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
                     } catch (IllegalArgumentException e) {
                     }
-                    requirementObj = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
+                    requirementObj = addEnumValueBoxWithDescriptions(
+                            pane,
+                            "Skill ID:",
+                            Requirement.SkillID.values(),
+                            skillId,
+                            writable,
+                            getEnumLabelGetter(Requirement.SkillID::getDescription),
+                            listener
+                    );
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
                     break;
@@ -641,7 +665,15 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                         skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
                     } catch (IllegalArgumentException e) {
                     }
-                    requirementObj = addEnumValueBoxWithDescriptions(pane, "Skill ID:", Requirement.SkillID.values(), skillId, writable, Requirement.SkillID::getDescription, listener);
+                    requirementObj = addEnumValueBoxWithDescriptions(
+                            pane,
+                            "Skill ID:",
+                            Requirement.SkillID.values(),
+                            skillId,
+                            writable,
+                            getEnumLabelGetter(Requirement.SkillID::getDescription),
+                            listener
+                    );
                     requirementObjId = null;//addTextField(pane, "Skill ID:", requirement.required_obj_id, writable, listener);
                     requirementValue = addIntegerField(pane, "Level: ", requirement.required_value, false, writable, listener);
                     break;
@@ -1852,7 +1884,6 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 if (selectedLayer instanceof tiled.core.ObjectGroup) {
                     map.getGroup((tiled.core.ObjectGroup) selectedLayer).visible = layerVisibleBox.isSelected();
                 }
-                modified = false;
                 tmxViewer.revalidate();
                 tmxViewer.repaint();
             } else if (source == groupActiveForNewGame) {
