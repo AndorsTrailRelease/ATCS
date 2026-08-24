@@ -8,6 +8,7 @@ import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.gamedata.*;
 import com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet;
 import com.gpl.rpg.atcontentstudio.ui.sprites.SpriteChooser;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 import com.jidesoft.swing.JideBoxLayout;
 
 import javax.swing.*;
@@ -257,6 +258,10 @@ public class JSONCreationWizard extends JDialog {
         pane.add(buttonPane, JideBoxLayout.FIX);
 
         ok.addActionListener(e -> {
+            if (!Validation.isValidInternalId(idField.getText())) {
+                updateStatus();
+                return;
+            }
             switch ((DataType) dataTypeCombo.getSelectedItem()) {
                 case actorCondition:
                     ((ActorCondition) creation).display_name = nameField.getText();
@@ -338,6 +343,9 @@ public class JSONCreationWizard extends JDialog {
             trouble = true;
         } else if (idField.getText() == null || idField.getText().length() <= 0) {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
+            trouble = true;
+        } else if (!Validation.isValidInternalId(idField.getText())) {
+            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
             trouble = true;
         } else {
             switch ((DataType) dataTypeCombo.getSelectedItem()) {

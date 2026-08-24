@@ -24,11 +24,14 @@ import java.awt.event.*;
 import javax.swing.plaf.basic.BasicSliderUI;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 
 public class WorldMapEditor extends Editor implements FieldUpdateListener {
 
+    @Serial
     private static final long serialVersionUID = -8358238912588729094L;
 
 
@@ -70,6 +73,7 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
     JTextField labelIdField;
     JTextField labelNameField;
     JTextField labelTypeField;
+    private boolean skipLabelIdUpdate = false;
 
     public WorldMapEditor(WorldmapSegment worldmap) {
         target = worldmap;
@@ -1281,6 +1285,16 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
         WorldmapSegment worldmap = (WorldmapSegment) target;
         boolean changed = false;
         if (source == labelIdField) {
+            if (skipLabelIdUpdate) {
+                skipLabelIdUpdate = false;
+                return;
+            }
+            if (!Validation.isValidInternalId((String) value)) {
+                Notification.addError(Validation.getInternalIdValidationError());
+                skipLabelIdUpdate = true;
+                labelIdField.setText(selectedLabel.id == null ? "" : selectedLabel.id);
+                return;
+            }
             List<String> coverage;
             if (selectedLabel.id != null) {
                 coverage = worldmap.labelledMaps.get(selectedLabel.id);

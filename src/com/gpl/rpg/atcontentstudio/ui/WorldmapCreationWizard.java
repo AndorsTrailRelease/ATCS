@@ -4,6 +4,7 @@ import com.gpl.rpg.atcontentstudio.ATContentStudio;
 import com.gpl.rpg.atcontentstudio.model.GameSource;
 import com.gpl.rpg.atcontentstudio.model.Project;
 import com.gpl.rpg.atcontentstudio.model.maps.WorldmapSegment;
+import com.gpl.rpg.atcontentstudio.utils.Validation;
 import com.jidesoft.swing.JideBoxLayout;
 
 import javax.swing.*;
@@ -62,6 +63,10 @@ public class WorldmapCreationWizard extends JDialog {
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (!Validation.isValidInternalId(idField.getText())) {
+                    updateStatus();
+                    return;
+                }
                 creation.id = idField.getText();
                 WorldmapCreationWizard.this.setVisible(false);
                 WorldmapCreationWizard.this.dispose();
@@ -115,6 +120,9 @@ public class WorldmapCreationWizard extends JDialog {
         message.setText("<html><font color=\"#00AA00\">Looks OK to me.</font></html>");
         if (idField.getText() == null || idField.getText().length() <= 0) {
             message.setText("<html><font color=\"#FF0000\">Internal ID must not be empty.</font></html>");
+            trouble = true;
+        } else if (!Validation.isValidInternalId(idField.getText())) {
+            message.setText("<html><font color=\"#FF0000\">Internal IDs may only contain lowercase letters, digits, and underscores.</font></html>");
             trouble = true;
         } else if (proj.getWorldmapSegment(idField.getText()) != null) {
             if (proj.getWorldmapSegment(idField.getText()).getDataType() == GameSource.Type.created) {
