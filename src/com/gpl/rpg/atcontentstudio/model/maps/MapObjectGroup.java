@@ -53,8 +53,10 @@ public class MapObjectGroup {
         if (!active) {
             tmxGroup.getProperties().put("active", Boolean.toString(active));
         }
-        for (MapObject object : mapObjects) {
-            tmxGroup.addObject(object.toTmxObject());
+        if (mapObjects != null) {
+            for (MapObject object : mapObjects) {
+                tmxGroup.addObject(object.toTmxObject());
+            }
         }
     }
 }

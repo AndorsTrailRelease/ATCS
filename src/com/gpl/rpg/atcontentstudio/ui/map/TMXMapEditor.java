@@ -1534,7 +1534,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         private boolean paintObjectGroup(Graphics2D g2d, tiled.core.ObjectGroup layer) {
             boolean paintSelected = false;
             for (MapObjectGroup group : ((TMXMap) target).groups) {
-                if (group.tmxGroup == layer) {
+                if (group.tmxGroup == layer && group.mapObjects != null) {
                     for (MapObject object : group.mapObjects) {
                         if (object == selectedMapObject) {
                             paintSelected = true;
