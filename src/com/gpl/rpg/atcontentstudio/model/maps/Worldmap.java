@@ -24,6 +24,8 @@ import java.awt.*;
 import java.io.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeNode {
 
@@ -36,6 +38,12 @@ public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeN
     public GameSource parent;
 
     public Map<String, Map<String, Point>> segments = new LinkedHashMap<String, Map<String, Point>>();
+
+    private static final ExecutorService WORLD_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "Worldmap world export");
+        thread.setDaemon(false);
+        return thread;
+    });
 
     public Worldmap(GameSource gameSource) {
         this.parent = gameSource;
@@ -213,9 +221,37 @@ public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeN
             }
 
             saveDocToFile(doc, worldmapFile);
+            saveWorldFiles();
         } catch (ParserConfigurationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+    }
+
+    public void saveWorldFiles() {
+        if (getDataType() == Type.source) {
+            return;
+        }
+        List<WorldmapSegment> snapshot = new ArrayList<WorldmapSegment>(this);
+        WorldmapWorldFileWriter.saveWorldFiles(snapshot);
+    }
+
+    public void saveWorldFile(WorldmapSegment segment) {
+        if (getDataType() == Type.source) {
+            return;
+        }
+        WorldmapWorldFileWriter.saveWorldFile(segment);
+    }
+
+    public static void shutdownWorldExportExecutor() {
+        WORLD_EXPORT_EXECUTOR.shutdown();
+        try {
+            if (!WORLD_EXPORT_EXECUTOR.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)) {
+                WORLD_EXPORT_EXECUTOR.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            WORLD_EXPORT_EXECUTOR.shutdownNow();
         }
     }
 
