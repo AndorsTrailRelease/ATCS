@@ -221,7 +221,6 @@ public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeN
             }
 
             saveDocToFile(doc, worldmapFile);
-            saveWorldFiles();
         } catch (ParserConfigurationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
