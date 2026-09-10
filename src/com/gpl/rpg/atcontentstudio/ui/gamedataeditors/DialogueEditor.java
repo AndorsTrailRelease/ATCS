@@ -17,10 +17,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DialogueEditor extends JSONElementEditor {
+    @Serial
     private static final long serialVersionUID = 4140553240585599873L;
 
     private static final String form_view_id = "Form";
@@ -137,7 +139,7 @@ public class DialogueEditor extends JSONElementEditor {
         return pane;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"rawtypes"})
     public void insertFormViewDataField(final JPanel pane) {
 
         final Dialogue dialogue = (Dialogue) target;
@@ -557,7 +559,7 @@ public class DialogueEditor extends JSONElementEditor {
                     Requirement.SkillID skillId = null;
                     try {
                         skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
-                    } catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException ignored) {
                     }
                     rewardRequirementObj = null;
                     rewardRequirementSkill = addEnumValueBox(
@@ -635,7 +637,7 @@ public class DialogueEditor extends JSONElementEditor {
         pane.repaint();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"rawtypes"})
     public void updateRepliesEditorPane(final JPanel pane, final Dialogue.Reply reply, final FieldUpdateListener listener) {
         pane.removeAll();
         if (replyNextPhrase != null) {
@@ -901,7 +903,7 @@ public class DialogueEditor extends JSONElementEditor {
                     skillId = null;
                     try {
                         skillId = requirement.required_obj_id == null ? null : Requirement.SkillID.valueOf(requirement.required_obj_id);
-                    } catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException ignored) {
                     }
                     requirementObj = null;
                     requirementSkill = addEnumValueBoxWithDescriptions(
@@ -941,10 +943,11 @@ public class DialogueEditor extends JSONElementEditor {
     }
 
     public static class RewardsCellRenderer extends DefaultListCellRenderer {
+        @Serial
         private static final long serialVersionUID = 7987880146189575234L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 JLabel label = ((JLabel) c);
@@ -972,10 +975,11 @@ public class DialogueEditor extends JSONElementEditor {
         }
     }
     public static class RewardRequirementsCellRenderer extends DefaultListCellRenderer {
+        @Serial
         private static final long serialVersionUID = 7987880146189575234L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 decorateRequirementJLabel((JLabel) c, (Requirement) value);
@@ -1136,10 +1140,11 @@ public class DialogueEditor extends JSONElementEditor {
     }
 
     public static class RepliesCellRenderer extends DefaultListCellRenderer {
+        @Serial
         private static final long serialVersionUID = 7987880146189575234L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 JLabel label = ((JLabel) c);
@@ -1202,10 +1207,11 @@ public class DialogueEditor extends JSONElementEditor {
     }
 
     public static class ReplyRequirementsCellRenderer extends DefaultListCellRenderer {
+        @Serial
         private static final long serialVersionUID = 7987880146189575234L;
 
         @Override
-        public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (c instanceof JLabel) {
                 decorateRequirementJLabel((JLabel) c, (Requirement) value);
