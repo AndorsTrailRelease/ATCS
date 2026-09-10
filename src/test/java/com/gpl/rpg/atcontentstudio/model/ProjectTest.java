@@ -119,4 +119,29 @@ public class ProjectTest {
         assertTrue(new File(project.createdContent.worldmap.worldmapFile.getParentFile(), "created_segment.world").isFile());
         assertTrue(new File(project.alteredContent.worldmap.worldmapFile.getParentFile(), "altered_segment.world").isFile());
     }
+
+    @Test
+    public void savingOneWorldmapSegmentOnlyCreatesItsOwnWorldFile() throws Exception {
+        Path tempRoot = Files.createTempDirectory("atcs-project-worldmap-segment-save");
+        File workspaceRoot = tempRoot.resolve("workspace").toFile();
+        File sourceRoot = tempRoot.resolve("source").toFile();
+        workspaceRoot.mkdirs();
+        sourceRoot.mkdirs();
+        createSourceLayout(sourceRoot);
+
+        Workspace workspace = new Workspace(workspaceRoot);
+        Project project = new Project(workspace, "worldmap-segment-project", sourceRoot, Project.ResourceSet.allFiles);
+        new File(project.baseFolder, "created/maps").mkdirs();
+
+        WorldmapSegment first = addSegment(project.createdContent.worldmap, "first_segment", 0, 0);
+        WorldmapSegment second = addSegment(project.createdContent.worldmap, "second_segment", 0, 0);
+        File firstWorld = new File(project.createdContent.worldmap.worldmapFile.getParentFile(), first.id + ".world");
+        File secondWorld = new File(project.createdContent.worldmap.worldmapFile.getParentFile(), second.id + ".world");
+
+        workspace.settings.createWorldFilesOnWorldmapSave.setCurrentValue(true);
+        first.save();
+
+        assertTrue(firstWorld.isFile());
+        assertFalse(secondWorld.isFile());
+    }
 }

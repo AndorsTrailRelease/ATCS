@@ -138,7 +138,14 @@ public class WorldmapSegment extends GameDataElement {
 
     @Override
     public void save() {
-        ((Worldmap) parent).save();
+        Worldmap worldmap = (Worldmap) parent;
+        worldmap.save();
+        if (getProject() != null
+                && getProject().parent != null
+                && getProject().parent.settings != null
+                && Boolean.TRUE.equals(getProject().parent.settings.createWorldFilesOnWorldmapSave.getCurrentValue())) {
+            worldmap.saveWorldFile(this);
+        }
     }
 
     public String toXml() {

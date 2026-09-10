@@ -27,6 +27,8 @@ public class WorkspaceSettings {
     // When enabled, world map zoom only reacts to Ctrl + mouse wheel.
     public static Boolean DEFAULT_ZOOM_WORLD_MAP_ONLY_WITH_CTRL = false;
     public Setting<Boolean> zoomWorldMapOnlyWithCtrl = new PrimitiveSetting<Boolean>("zoomWorldMapOnlyWithCtrl", DEFAULT_ZOOM_WORLD_MAP_ONLY_WITH_CTRL);
+    public static Boolean DEFAULT_CREATE_WORLD_FILES_ON_SAVE = true;
+    public Setting<Boolean> createWorldFilesOnWorldmapSave = new PrimitiveSetting<Boolean>("createWorldFilesOnWorldmapSave", DEFAULT_CREATE_WORLD_FILES_ON_SAVE);
 
     public static Boolean DEFAULT_USE_SYS_IMG_VIEWER = true;
     public Setting<Boolean> useSystemDefaultImageViewer = new PrimitiveSetting<Boolean>("useSystemDefaultImageViewer", DEFAULT_USE_SYS_IMG_VIEWER);
@@ -53,6 +55,7 @@ public class WorkspaceSettings {
         settings.add(useSystemDefaultMapEditor);
         settings.add(mapEditorCommand);
         settings.add(zoomWorldMapOnlyWithCtrl);
+        settings.add(createWorldFilesOnWorldmapSave);
         settings.add(useSystemDefaultImageViewer);
         settings.add(useSystemDefaultImageEditor);
         settings.add(imageEditorCommand);

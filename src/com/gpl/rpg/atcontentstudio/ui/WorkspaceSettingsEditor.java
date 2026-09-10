@@ -20,6 +20,7 @@ public class WorkspaceSettingsEditor extends JDialog {
     // Checkbox for the world map Ctrl-only zoom preference.
     JCheckBox zoomWorldMapOnlyWithCtrlBox;
     JCheckBox showEnumNamesInComboboxes;
+    JCheckBox createWorldFilesOnWorldmapSaveBox;
 
     JRadioButton useSystemDefaultImageViewerButton, useSystemDefaultImageEditorButton, useCustomImageEditorButton;
     JTextField imageEditorCommandField;
@@ -113,6 +114,8 @@ public class WorkspaceSettingsEditor extends JDialog {
         };
         useSystemDefaultMapEditorButton.addActionListener(tiledRadioListener);
         useCustomMapEditorButton.addActionListener(tiledRadioListener);
+        createWorldFilesOnWorldmapSaveBox = new JCheckBox("Create Tiled .world files when saving a worldmap");
+        tiledPane.add(createWorldFilesOnWorldmapSaveBox, JideBoxLayout.FIX);
         pane.add(tiledPane, JideBoxLayout.FIX);
 
         //Images
@@ -214,6 +217,7 @@ public class WorkspaceSettingsEditor extends JDialog {
         mapEditorCommandField.setText(settings.mapEditorCommand.getCurrentValue());
         zoomWorldMapOnlyWithCtrlBox.setSelected(settings.zoomWorldMapOnlyWithCtrl.getCurrentValue());
         showEnumNamesInComboboxes.setSelected(settings.showEnumNamesInComboboxes.getCurrentValue());
+        createWorldFilesOnWorldmapSaveBox.setSelected(settings.createWorldFilesOnWorldmapSave.getCurrentValue());
         //Images
         useSystemDefaultImageViewerButton.setSelected(settings.useSystemDefaultImageViewer.getCurrentValue());
         useSystemDefaultImageEditorButton.setSelected(settings.useSystemDefaultImageEditor.getCurrentValue());
@@ -241,6 +245,7 @@ public class WorkspaceSettingsEditor extends JDialog {
         settings.mapEditorCommand.setCurrentValue(mapEditorCommandField.getText());
         settings.zoomWorldMapOnlyWithCtrl.setCurrentValue(zoomWorldMapOnlyWithCtrlBox.isSelected());
         settings.showEnumNamesInComboboxes.setCurrentValue(showEnumNamesInComboboxes.isSelected());
+        settings.createWorldFilesOnWorldmapSave.setCurrentValue(createWorldFilesOnWorldmapSaveBox.isSelected());
         //Images
         settings.useSystemDefaultImageViewer.setCurrentValue(useSystemDefaultImageViewerButton.isSelected());
         settings.useSystemDefaultImageEditor.setCurrentValue(useSystemDefaultImageEditorButton.isSelected());

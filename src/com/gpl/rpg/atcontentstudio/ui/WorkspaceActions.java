@@ -510,6 +510,9 @@ public class WorkspaceActions {
         public void actionPerformed(ActionEvent e) {
             if (selectedNode == null || selectedNode.getProject() == null) return;
             Project project = selectedNode.getProject();
+            if (!ConfirmationDialogs.confirmRegenerateWorldFiles(ATContentStudio.frame, project.name)) {
+                return;
+            }
             WorkerDialog.showTaskMessage("Regenerating .world files for " + project.name + "...", ATContentStudio.frame, true, project::regenerateWorldFiles);
         }
 
