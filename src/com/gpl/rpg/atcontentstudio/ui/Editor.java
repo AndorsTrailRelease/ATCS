@@ -1650,9 +1650,8 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         }
 
         /**
-         * Helper to get the underlying GameDataElement from the attached combo box model, if it is a SortedGDEComboModel.
-         * This is needed because getSelectedItem() needs to return the wrapped element so get Swing's built-in
-         * search/sort stuff works correctly.
+         * Helper to get the actual GameDataElement from the attached combo box model, if it is a SortedGDEComboModel.
+         * This is needed because getSelectedItem() needs to return the wrapped element so Swing's built-in search/sort works.
          * @return the selected element, or null if none is selected.
          */
        public GameDataElement getSelectedDelegate() {

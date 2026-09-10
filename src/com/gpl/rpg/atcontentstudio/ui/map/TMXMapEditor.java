@@ -604,7 +604,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 case questProgress:
                     requirementObj = addQuestBox(pane, project, "Quest: ", (Quest) requirement.required_obj, writable, listener);
                     requirementObjId = null;
-                    requirementValue = addQuestStageBox(pane, project, "Quest stage: ", requirement.required_value, writable, listener, (Quest) requirement.required_obj, (MyComboBox) requirementValue);
+                    requirementValue = addQuestStageBox(pane, project, "Quest stage: ", requirement.required_value, writable, listener, (Quest) requirement.required_obj, (MyComboBox) requirementObj);
                     break;
                 case skillLevel:
                     Requirement.SkillID skillId = null;
