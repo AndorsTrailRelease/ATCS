@@ -11,7 +11,6 @@ import com.gpl.rpg.atcontentstudio.model.tools.writermode.WriterModeDataSet;
 import com.gpl.rpg.atcontentstudio.ui.tools.BeanShellView;
 import com.gpl.rpg.atcontentstudio.ui.tools.ItemsTableView;
 import com.gpl.rpg.atcontentstudio.ui.tools.NPCsTableView;
-import com.gpl.rpg.atcontentstudio.ui.WorkerDialog;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
