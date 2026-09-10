@@ -889,23 +889,16 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 else return ((GameDataElement) object).getDesc();
             }
         };
-        questSelectionBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (comboModel.selected != null) {
-                    Editor.this.target.removeBacklink(comboModel.selected);
-                }
-                Quest newQuest = (Quest) questSelectionBox.getSelectedItem();
-                comboModel.changeQuest(newQuest);
-                combo.revalidate();
+        questSelectionBox.addActionListener(e -> {
+            if (comboModel.selected != null) {
+                Editor.this.target.removeBacklink(comboModel.selected);
             }
+
+            Quest newQuest = (Quest) questSelectionBox.getSelectedDelegate();
+            comboModel.changeQuest(newQuest);
+            combo.revalidate();
         });
-        combo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                listener.valueChanged(combo, comboModel.selected == null ? null : comboModel.selected.progress);
-            }
-        });
+        combo.addActionListener(e -> listener.valueChanged(combo, comboModel.selected == null ? null : comboModel.selected.progress));
 
 
         combo.setEnabled(writable);
@@ -917,13 +910,12 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     }
 
 
-    @SuppressWarnings({"rawtypes"})
-    public JList addBacklinksList(JPanel pane, GameDataElement gde) {
-        return addBacklinksList(pane, gde, "Elements linking to this one");
+    public void addBacklinksList(JPanel pane, GameDataElement gde) {
+        addBacklinksList(pane, gde, "Elements linking to this one");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public JList addBacklinksList(JPanel pane, GameDataElement gde, String title) {
+    public void addBacklinksList(JPanel pane, GameDataElement gde, String title) {
         final JList list = new JList(new GDEBacklinksListModel(gde));
         list.addMouseListener(new MouseAdapter() {
             @Override
@@ -946,7 +938,6 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         list.setCellRenderer(new GDERenderer(true, false));
 
         pane.add(new CollapsibleScrollList(title, list));
-        return list;
     }
 
     /**
@@ -1656,6 +1647,21 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
             super(model);
             this.dataType = dataType;
             Editor.this.addElementListener(dataType, this);
+        }
+
+        /**
+         * Helper to get the underlying GameDataElement from the attached combo box model, if it is a SortedGDEComboModel.
+         * This is needed because getSelectedItem() needs to return the wrapped element so get Swing's built-in
+         * search/sort stuff works correctly.
+         * @return the selected element, or null if none is selected.
+         */
+       public GameDataElement getSelectedDelegate() {
+            ComboBoxModel model = getModel();
+            if (model instanceof SortedGDEComboModel<?> sorted) {
+                return sorted.getSelectedDelegate();
+            }
+            Object selected = model.getSelectedItem();
+            return selected instanceof GameDataElement ? (GameDataElement) selected : null;
         }
 
         @Override
