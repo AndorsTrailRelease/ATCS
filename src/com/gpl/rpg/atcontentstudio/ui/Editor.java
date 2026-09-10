@@ -1516,7 +1516,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     /**
      * Builds the default GDE combo sections used by the shared editors.
      */
-    static <E extends GameDataElement> List<SortedGDEComboModel.Section<E>> createGDEComboSections() {
+    public static <E extends GameDataElement> List<SortedGDEComboModel.Section<E>> createGDEComboSections() {
         Comparator<E> comparator = SortedGDEComboModel.buildComparator();
         List<SortedGDEComboModel.Section<E>> result = new ArrayList<SortedGDEComboModel.Section<E>>();
         result.add(new SortedGDEComboModel.Section<E>(SortedGDEComboModel.PROJECT_HEADER,
