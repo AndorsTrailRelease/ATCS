@@ -20,10 +20,9 @@ public class WorkspaceSettingsTest {
         Workspace workspace = new Workspace(workspaceRoot);
         assertTrue(workspace.settings.createWorldFilesOnWorldmapSave.getCurrentValue());
 
-        workspace.settings.createWorldFilesOnWorldmapSave.setCurrentValue(true);
+        workspace.settings.createWorldFilesOnWorldmapSave.setCurrentValue(false);
         workspace.settings.save();
 
         Workspace restoredWorkspace = new Workspace(workspaceRoot);
-        assertTrue(restoredWorkspace.settings.createWorldFilesOnWorldmapSave.getCurrentValue());
-    }
+        assertFalse(restoredWorkspace.settings.createWorldFilesOnWorldmapSave.getCurrentValue());
 }
