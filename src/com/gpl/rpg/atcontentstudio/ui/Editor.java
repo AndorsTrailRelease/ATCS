@@ -35,6 +35,7 @@ import java.text.Collator;
 
 public abstract class Editor extends JPanel implements ProjectElementListener {
 
+    @Serial
     private static final long serialVersionUID = 241750514033596878L;
     private static final FieldUpdateListener nullListener = new FieldUpdateListener() {
         @Override
@@ -119,8 +120,8 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     }
 
 
-    public static JTextField addLabelField(JPanel pane, String label, String value) {
-        return addTextField(pane, label, value, false, nullListener);
+    public static void addLabelField(JPanel pane, String label, String value) {
+        addTextField(pane, label, value, false, nullListener);
     }
 
     public static void addTranslationPane(JPanel pane, final JTextComponent tfComponent, final String initialValue) {
@@ -229,7 +230,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         return tfField;
     }
 
-    public static <T extends JTextComponent> T addTextComponent(JPanel pane, String label, boolean editable, final FieldUpdateListener listener, T tfField, boolean specialNewLinesHandling, boolean scrollable) {
+    public static <T extends JTextComponent> void addTextComponent(JPanel pane, String label, boolean editable, final FieldUpdateListener listener, T tfField, boolean specialNewLinesHandling, boolean scrollable) {
         JPanel tfPane = new JPanel();
         tfPane.setLayout(new JideBoxLayout(tfPane, JideBoxLayout.LINE_AXIS, 6));
         JLabel tfLabel = new JLabel(label);
@@ -273,7 +274,6 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 listener.valueChanged(tfField, text);
             }
         });
-        return tfField;
     }
 
 
@@ -368,16 +368,16 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 int c = defaultValue.indexOf('/');
                 try {
                     defaultChance = Integer.parseInt(defaultValue.substring(0, c));
-                } catch (NumberFormatException nfe) {
+                } catch (NumberFormatException ignored) {
                 }
                 try {
                     defaultMaxChance = Integer.parseInt(defaultValue.substring(c + 1));
-                } catch (NumberFormatException nfe) {
+                } catch (NumberFormatException ignored) {
                 }
             } else {
                 try {
                     defaultChance = Integer.parseInt(defaultValue);
-                } catch (NumberFormatException nfe) {
+                } catch (NumberFormatException ignored) {
                 }
             }
         }
@@ -390,17 +390,17 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
                 int c = initialValue.indexOf('/');
                 try {
                     chance = Integer.parseInt(initialValue.substring(0, c));
-                } catch (NumberFormatException nfe) {
+                } catch (NumberFormatException ignored) {
                 }
                 try {
                     maxChance = Integer.parseInt(initialValue.substring(c + 1));
-                } catch (NumberFormatException nfe) {
+                } catch (NumberFormatException ignored) {
                 }
             } else {
                 try {
                     chance = Integer.parseInt(initialValue);
                     currentFormIsRatio = false;
-                } catch (NumberFormatException nfe) {
+                } catch (NumberFormatException ignored) {
                 }
             }
         }
@@ -618,6 +618,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         enumValuesCombo.setSelectedItem(initialValue);
         // Renderer shows description and tooltip with enum name
         enumValuesCombo.setRenderer(new DefaultListCellRenderer() {
+            @Serial
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -676,6 +677,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addNPCBox(JPanel pane, Project proj, String label, NPC npc, boolean writable, FieldUpdateListener listener) {
         final GDEComboModel<NPC> comboModel = new GDEComboModel<NPC>(proj, npc) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -693,6 +695,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addActorConditionBox(JPanel pane, Project proj, String label, ActorCondition acond, boolean writable, FieldUpdateListener listener) {
         final GDEComboModel<ActorCondition> comboModel = new GDEComboModel<ActorCondition>(proj, acond) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -710,6 +713,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addItemBox(JPanel pane, Project proj, String label, Item item, boolean writable, FieldUpdateListener listener) {
         final GDEComboModel<Item> comboModel = new GDEComboModel<Item>(proj, item) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -727,6 +731,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addItemCategoryBox(JPanel pane, Project proj, String label, ItemCategory ic, boolean writable, FieldUpdateListener listener) {
         final GDEComboModel<ItemCategory> comboModel = new GDEComboModel<ItemCategory>(proj, ic) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -744,6 +749,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addQuestBox(JPanel pane, Project proj, String label, Quest quest, boolean writable, FieldUpdateListener listener) {
         final GDEComboModel<Quest> comboModel = new GDEComboModel<Quest>(proj, quest) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -761,6 +767,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addDroplistBox(JPanel pane, Project proj, String label, Droplist droplist, boolean writable, FieldUpdateListener listener) {
         final GDEComboModel<Droplist> comboModel = new GDEComboModel<Droplist>(proj, droplist) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -778,6 +785,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addDialogueBox(JPanel pane, Project proj, String label, Dialogue dialogue, boolean writable, final FieldUpdateListener listener) {
         final GDEComboModel<Dialogue> comboModel = new GDEComboModel<Dialogue>(proj, dialogue) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -795,6 +803,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
 
     public MyComboBox addMapBox(JPanel pane, Project proj, String label, TMXMap map, boolean writable, final FieldUpdateListener listener) {
         final GDEComboModel<TMXMap> comboModel = new GDEComboModel<TMXMap>(proj, map) {
+            @Serial
             private static final long serialVersionUID = 2638082961277241764L;
 
             @Override
@@ -954,6 +963,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
      */
     public static abstract class GDEComboModel<E extends GameDataElement> extends AbstractListModel<E> implements ComboBoxModel<E> {
 
+        @Serial
         private static final long serialVersionUID = -5854574666510314715L;
 
         public Project project;
@@ -1443,6 +1453,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
      */
     public static class GDERenderer extends DefaultListCellRenderer {
 
+        @Serial
         private static final long serialVersionUID = 6819681566800482793L;
         private static final Color ALTERED_HIGHLIGHT = new Color(255, 255, 0, 48);
         private static final Color CREATED_HIGHLIGHT = new Color(0, 255, 0, 48);
@@ -1551,6 +1562,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
      */
     public static class QuestStageComboModel extends AbstractListModel<QuestStage> implements ComboBoxModel<QuestStage> {
 
+        @Serial
         private static final long serialVersionUID = -5854574666510314715L;
 
         public Project project;
@@ -1648,6 +1660,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
     // Combo box that listens for project element add/remove events and forwards them to its model.
     public class MyComboBox extends JComboBox implements ProjectElementListener {
 
+        @Serial
         private static final long serialVersionUID = -4184228604170642567L;
 
         Class<? extends GameDataElement> dataType;

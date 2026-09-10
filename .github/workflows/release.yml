@@ -149,7 +149,7 @@ jobs:
         uses: joncloud/makensis-action@v5.0
         with:
           script-file: packaging/Windows/ATCS_Installer.nsi
-          arguments: -DVERSION="${{ env.VERSION }}" -DATCS_JAR_PATH="../../build/libs/ATContentStudio-${{ env.VERSION }}-all.jar" -DATCS_OUTPUT_FILE="../ATCS_${{ env.VERSION }}_Setup.exe"
+          arguments: -DVERSION="${{ env.VERSION }}" -DATCS_JAR_PATH="../../build/libs/ATContentStudio-${{ env.VERSION }}-all.jar" -DATCS_OUTPUT_FILE="../Legacy_ATCS_${{ env.VERSION }}_Setup.exe"
 
       - name: Upload Release Assets (legacy exe)
         if: ${{ env.RELEASE_TAG != '' }}
