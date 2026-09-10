@@ -187,7 +187,7 @@ public class ATContentStudio {
             return failCommandLineExport("The --project argument must not be empty.", null, true);
         }
         if (!startupArguments.exportRequested() && !startupArguments.regenerateWorldFiles) {
-            return failCommandLineExport("Specify either --export-target or --regenerate-world-files.", null, true);
+            return failCommandLineExport("Specify --export-target and/or --regenerate-world-files.", null, true);
         }
 
         File workspaceRoot = startupArguments.workspaceRoot.getAbsoluteFile();
