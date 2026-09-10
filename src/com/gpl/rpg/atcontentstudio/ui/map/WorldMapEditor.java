@@ -368,7 +368,8 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                     return project.getMapCount() + 1;
                 }
             };
-            final MyComboBox mapBox = new MyComboBox(TMXMap.class, mapComboModel);
+            final SortedGDEComboModel<TMXMap> sortedMapComboModel = new SortedGDEComboModel<>(mapComboModel, Editor.createGDEComboSections());
+            final MyComboBox mapBox = new MyComboBox(TMXMap.class, sortedMapComboModel);
             mapBox.setRenderer(new GDERenderer(false, false));
             new ComboBoxSearchable(mapBox) {
                 @Override
@@ -417,8 +418,9 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
                 public void actionPerformed(ActionEvent e) {
                     editMode = EditMode.addMap;
                     mapBox.setEnabled(true);
-                    if (mapBox.getSelectedItem() != null) {
-                        mapBeingAddedID = ((TMXMap) mapBox.getSelectedItem()).id;
+                    TMXMap selectedMap = (TMXMap) mapBox.getSelectedDelegate();
+                    if (selectedMap != null) {
+                        mapBeingAddedID = selectedMap.id;
                     }
                 }
             });
@@ -426,13 +428,14 @@ public class WorldMapEditor extends Editor implements FieldUpdateListener {
             mapBox.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if (mapBox.getSelectedItem() == null) {
+                    TMXMap selectedMap = (TMXMap) mapBox.getSelectedDelegate();
+                    if (selectedMap == null) {
                         mapBeingAddedID = null;
                     } else {
                         if (mapBeingAddedID != null) {
                             mapView.updateFromModel();
                         }
-                        mapBeingAddedID = ((TMXMap) mapBox.getSelectedItem()).id;
+                        mapBeingAddedID = selectedMap.id;
                         if (mapView.mapLocations.isEmpty()) {
                             TMXMap map = target.getProject().getMap(mapBeingAddedID);
                             int w = map.tmxMap.getWidth() * WorldMapView.TILE_SIZE;

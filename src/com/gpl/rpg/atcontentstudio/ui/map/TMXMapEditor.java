@@ -604,7 +604,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 case questProgress:
                     requirementObj = addQuestBox(pane, project, "Quest: ", (Quest) requirement.required_obj, writable, listener);
                     requirementObjId = null;
-                    requirementValue = addQuestStageBox(pane, project, "Quest stage: ", requirement.required_value, writable, listener, (Quest) requirement.required_obj, requirementObj);
+                    requirementValue = addQuestStageBox(pane, project, "Quest stage: ", requirement.required_value, writable, listener, (Quest) requirement.required_obj, (MyComboBox) requirementObj);
                     break;
                 case skillLevel:
                     Requirement.SkillID skillId = null;
@@ -1534,7 +1534,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
         private boolean paintObjectGroup(Graphics2D g2d, tiled.core.ObjectGroup layer) {
             boolean paintSelected = false;
             for (MapObjectGroup group : ((TMXMap) target).groups) {
-                if (group.tmxGroup == layer) {
+                if (group.tmxGroup == layer && group.mapObjects != null) {
                     for (MapObject object : group.mapObjects) {
                         if (object == selectedMapObject) {
                             paintSelected = true;
