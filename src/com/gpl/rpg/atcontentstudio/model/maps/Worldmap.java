@@ -85,13 +85,7 @@ public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeN
             }
         } catch (SAXException e) {
             e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ParserConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ParserConfigurationException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -219,6 +213,21 @@ public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeN
         }
     }
 
+    public void saveWorldFiles() {
+        if (getDataType() == Type.source) {
+            return;
+        }
+        List<WorldmapSegment> snapshot = new ArrayList<WorldmapSegment>(this);
+        WorldmapWorldFileWriter.saveWorldFiles(snapshot);
+    }
+
+    public void saveWorldFile(WorldmapSegment segment) {
+        if (getDataType() == Type.source) {
+            return;
+        }
+        WorldmapWorldFileWriter.saveWorldFile(segment);
+    }
+
     public WorldmapSegment getWorldmapSegment(String id) {
         for (WorldmapSegment s : this) {
             if (s.id.equals(id)) {
@@ -252,16 +261,7 @@ public class Worldmap extends ArrayList<WorldmapSegment> implements ProjectTreeN
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xalan}indent-amount", "2");
             transformer.transform(input, output);
-        } catch (TransformerConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (TransformerFactoryConfigurationError e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (TransformerException e) {
+        } catch (TransformerFactoryConfigurationError | FileNotFoundException | TransformerException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

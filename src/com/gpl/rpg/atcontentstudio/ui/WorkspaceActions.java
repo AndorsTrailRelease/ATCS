@@ -505,6 +505,21 @@ public class WorkspaceActions {
 
     };
 
+    public ATCSAction regenerateWorldFiles = new ATCSAction("Regenerate .world files", "Regenerates all .world files for created and altered worldmaps.") {
+        public void actionPerformed(ActionEvent e) {
+            if (selectedNode == null || selectedNode.getProject() == null) return;
+            Project project = selectedNode.getProject();
+            if (!ConfirmationDialogs.confirmRegenerateWorldFiles(ATContentStudio.frame, project.name)) {
+                return;
+            }
+            WorkerDialog.showTaskMessage("Regenerating .world files for " + project.name + "...", ATContentStudio.frame, true, project::regenerateWorldFiles);
+        }
+
+        public void selectionChanged(ProjectTreeNode selectedNode, TreePath[] selectedPaths) {
+            setEnabled(selectedNode != null && selectedNode.getProject() != null);
+        }
+    };
+
     public ATCSAction runBeanShell = new ATCSAction("Run Beanshell console", "Opens a beanshell scripting pad.") {
         public void actionPerformed(ActionEvent e) {
             new BeanShellView();
@@ -640,6 +655,7 @@ public class WorkspaceActions {
         selectionAwareActions.add(compareItems);
         selectionAwareActions.add(compareNPCs);
         selectionAwareActions.add(exportProject);
+        selectionAwareActions.add(regenerateWorldFiles);
         selectionAwareActions.add(createWriter);
         selectionAwareActions.add(generateWriter);
         selectionChanged(null, null);

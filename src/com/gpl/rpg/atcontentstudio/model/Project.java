@@ -367,6 +367,15 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         FileUtils.writeStringToFile(FileUtils.toJsonString(toMap()),new File(baseFolder, Project.SETTINGS_FILE_JSON), "Project " + this.name);
     }
 
+    public void regenerateWorldFiles() {
+        if (createdContent != null && createdContent.worldmap != null) {
+            createdContent.worldmap.saveWorldFiles();
+        }
+        if (alteredContent != null && alteredContent.worldmap != null) {
+            alteredContent.worldmap.saveWorldFiles();
+        }
+    }
+
 
     public JSONElement getGameDataElement(Class<? extends JSONElement> gdeClass, String id) {
         if (gdeClass == ActorCondition.class) {
@@ -1227,12 +1236,12 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         tmpMapDir.mkdirs();
         writtenFiles = new LinkedList<String>();
         for (File createdMapFile : createdContent.gameMaps.mapFolder.listFiles()) {
-            if (createdMapFile.getName().equalsIgnoreCase("worldmap.xml")) continue;
+            if (createdMapFile.getName().equalsIgnoreCase("worldmap.xml") || createdMapFile.getName().toLowerCase(Locale.ROOT).endsWith(".world")) continue;
             copyTmxConverted(createdMapFile.toPath(), Paths.get(tmpMapDir.getAbsolutePath(), createdMapFile.getName()));
             writtenFiles.add(createdMapFile.getName());
         }
         for (File alteredMapFile : alteredContent.gameMaps.mapFolder.listFiles()) {
-            if (alteredMapFile.getName().equalsIgnoreCase("worldmap.xml")) continue;
+            if (alteredMapFile.getName().equalsIgnoreCase("worldmap.xml") || alteredMapFile.getName().toLowerCase(Locale.ROOT).endsWith(".world")) continue;
             copyTmxConverted(alteredMapFile.toPath(), Paths.get(tmpMapDir.getAbsolutePath(), alteredMapFile.getName()));
             writtenFiles.add(alteredMapFile.getName());
         }

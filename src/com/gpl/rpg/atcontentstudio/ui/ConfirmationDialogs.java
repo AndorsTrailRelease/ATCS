@@ -145,5 +145,16 @@ public final class ConfirmationDialogs {
         );
         return answer == JOptionPane.YES_OPTION;
     }
-}
 
+    public static boolean confirmRegenerateWorldFiles(Component parent, String projectName) {
+        String target = projectName == null || projectName.isEmpty() ? "this project" : "'" + projectName + "'";
+        int answer = JOptionPane.showConfirmDialog(
+                parent,
+                "Regenerate all Tiled .world files for project " + target + "?\n\nAny existing .world files will be overwritten.",
+                "Confirm regenerate .world files",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        return answer == JOptionPane.YES_OPTION;
+    }
+}
