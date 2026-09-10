@@ -158,7 +158,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          files: ./packaging/ATCS_${{ env.VERSION }}_Setup.exe
+          files: ./packaging/Legacy_ATCS_${{ env.VERSION }}_Setup.exe
 
   build-windows:
     runs-on: windows-latest
