@@ -116,8 +116,8 @@ public class ProjectTest {
 
         project.regenerateWorldFiles();
 
-        assertTrue(new File(project.createdContent.worldmap.worldmapFile.getParentFile(), "created_segment.world").isFile());
-        assertTrue(new File(project.alteredContent.worldmap.worldmapFile.getParentFile(), "altered_segment.world").isFile());
+        assertTrue(new File(project.baseFolder, "created_segment.world").isFile());
+        assertTrue(new File(project.baseFolder, "altered_segment.world").isFile());
     }
 
     @Test
@@ -135,8 +135,8 @@ public class ProjectTest {
 
         WorldmapSegment first = addSegment(project.createdContent.worldmap, "first_segment", 0, 0);
         WorldmapSegment second = addSegment(project.createdContent.worldmap, "second_segment", 0, 0);
-        File firstWorld = new File(project.createdContent.worldmap.worldmapFile.getParentFile(), first.id + ".world");
-        File secondWorld = new File(project.createdContent.worldmap.worldmapFile.getParentFile(), second.id + ".world");
+        File firstWorld = new File(project.baseFolder, first.id + ".world");
+        File secondWorld = new File(project.baseFolder, second.id + ".world");
 
         workspace.settings.createWorldFilesOnWorldmapSave.setCurrentValue(true);
         first.save();

@@ -37,8 +37,7 @@ public final class WorldmapWorldFileWriter {
             return false;
         }
 
-        Worldmap worldmap = (Worldmap) segment.parent;
-        File worldFile = new File(worldmap.worldmapFile.getParentFile(), segment.id + ".world");
+        File worldFile = new File(project.baseFolder, segment.id + ".world");
         boolean saved = FileUtils.writeStringToFile(FileUtils.toJsonString(buildWorldFileData(segment, project)), worldFile, null, false);
         if (!saved) {
             Notification.addError("Error while saving world file " + worldFile.getAbsolutePath());
@@ -49,7 +48,7 @@ public final class WorldmapWorldFileWriter {
     private static Map<String, Object> buildWorldFileData(WorldmapSegment segment, Project project) {
         Map<String, Object> worldData = new LinkedHashMap<String, Object>();
         List<Map<String, Object>> maps = new ArrayList<Map<String, Object>>();
-        File worldFileDir = ((Worldmap) segment.parent).worldmapFile.getParentFile();
+        File worldFileDir = project.baseFolder;
         for (String mapId : segment.mapLocations.keySet()) {
             TMXMap map = project.getMap(mapId);
             if (map == null || map.tmxMap == null) {
