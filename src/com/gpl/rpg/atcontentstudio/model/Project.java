@@ -367,6 +367,15 @@ public class Project implements ProjectTreeNode, Serializable, JsonSerializable 
         FileUtils.writeStringToFile(FileUtils.toJsonString(toMap()),new File(baseFolder, Project.SETTINGS_FILE_JSON), "Project " + this.name);
     }
 
+    public void regenerateWorldFiles() {
+        if (createdContent != null && createdContent.worldmap != null) {
+            createdContent.worldmap.saveWorldFiles();
+        }
+        if (alteredContent != null && alteredContent.worldmap != null) {
+            alteredContent.worldmap.saveWorldFiles();
+        }
+    }
+
 
     public JSONElement getGameDataElement(Class<? extends JSONElement> gdeClass, String id) {
         if (gdeClass == ActorCondition.class) {

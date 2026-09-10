@@ -51,6 +51,7 @@ public class ATContentStudio {
     private static final String SKIP_LOCK_CHECK_ARGUMENT = "--skip-lock-check";
     private static final String IGNORE_EXISTING_CONFIG_ARGUMENT = "--ignore-config";
     private static final String SHOW_CONSOLE_ARGUMENT = "--show-console";
+    private static final String REGENERATE_WORLD_FILES_ARGUMENT = "--regenerate-world-files";
     private static final String RESTART_HELPER_ARGUMENT = "--restart-helper";
     private static final String WAIT_FOR_PID_ARGUMENT = "--wait-for-pid";
     private static final String HELP_ARGUMENT = "--help";
@@ -122,7 +123,7 @@ public class ATContentStudio {
 
         if (startupArguments.isHeadlessExportRequested()) {
             System.setProperty("java.awt.headless", "true");
-            int exitCode = runHeadlessProjectExport(startupArguments);
+            int exitCode = runHeadlessProjectTask(startupArguments);
             System.exit(exitCode);
             return;
         }
@@ -178,15 +179,15 @@ public class ATContentStudio {
         return !isBlank(getDefaultExportTarget());
     }
 
-    private static int runHeadlessProjectExport(StartupArguments startupArguments) {
+    private static int runHeadlessProjectTask(StartupArguments startupArguments) {
         if (startupArguments.workspaceRoot == null) {
-            return failCommandLineExport("The --workspace argument is required when using --project.", null, true);
+            return failCommandLineExport("The --workspace argument is required when using headless project commands.", null, true);
         }
         if (isBlank(startupArguments.projectName)) {
             return failCommandLineExport("The --project argument must not be empty.", null, true);
         }
-        if (isBlank(startupArguments.exportTarget)) {
-            return failCommandLineExport("The --export-target argument is required when using --project.", null, true);
+        if (!startupArguments.exportRequested() && !startupArguments.regenerateWorldFiles) {
+            return failCommandLineExport("Specify either --export-target or --regenerate-world-files.", null, true);
         }
 
         File workspaceRoot = startupArguments.workspaceRoot.getAbsoluteFile();
@@ -236,22 +237,27 @@ public class ATContentStudio {
                 );
             }
 
-            File exportTarget = new File(startupArguments.exportTarget).getAbsoluteFile();
-            validateHeadlessExportTarget(exportTarget);
-
             logInfo("Project loaded: " + project.name);
-            logInfo("Exporting project '" + project.name + "' to " + exportTarget.getAbsolutePath());
+            if (startupArguments.regenerateWorldFiles) {
+                logInfo("Regenerating world files for project '" + project.name + "'");
+                project.regenerateWorldFiles();
+            }
+            if (startupArguments.exportRequested()) {
+                File exportTarget = new File(startupArguments.exportTarget).getAbsoluteFile();
+                validateHeadlessExportTarget(exportTarget);
+                logInfo("Exporting project '" + project.name + "' to " + exportTarget.getAbsolutePath());
 
-            if (isZipExportTarget(exportTarget)) {
-                project.exportProjectAsZipPackageSync(exportTarget);
-            } else {
-                project.exportProjectOverGameSourceSync(exportTarget);
+                if (isZipExportTarget(exportTarget)) {
+                    project.exportProjectAsZipPackageSync(exportTarget);
+                } else {
+                    project.exportProjectOverGameSourceSync(exportTarget);
+                }
             }
 
-            logInfo("Export completed successfully.");
+            logInfo("Headless project command completed successfully.");
             return 0;
         } catch (Exception e) {
-            return failCommandLineExport("Project export failed.", e, false);
+            return failCommandLineExport("Headless project command failed.", e, false);
         } finally {
             if (!skipLockCheck) {
                 WorkspaceInstanceLock.releaseCurrentWorkspace();
@@ -613,14 +619,15 @@ public class ATContentStudio {
             customSynopsis = {
                     "  GUI mode:",
                     "    ATContentStudio [--help] [--show-console] [--workspace <workspace>] [--export-target <path>] [--skip-lock-check] [--ignore-config]",
-                    "  Headless export mode:",
-                    "    ATContentStudio [--help] [--show-console] --workspace <workspace> --project <project-name> --export-target <target> [-q|--quiet] [--skip-lock-check] [--ignore-config]"
+                    "  Headless project mode:",
+                    "    ATContentStudio [--help] [--show-console] --workspace <workspace> --project <project-name> (--export-target <target> | --regenerate-world-files) [-q|--quiet] [--skip-lock-check] [--ignore-config]"
             },
-            description = "Launches Andor's Trail Content Studio in GUI mode or headless export mode.",
+            description = "Launches Andor's Trail Content Studio in GUI mode or headless project mode.",
             footer = {
                     "Notes:",
                     "  - If <target> ends with .zip, ATCS exports a zip package.",
                     "  - Otherwise, <target> must be an existing game-source directory.",
+                    "  - --regenerate-world-files rewrites all .world files for created and altered worldmap segments.",
                     "  - --show-console allocates and attaches a console window (Windows platform only).",
                     "  - --skip-lock-check bypasses single-instance workspace locking.",
                     "  - --ignore-config ignores saved global config and behaves like a fresh install for this run.",
@@ -635,6 +642,9 @@ public class ATContentStudio {
 
         @Option(names = {SHORT_EXPORT_TARGET_ARGUMENT, EXPORT_TARGET_ARGUMENT}, paramLabel = "<target>", description = "Zip file or existing game-source directory to export to.")
         private String exportTarget;
+
+        @Option(names = REGENERATE_WORLD_FILES_ARGUMENT, description = "Regenerates all .world files for created and altered worldmap segments.")
+        private boolean regenerateWorldFiles;
 
         @Option(names = {SHORT_QUIET_ARGUMENT, QUIET_ARGUMENT}, description = "Suppresses informational console output in headless mode.")
         private boolean quiet;
@@ -658,11 +668,15 @@ public class ATContentStudio {
         private boolean help;
 
         private boolean isHeadlessExportRequested() {
-            return !isBlank(projectName);
+            return !isBlank(projectName) && (exportRequested() || regenerateWorldFiles);
         }
 
         private String getDefaultExportTarget() {
             return exportTarget;
+        }
+
+        private boolean exportRequested() {
+            return !isBlank(exportTarget);
         }
     }
 

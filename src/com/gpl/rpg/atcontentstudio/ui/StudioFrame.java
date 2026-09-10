@@ -244,6 +244,7 @@ public class StudioFrame extends JFrame {
         toolsMenu.add(new JMenuItem(actions.runBeanShell)).setMnemonic(KeyEvent.VK_B);
         toolsMenu.add(new JSeparator());
         toolsMenu.add(new JMenuItem(actions.exportProject)).setMnemonic(KeyEvent.VK_E);
+        toolsMenu.add(new JMenuItem(actions.regenerateWorldFiles)).setMnemonic(KeyEvent.VK_G);
         getJMenuBar().add(toolsMenu);
 
         JMenu viewMenu = new JMenu("View");
