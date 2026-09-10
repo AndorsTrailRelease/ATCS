@@ -869,7 +869,7 @@ public abstract class Editor extends JPanel implements ProjectElementListener {
         return gdeBox;
     }
 
-    public JComboBox<QuestStage> addQuestStageBox(JPanel pane, Project proj, String label, Integer initialValue, boolean writable, final FieldUpdateListener listener, Quest quest, @SuppressWarnings("rawtypes") final JComboBox questSelectionBox) {
+    public JComboBox<QuestStage> addQuestStageBox(JPanel pane, Project proj, String label, Integer initialValue, boolean writable, final FieldUpdateListener listener, Quest quest, final MyComboBox questSelectionBox) {
         JPanel gdePane = new JPanel();
         gdePane.setLayout(new JideBoxLayout(gdePane, JideBoxLayout.LINE_AXIS, 6));
         JLabel gdeLabel = new JLabel(label);
