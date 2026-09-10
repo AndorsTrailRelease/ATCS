@@ -25,4 +25,5 @@ public class WorkspaceSettingsTest {
 
         Workspace restoredWorkspace = new Workspace(workspaceRoot);
         assertFalse(restoredWorkspace.settings.createWorldFilesOnWorldmapSave.getCurrentValue());
+    }
 }
