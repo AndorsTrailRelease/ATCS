@@ -79,6 +79,9 @@ public class AboutEditor extends Editor {
                     "<a href=\"https://jsoup.org/\">jsoup</a> by Jonathan Hedley<br/>" +
                     "License: <a href=\"https://jsoup.org/license\">MIT License</a><br/>" +
                     "<br/>" +
+                    "<a href=\"https://www.formdev.com/flatlaf/\">FlatLaf</a> by FormDev Software GmbH<br/>" +
+                    "License: <a href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a><br/>" +
+                    "<br/>" +
                     "A slightly modified version of <a href=\"https://launchpad.net/po-parser\">General PO Parser</a> by Bal�zs T�th<br/>" +
                     "License: <a href=\"http://www.gnu.org/licenses/gpl-3.0.html\">GPL v3</a><br/>" +
                     "<br/>" +
@@ -163,6 +166,7 @@ public class AboutEditor extends Editor {
         editorTabsHolder.add("SipHash for Java License",
                              getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.siphash-zackehh.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("jsoup License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.jsoup.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
+        editorTabsHolder.add("FlatLaf License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.flatlaf.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("General PO Parser License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.GPLv3.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("Minify.java License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.minify.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));
         editorTabsHolder.add("ATCS License", getInfoPane(new Scanner(ATContentStudio.class.getResourceAsStream("/LICENSE.GPLv3.txt"), "UTF-8").useDelimiter("\\A").next(), "text/text"));

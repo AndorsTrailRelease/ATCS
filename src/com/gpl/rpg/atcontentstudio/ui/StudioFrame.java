@@ -10,6 +10,12 @@ import com.gpl.rpg.atcontentstudio.model.maps.TMXMap;
 import com.gpl.rpg.atcontentstudio.model.maps.WorldmapSegment;
 import com.gpl.rpg.atcontentstudio.model.sprites.Spritesheet;
 import com.gpl.rpg.atcontentstudio.model.tools.writermode.WriterModeData;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -23,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class StudioFrame extends JFrame {
@@ -252,20 +259,20 @@ public class StudioFrame extends JFrame {
         JMenu changeLaF = new JMenu("Look & Feel");
         changeLaF.setMnemonic(KeyEvent.VK_L);
         int j = 1;
-        for (final LookAndFeelInfo i : UIManager.getInstalledLookAndFeels()) {
+        for (final LookAndFeelChoice choice : getLookAndFeelChoices()) {
             JMenuItem lafItem = null;
             if( j <= 9) {
-                lafItem = new JMenuItem(j + ": " + i.getName());
+                lafItem = new JMenuItem(j + ": " + choice.name());
                 lafItem.setMnemonic(KeyEvent.VK_0 + j);
             } else {
-                lafItem = new JMenuItem(i.getName());
+                lafItem = new JMenuItem(choice.name());
             }
 
             changeLaF.add(lafItem);
             lafItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    String lookAndFeel = i.getClassName();
+                    String lookAndFeel = choice.className();
                     ATContentStudio.setLookAndFeel(lookAndFeel);
                     SwingUtilities.updateComponentTreeUI(ATContentStudio.frame);
                     ConfigCache.setFavoriteLaFClassName(lookAndFeel);
@@ -286,6 +293,30 @@ public class StudioFrame extends JFrame {
             exportButton.setContentAreaFilled(false);
             getJMenuBar().add(exportButton);
         }
+    }
+
+    private List<LookAndFeelChoice> getLookAndFeelChoices() {
+        List<LookAndFeelChoice> choices = new ArrayList<>();
+
+        addLookAndFeelChoice(choices, "FlatLaf Dark", FlatDarkLaf.class.getName());
+        addLookAndFeelChoice(choices, "FlatLaf Darcula", FlatDarculaLaf.class.getName());
+        addLookAndFeelChoice(choices, "FlatLaf Light", FlatLightLaf.class.getName());
+        addLookAndFeelChoice(choices, "FlatLaf IntelliJ", FlatIntelliJLaf.class.getName());
+        addLookAndFeelChoice(choices, "FlatLaf macOS Dark", FlatMacDarkLaf.class.getName());
+        addLookAndFeelChoice(choices, "FlatLaf macOS Light", FlatMacLightLaf.class.getName());
+
+        for (final LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+            addLookAndFeelChoice(choices, info.getName(), info.getClassName());
+        }
+
+        return choices;
+    }
+
+    private void addLookAndFeelChoice(List<LookAndFeelChoice> choices, String name, String className) {
+        if (choices.stream().anyMatch(choice -> Objects.equals(choice.className(), className))) {
+            return;
+        }
+        choices.add(new LookAndFeelChoice(name, className));
     }
 
     private JMenu createRecentWorkspacesMenu() {
@@ -437,6 +468,9 @@ public class StudioFrame extends JFrame {
 
     public void showAbout() {
         editors.showAbout();
+    }
+
+    private record LookAndFeelChoice(String name, String className) {
     }
 
 }

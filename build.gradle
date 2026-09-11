@@ -33,6 +33,8 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'lib', include: ['*.jar'], exclude: ['junit-*.jar', '*-sources.jar'])
     implementation 'net.java.dev.jna:jna:5.15.0' // Needed for Windows console support
+    implementation 'com.formdev:flatlaf:3.5.2' // Flatlaf Look and Feel library
+
 
     testImplementation files('lib/junit-4.10.jar')
 }
