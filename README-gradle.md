@@ -6,7 +6,7 @@ This Gradle build replaces the old IDE-based build with packaging shell script, 
 
 - GitHub checkout with the Gradle wrapper
 - A JVM capable of running Gradle. The Gradle wrapper downloads the configured Gradle version.
-- The build uses a Gradle-managed Java 21 toolchain through Foojay, so a JDK 21 install does not need to be configured manually in normal environments.
+- The build uses a Gradle-managed Java 25 toolchain through Foojay, so a JDK 25 install does not need to be configured manually in normal environments.
 
 ## Common commands
 
@@ -103,7 +103,7 @@ A source distribution is written to `build/libs/ATContentStudio-<version>-source
 - Local jars are loaded from `lib/`.
 - Source roots include `src`, `hacked-libtiled`, `minify`, and `siphash-zackehh/src/main/java`.
 - `hacked-libtiled/tiled/io/resources/map.dtd` is copied into the runtime resources so TMX loading works.
-- The build currently uses a Gradle-managed JDK 21 toolchain so `jlink` can run without a hard-coded path.
+- The build currently uses a Gradle-managed JDK 25 toolchain so `jlink` can run without a hard-coded path.
 - Windows installers include Start Menu and desktop shortcuts.
 - Windows packaging uses `packaging/Windows/ATCS.ico` for the installer and launcher icon.
 - Linux packaging uses `packaging/common/ATCS.png` for the installer and launcher icon.

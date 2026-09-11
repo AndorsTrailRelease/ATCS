@@ -40,7 +40,7 @@ dependencies {
 // Java toolchain and source jar settings.
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
     withSourcesJar()
 }
@@ -125,7 +125,7 @@ configurations.configureEach {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release = 21
+    options.release = 25
 }
 
 // Keep jar packaging deterministic and avoid duplicate entries.
@@ -264,7 +264,7 @@ runtime {
 // Helper to actually run the jpackage build for a given installer type
 def jpackageExecutable = {
     def launcher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }.get()
     def binaryName = org.gradle.internal.os.OperatingSystem.current().isWindows() ? 'jpackage.exe' : 'jpackage'
     def installationDir = launcher.metadata.installationPath.asFile
