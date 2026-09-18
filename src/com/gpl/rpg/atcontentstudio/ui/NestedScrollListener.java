@@ -24,7 +24,6 @@ public class NestedScrollListener implements MouseWheelListener {
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        // 2. Find the outer parent scroll container
         if (parentScrollPane == null) {
             parentScrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, childScrollPane);
         }
@@ -34,18 +33,20 @@ public class NestedScrollListener implements MouseWheelListener {
         int min = scrollBar.getMinimum();
         int max = scrollBar.getMaximum() - scrollBar.getModel().getExtent();
 
-        // 3. Determine if the inner scrollbar is hitting an edge
+        boolean canScroll = scrollBar.isVisible() && max > min;
         boolean reachedTop = (e.getWheelRotation() < 0 && value <= min);
         boolean reachedBottom = (e.getWheelRotation() > 0 && value >= max);
 
-        if ((reachedTop || reachedBottom) && parentScrollPane != null) {
-            // 4. Bubble Up: Redirect the event to the outer frame
+        if ((!canScroll || reachedTop || reachedBottom) && parentScrollPane != null) {
             parentScrollPane.dispatchEvent(SwingUtilities.convertMouseEvent(
                     childScrollPane, e, parentScrollPane
             ));
         } else if (defaultListener != null) {
-            // 5. Standard Behavior: Pass the scroll action down to the internal list
             defaultListener.mouseWheelMoved(e);
+        } else if (parentScrollPane != null) {
+            parentScrollPane.dispatchEvent(SwingUtilities.convertMouseEvent(
+                    childScrollPane, e, parentScrollPane
+            ));
         }
     }
 

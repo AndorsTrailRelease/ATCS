@@ -5,9 +5,17 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.Serial;
 
+/**
+ * A titled panel whose child components can be collapsed and expanded in place.
+ * <p>
+ * The panel keeps its border title in sync with the expanded state and supports
+ * keyboard toggling with Enter or Space when focused.
+ */
 public class CollapsiblePanel extends JPanel {
 
+    @Serial
     private static final long serialVersionUID = 319384990345722150L;
 
     String title;
@@ -42,6 +50,11 @@ public class CollapsiblePanel extends JPanel {
             }
         }
 
+    /**
+     * Creates a collapsible titled panel.
+     *
+     * @param title the title shown in the border
+     */
     public CollapsiblePanel(String title) {
         super();
         this.title = title;
@@ -115,10 +128,20 @@ public class CollapsiblePanel extends JPanel {
         }
     };
 
+    /**
+     * Returns the current border title.
+     *
+     * @return the panel title
+     */
     public String getTitle() {
         return title;
     }
 
+    /**
+     * Updates the border title shown for this panel.
+     *
+     * @param title the new title
+     */
     public void setTitle(String title) {
         String oldTitle = this.title;
         this.title = title;
@@ -214,14 +237,25 @@ public class CollapsiblePanel extends JPanel {
         return false;
     }
 
+    /**
+     * Collapses the panel contents.
+     */
     public void collapse() {
         toggleVisibility(false);
     }
 
+    /**
+     * Expands the panel contents.
+     */
     public void expand() {
         toggleVisibility(true);
     }
 
+    /**
+     * Sets whether the panel contents are expanded.
+     *
+     * @param expand {@code true} to show the contents, {@code false} to hide them
+     */
     public void setExpanded(boolean expand) {
         toggleVisibility(expand);
     }

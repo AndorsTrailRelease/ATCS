@@ -5,6 +5,7 @@ import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.ui.CollapsiblePanel;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
 import com.gpl.rpg.atcontentstudio.ui.FieldUpdateListener;
+import com.gpl.rpg.atcontentstudio.ui.NestedScrollListener;
 import com.gpl.rpg.atcontentstudio.ui.OrderedListenerListModel;
 import com.jidesoft.swing.JideBoxLayout;
 
@@ -42,12 +43,14 @@ public class UiUtils {
                                                                                                                          DefaultListCellRenderer cellRenderer,
                                                                                                                          String title,
                                                                                                                          BasicLambdaWithArgAndReturn<E, GameDataElement> getReferencedObj) {
-        CollapsiblePanel itemsPane = new CollapsiblePanel(title);
-        itemsPane.setLayout(new JideBoxLayout(itemsPane, JideBoxLayout.PAGE_AXIS));
+        CollapsiblePanel listPanel = new CollapsiblePanel(title);
+        listPanel.setLayout(new JideBoxLayout(listPanel, JideBoxLayout.PAGE_AXIS));
         final JList<E> list = new JList<>(listModel);
         list.setCellRenderer(cellRenderer);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        itemsPane.add(new JScrollPane(list), JideBoxLayout.FIX);
+        JScrollPane scroller = new JScrollPane(list);
+        NestedScrollListener.install(scroller);
+        listPanel.add(scroller, JideBoxLayout.FIX);
         final JPanel editorPane = new JPanel();
         final JButton createBtn = new JButton(new ImageIcon(DefaultIcons.getCreateIcon()));
         final JButton deleteBtn = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
@@ -82,16 +85,16 @@ public class UiUtils {
             addMoveButtonListeners(listener, listModel, getSelected, moveUpBtn, list, listButtonsPane, moveDownBtn);
 
             listButtonsPane.add(new JPanel(), JideBoxLayout.VARY);
-            itemsPane.add(listButtonsPane, JideBoxLayout.FIX);
+            listPanel.add(listButtonsPane, JideBoxLayout.FIX);
         }
 
         addNavigationListeners(getReferencedObj, list);
 
         editorPane.setLayout(new JideBoxLayout(editorPane, JideBoxLayout.PAGE_AXIS));
-        itemsPane.add(editorPane, JideBoxLayout.FIX);
+        listPanel.add(editorPane, JideBoxLayout.FIX);
 
         CollapsibleItemListCreation<E> result = new CollapsibleItemListCreation<>();
-        result.collapsiblePanel = itemsPane;
+        result.collapsiblePanel = listPanel;
         result.list = list;
         return result;
     }
