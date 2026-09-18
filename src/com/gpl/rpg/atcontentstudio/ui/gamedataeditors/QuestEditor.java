@@ -81,7 +81,7 @@ public class QuestEditor extends JSONElementEditor {
                                                     title,
                                                     (x) -> null);
         stagesList = result.list;
-
+        UiUtils.resizeListToFit(stagesList, -1);
         if (quest.stages == null || quest.stages.isEmpty()) {
             result.collapsiblePanel.collapse();
         }
