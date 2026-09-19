@@ -693,7 +693,7 @@ public class ATContentStudio {
 
         try {
             UIManager.setLookAndFeel(laf);
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException e) {
             requestedApplied = false;
             String fallback = UIManager.getSystemLookAndFeelClassName();
             if (!Objects.equals(laf, fallback)) {
@@ -702,7 +702,7 @@ public class ATContentStudio {
                     System.err.println("Look and feel '" + laf + "' is unavailable. Falling back to system default: " + fallback);
                 } catch (ClassNotFoundException | InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException fallbackError) {
                     String crossPlatform = UIManager.getCrossPlatformLookAndFeelClassName();
-                    if (!Objects.equals(laf, crossPlatform)) {
+                    if (!Objects.equals(laf, crossPlatform) && !Objects.equals(fallback, crossPlatform)) {
                         try {
                             UIManager.setLookAndFeel(crossPlatform);
                             System.err.println("Look and feel '" + laf + "' is unavailable. Falling back to cross-platform default: " + crossPlatform);
@@ -717,9 +717,6 @@ public class ATContentStudio {
                     }
                 }
             }
-        } catch (InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException e) {
-            requestedApplied = false;
-            e.printStackTrace();
         }
         var newLaF = UIManager.getLookAndFeel();
         System.out.println("Using look and feel: " + newLaF.getName() + " (" + newLaF.getClass().getName() + ")");
