@@ -1,6 +1,7 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
 import javax.swing.*;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
@@ -38,16 +39,32 @@ public class NestedScrollListener implements MouseWheelListener {
         boolean reachedBottom = (e.getWheelRotation() > 0 && value >= max);
 
         if ((!canScroll || reachedTop || reachedBottom) && parentScrollPane != null) {
-            parentScrollPane.dispatchEvent(SwingUtilities.convertMouseEvent(
-                    childScrollPane, e, parentScrollPane
-            ));
+            parentScrollPane.dispatchEvent(convertWheelEventToParent(e));
         } else if (defaultListener != null) {
             defaultListener.mouseWheelMoved(e);
         } else if (parentScrollPane != null) {
-            parentScrollPane.dispatchEvent(SwingUtilities.convertMouseEvent(
-                    childScrollPane, e, parentScrollPane
-            ));
+            parentScrollPane.dispatchEvent(convertWheelEventToParent(e));
         }
+    }
+
+    private MouseWheelEvent convertWheelEventToParent(MouseWheelEvent e) {
+        Point parentPoint = SwingUtilities.convertPoint(childScrollPane, e.getPoint(), parentScrollPane);
+        return new MouseWheelEvent(
+                parentScrollPane,
+                e.getID(),
+                e.getWhen(),
+                e.getModifiersEx(),
+                parentPoint.x,
+                parentPoint.y,
+                e.getXOnScreen(),
+                e.getYOnScreen(),
+                e.getClickCount(),
+                e.isPopupTrigger(),
+                e.getScrollType(),
+                e.getScrollAmount(),
+                e.getWheelRotation(),
+                e.getPreciseWheelRotation()
+        );
     }
 
     public static void install(JScrollPane childScrollPane) {
