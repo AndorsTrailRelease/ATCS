@@ -150,7 +150,10 @@ public class ATContentStudio {
         }
 
         String laf = ConfigCache.getFavoriteLaFClassName();
-        setLookAndFeel(laf);
+        boolean requestedLookAndFeelApplied = setLookAndFeel(laf);
+        if (!requestedLookAndFeelApplied && !isBlank(laf)) {
+            ConfigCache.setFavoriteLaFClassName(UIManager.getLookAndFeel().getClass().getName());
+        }
 
         // Need to keep a strong reference to it, to avoid garbage collection that'll
         // reset this setting.
@@ -680,32 +683,49 @@ public class ATContentStudio {
         }
     }
 
-    public static void setLookAndFeel(String laf) {
+    public static boolean setLookAndFeel(String laf) {
+        boolean requestedApplied = true;
         if (laf == null)
         {
             System.out.println("No look and feel specified, using system default.");
             laf = UIManager.getSystemLookAndFeelClassName();
         }
-        System.out.println("Info: Setting look and feel to: " + laf);
 
         try {
             UIManager.setLookAndFeel(laf);
         } catch (ClassNotFoundException e) {
-            System.err.println("Failed to load system look and feel. ");
-            System.err.println("Installed look and feel classes: ");
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                System.err.println("  " + info.getName() + " (" + info.getClassName() + ")");
+            requestedApplied = false;
+            String fallback = UIManager.getSystemLookAndFeelClassName();
+            if (!Objects.equals(laf, fallback)) {
+                try {
+                    UIManager.setLookAndFeel(fallback);
+                    System.err.println("Look and feel '" + laf + "' is unavailable. Falling back to system default: " + fallback);
+                } catch (ClassNotFoundException | InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException fallbackError) {
+                    String crossPlatform = UIManager.getCrossPlatformLookAndFeelClassName();
+                    if (!Objects.equals(laf, crossPlatform)) {
+                        try {
+                            UIManager.setLookAndFeel(crossPlatform);
+                            System.err.println("Look and feel '" + laf + "' is unavailable. Falling back to cross-platform default: " + crossPlatform);
+                        } catch (ClassNotFoundException | InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException crossPlatformError) {
+                            System.err.println("Failed to load a usable look and feel.");
+                            System.err.println("Installed look and feel classes: ");
+                            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                                System.err.println("  " + info.getName() + " (" + info.getClassName() + ")");
+                            }
+                            crossPlatformError.printStackTrace();
+                        }
+                    }
+                }
             }
-            System.err.println("Tried to load: " + laf + " but got this error:");
-
-            e.printStackTrace();
         } catch (InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException e) {
+            requestedApplied = false;
             e.printStackTrace();
         }
         var newLaF = UIManager.getLookAndFeel();
         System.out.println("Using look and feel: " + newLaF.getName() + " (" + newLaF.getClass().getName() + ")");
 
         scaleUIFont();
+        return requestedApplied;
     }
 
     private static void checkUpdate() {
