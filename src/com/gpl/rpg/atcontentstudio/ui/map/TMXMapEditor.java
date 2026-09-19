@@ -1884,6 +1884,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                 if (selectedLayer instanceof tiled.core.ObjectGroup) {
                     map.getGroup((tiled.core.ObjectGroup) selectedLayer).visible = layerVisibleBox.isSelected();
                 }
+                modified = false;
                 tmxViewer.revalidate();
                 tmxViewer.repaint();
             } else if (source == groupActiveForNewGame) {
@@ -2288,7 +2289,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
             replacementsForLayer.clear();
 
             for (tiled.core.MapLayer layer : map.tmxMap.getLayers()) {
-                if (layer instanceof tiled.core.TileLayer) {
+                    if (layer instanceof tiled.core.TileLayer) {
                     layersByName.put(layer.getName(), (tiled.core.TileLayer) layer);
                     if (TMXMap.GROUND_LAYER_NAME.equalsIgnoreCase(layer.getName())) {
                         groundName = layer.getName();
@@ -2314,9 +2315,7 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
 
                         if (area.replacements != null) {
                             for (ReplaceArea.Replacement repl : area.replacements) {
-                                if (replacementsForLayer.get(repl.sourceLayer) == null) {
-                                    replacementsForLayer.put(repl.sourceLayer, new ArrayList<ReplaceArea>());
-                                }
+                                replacementsForLayer.computeIfAbsent(repl.sourceLayer, k -> new ArrayList<ReplaceArea>());
                                 replacementsForLayer.get(repl.sourceLayer).add(area);
                             }
                         }
@@ -2350,9 +2349,13 @@ public class TMXMapEditor extends Editor implements TMXMap.MapChangedOnDiskListe
                                 }
                             }
                             if (targetName != null) {
+                                tiled.core.TileLayer targetLayer = layersByName.get(targetName);
+                                if (targetLayer == null) {
+                                    Notification.addError("Replacement target layer '" + targetName + "' for area '" + area.name + "' in map " + map.getDesc() + " not found.");
+                                }
                                 for (int x = area.x / 32; x < (area.x + area.w) / 32; x++) {
                                     for (int y = area.y / 32; y < (area.y + area.h) / 32; y++) {
-                                        merged.setTileAt(x, y, layersByName.get(targetName).getTileAt(x, y));
+                                        merged.setTileAt(x, y, targetLayer != null ? targetLayer.getTileAt(x, y) : null);
                                     }
                                 }
                             }
