@@ -118,6 +118,7 @@ public class UiUtils {
                 selectedItemReset.doIt();
                 itemsList.clearSelection();
                 listener.valueChanged(new JLabel(), null); //Item changed, but we took care of it, just do the usual notification and JSON update stuff.
+                resizeListToFit(itemsList);
             }
         });
         listButtonsPane.add(deleteBtn, JideBoxLayout.FIX);
@@ -195,11 +196,18 @@ public class UiUtils {
      * @param maxRows the maximum number of rows to display, or a negative value to use all rows
      */
     public static void resizeListToFit(JList<?> list, int maxRows) {
+        resizeListToFit(list, maxRows, false);
+    }
+
+    private static void resizeListToFit(JList<?> list, int maxRows, boolean alreadyRetried) {
         if (list == null) return;
         list.putClientProperty(RESIZE_LIST_MAX_ROWS_PROPERTY, maxRows);
         JScrollPane scroller = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, list);
-        if (scroller != null && scroller.getViewport().getWidth() <= 0) { // Not rendered yet, postpone it
-            SwingUtilities.invokeLater(() -> resizeListToFit(list, maxRows));
+        if (scroller != null && scroller.getViewport().getWidth() <= 0) { // Not rendered yet, postpone it once
+            if (alreadyRetried) {
+                return;
+            }
+            SwingUtilities.invokeLater(() -> resizeListToFit(list, maxRows, true));
             return;
         }
 
