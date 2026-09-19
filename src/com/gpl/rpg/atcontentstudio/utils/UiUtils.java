@@ -5,6 +5,7 @@ import com.gpl.rpg.atcontentstudio.model.GameDataElement;
 import com.gpl.rpg.atcontentstudio.ui.CollapsiblePanel;
 import com.gpl.rpg.atcontentstudio.ui.DefaultIcons;
 import com.gpl.rpg.atcontentstudio.ui.FieldUpdateListener;
+import com.gpl.rpg.atcontentstudio.ui.NestedScrollListener;
 import com.gpl.rpg.atcontentstudio.ui.OrderedListenerListModel;
 import com.jidesoft.swing.JideBoxLayout;
 
@@ -14,6 +15,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class UiUtils {
+    private static final String RESIZE_LIST_MAX_ROWS_PROPERTY = UiUtils.class.getName() + ".resizeListToFit.maxRows";
+    private static final int RESIZE_LIST_DEFAULT_ROWS = 8;
+
     public static class CollapsibleItemListCreation<E> {
         public CollapsiblePanel collapsiblePanel;
         public JList<E> list;
@@ -42,12 +46,14 @@ public class UiUtils {
                                                                                                                          DefaultListCellRenderer cellRenderer,
                                                                                                                          String title,
                                                                                                                          BasicLambdaWithArgAndReturn<E, GameDataElement> getReferencedObj) {
-        CollapsiblePanel itemsPane = new CollapsiblePanel(title);
-        itemsPane.setLayout(new JideBoxLayout(itemsPane, JideBoxLayout.PAGE_AXIS));
+        CollapsiblePanel listPanel = new CollapsiblePanel(title);
+        listPanel.setLayout(new JideBoxLayout(listPanel, JideBoxLayout.PAGE_AXIS));
         final JList<E> list = new JList<>(listModel);
         list.setCellRenderer(cellRenderer);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        itemsPane.add(new JScrollPane(list), JideBoxLayout.FIX);
+        JScrollPane scroller = new JScrollPane(list);
+        NestedScrollListener.install(scroller);
+        listPanel.add(scroller, JideBoxLayout.FIX);
         final JPanel editorPane = new JPanel();
         final JButton createBtn = new JButton(new ImageIcon(DefaultIcons.getCreateIcon()));
         final JButton deleteBtn = new JButton(new ImageIcon(DefaultIcons.getNullifyIcon()));
@@ -82,16 +88,16 @@ public class UiUtils {
             addMoveButtonListeners(listener, listModel, getSelected, moveUpBtn, list, listButtonsPane, moveDownBtn);
 
             listButtonsPane.add(new JPanel(), JideBoxLayout.VARY);
-            itemsPane.add(listButtonsPane, JideBoxLayout.FIX);
+            listPanel.add(listButtonsPane, JideBoxLayout.FIX);
         }
 
         addNavigationListeners(getReferencedObj, list);
 
         editorPane.setLayout(new JideBoxLayout(editorPane, JideBoxLayout.PAGE_AXIS));
-        itemsPane.add(editorPane, JideBoxLayout.FIX);
+        listPanel.add(editorPane, JideBoxLayout.FIX);
 
         CollapsibleItemListCreation<E> result = new CollapsibleItemListCreation<>();
-        result.collapsiblePanel = itemsPane;
+        result.collapsiblePanel = listPanel;
         result.list = list;
         return result;
     }
@@ -112,6 +118,7 @@ public class UiUtils {
                 selectedItemReset.doIt();
                 itemsList.clearSelection();
                 listener.valueChanged(new JLabel(), null); //Item changed, but we took care of it, just do the usual notification and JSON update stuff.
+                resizeListToFit(itemsList);
             }
         });
         listButtonsPane.add(deleteBtn, JideBoxLayout.FIX);
@@ -169,9 +176,54 @@ public class UiUtils {
         });
     }
 
+    /**
+     * Adjusts a list's visible row count using the stored row limit, or 8 if none was set.
+     *
+     * @param list the list to resize
+     */
     public static void resizeListToFit(JList<?> list) {
         if (list == null) return;
-        list.setVisibleRowCount(Math.min(8, list.getModel().getSize()));
+        Object storedMaxRows = list.getClientProperty(RESIZE_LIST_MAX_ROWS_PROPERTY);
+        int maxRows = storedMaxRows instanceof Integer ? (Integer) storedMaxRows : RESIZE_LIST_DEFAULT_ROWS;
+        resizeListToFit(list, maxRows);
     }
 
+    /**
+     * Adjusts a list's visible row count up to the provided row limit (-1 = now limit).
+     * Adds an extra row if the list needs a horizontal scrollbar.
+     *
+     * @param list the list to resize
+     * @param maxRows the maximum number of rows to display, or a negative value to use all rows
+     */
+    public static void resizeListToFit(JList<?> list, int maxRows) {
+        resizeListToFit(list, maxRows, false);
+    }
+
+    private static void resizeListToFit(JList<?> list, int maxRows, boolean alreadyRetried) {
+        if (list == null) return;
+        list.putClientProperty(RESIZE_LIST_MAX_ROWS_PROPERTY, maxRows);
+        JScrollPane scroller = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, list);
+        if (scroller != null && scroller.getViewport().getWidth() <= 0) { // Not rendered yet, postpone it once
+            if (alreadyRetried) {
+                return;
+            }
+            SwingUtilities.invokeLater(() -> resizeListToFit(list, maxRows, true));
+            return;
+        }
+
+        final int rowLimit = maxRows < 0 ? list.getModel().getSize() : maxRows;
+        int rowCount = Math.min(rowLimit, list.getModel().getSize());
+        if (scroller != null && needsHorizontalScrollBar(list, scroller)) {
+            rowCount++;
+        }
+        list.setVisibleRowCount(rowCount);
+    }
+
+    private static boolean needsHorizontalScrollBar(JList<?> list, JScrollPane scroller) {
+        JViewport viewport = scroller.getViewport();
+        if (viewport == null) {
+            return false;
+        }
+        return list.getPreferredSize().width > viewport.getWidth();
+    }
 }

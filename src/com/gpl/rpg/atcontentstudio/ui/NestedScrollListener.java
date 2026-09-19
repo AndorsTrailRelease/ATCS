@@ -1,6 +1,7 @@
 package com.gpl.rpg.atcontentstudio.ui;
 
 import javax.swing.*;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
@@ -24,7 +25,6 @@ public class NestedScrollListener implements MouseWheelListener {
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        // 2. Find the outer parent scroll container
         if (parentScrollPane == null) {
             parentScrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, childScrollPane);
         }
@@ -34,19 +34,37 @@ public class NestedScrollListener implements MouseWheelListener {
         int min = scrollBar.getMinimum();
         int max = scrollBar.getMaximum() - scrollBar.getModel().getExtent();
 
-        // 3. Determine if the inner scrollbar is hitting an edge
+        boolean canScroll = scrollBar.isVisible() && max > min;
         boolean reachedTop = (e.getWheelRotation() < 0 && value <= min);
         boolean reachedBottom = (e.getWheelRotation() > 0 && value >= max);
 
-        if ((reachedTop || reachedBottom) && parentScrollPane != null) {
-            // 4. Bubble Up: Redirect the event to the outer frame
-            parentScrollPane.dispatchEvent(SwingUtilities.convertMouseEvent(
-                    childScrollPane, e, parentScrollPane
-            ));
+        if ((!canScroll || reachedTop || reachedBottom) && parentScrollPane != null) {
+            parentScrollPane.dispatchEvent(convertWheelEventToParent(e));
         } else if (defaultListener != null) {
-            // 5. Standard Behavior: Pass the scroll action down to the internal list
             defaultListener.mouseWheelMoved(e);
+        } else if (parentScrollPane != null) {
+            parentScrollPane.dispatchEvent(convertWheelEventToParent(e));
         }
+    }
+
+    private MouseWheelEvent convertWheelEventToParent(MouseWheelEvent e) {
+        Point parentPoint = SwingUtilities.convertPoint(childScrollPane, e.getPoint(), parentScrollPane);
+        return new MouseWheelEvent(
+                parentScrollPane,
+                e.getID(),
+                e.getWhen(),
+                e.getModifiersEx(),
+                parentPoint.x,
+                parentPoint.y,
+                e.getXOnScreen(),
+                e.getYOnScreen(),
+                e.getClickCount(),
+                e.isPopupTrigger(),
+                e.getScrollType(),
+                e.getScrollAmount(),
+                e.getWheelRotation(),
+                e.getPreciseWheelRotation()
+        );
     }
 
     public static void install(JScrollPane childScrollPane) {

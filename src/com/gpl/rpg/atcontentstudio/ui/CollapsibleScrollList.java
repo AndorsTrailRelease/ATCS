@@ -106,4 +106,3 @@ public class CollapsibleScrollList extends CollapsiblePanel {
         return scroller;
     }
 }
-
