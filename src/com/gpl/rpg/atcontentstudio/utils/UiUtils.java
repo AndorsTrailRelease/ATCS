@@ -15,6 +15,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class UiUtils {
+    private static final String RESIZE_LIST_MAX_ROWS_PROPERTY = UiUtils.class.getName() + ".resizeListToFit.maxRows";
+    private static final int RESIZE_LIST_DEFAULT_ROWS = 8;
+
     public static class CollapsibleItemListCreation<E> {
         public CollapsiblePanel collapsiblePanel;
         public JList<E> list;
@@ -172,13 +175,47 @@ public class UiUtils {
         });
     }
 
+    /**
+     * Adjusts a list's visible row count using the stored row limit, or 8 if none was set.
+     *
+     * @param list the list to resize
+     */
     public static void resizeListToFit(JList<?> list) {
-        resizeListToFit(list, 8);
+        if (list == null) return;
+        Object storedMaxRows = list.getClientProperty(RESIZE_LIST_MAX_ROWS_PROPERTY);
+        int maxRows = storedMaxRows instanceof Integer ? (Integer) storedMaxRows : RESIZE_LIST_DEFAULT_ROWS;
+        resizeListToFit(list, maxRows);
     }
 
+    /**
+     * Adjusts a list's visible row count up to the provided row limit (-1 = now limit).
+     * Adds an extra row if the list needs a horizontal scrollbar.
+     *
+     * @param list the list to resize
+     * @param maxRows the maximum number of rows to display, or a negative value to use all rows
+     */
     public static void resizeListToFit(JList<?> list, int maxRows) {
         if (list == null) return;
-        if (maxRows < 0) maxRows = list.getModel().getSize();
-        list.setVisibleRowCount(Math.min(maxRows, list.getModel().getSize()));
+        list.putClientProperty(RESIZE_LIST_MAX_ROWS_PROPERTY, maxRows);
+        JScrollPane scroller = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, list);
+        if (scroller != null && scroller.getViewport().getWidth() <= 0) { // Not rendered yet, postpone it
+            SwingUtilities.invokeLater(() -> resizeListToFit(list, maxRows));
+            return;
+        }
+
+        final int rowLimit = maxRows < 0 ? list.getModel().getSize() : maxRows;
+        int rowCount = Math.min(rowLimit, list.getModel().getSize());
+        if (scroller != null && needsHorizontalScrollBar(list, scroller)) {
+            rowCount++;
+        }
+        list.setVisibleRowCount(rowCount);
+    }
+
+    private static boolean needsHorizontalScrollBar(JList<?> list, JScrollPane scroller) {
+        JViewport viewport = scroller.getViewport();
+        if (viewport == null) {
+            return false;
+        }
+        return list.getPreferredSize().width > viewport.getWidth();
     }
 }
