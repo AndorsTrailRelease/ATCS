@@ -28,7 +28,7 @@ See our [ATCS release](https://github.com/AndorsTrailRelease/ATCS/releases) page
 
 - The Gradle wrapper included in this repository.  The wrapper will download the required gradle version if needed.
 
-Gradle is configured to use an Adoptium/Temurin Java 21 toolchain. If a matching JDK is not already available, Gradle can download one through the configured Foojay toolchain resolver.
+Gradle is configured to use an Adoptium/Temurin Java 25 toolchain. If a matching JDK is not already available, Gradle can download one through the configured Foojay toolchain resolver.
 
 ## Running from the IDE
 If you are using the **Android Studio / IntelliJ IDE**, select the **`Run ATCS`** run configuration to build and start the application.  Any required dependencies should be downloaded automatically, but it may be necessary to refresh the download links via the available link if an error occurs. 
