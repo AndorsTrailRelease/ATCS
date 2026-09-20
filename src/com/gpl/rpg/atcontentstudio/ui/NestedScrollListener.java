@@ -39,17 +39,17 @@ public class NestedScrollListener implements MouseWheelListener {
         boolean reachedBottom = (e.getWheelRotation() > 0 && value >= max);
 
         if ((!canScroll || reachedTop || reachedBottom) && parentScrollPane != null) {
-            parentScrollPane.dispatchEvent(convertWheelEventToParent(e));
+            bubbleWheelToParent(e);
         } else if (defaultListener != null) {
             defaultListener.mouseWheelMoved(e);
         } else if (parentScrollPane != null) {
-            parentScrollPane.dispatchEvent(convertWheelEventToParent(e));
+            bubbleWheelToParent(e);
         }
     }
 
-    private MouseWheelEvent convertWheelEventToParent(MouseWheelEvent e) {
+    private void bubbleWheelToParent(MouseWheelEvent e) {
         Point parentPoint = SwingUtilities.convertPoint(childScrollPane, e.getPoint(), parentScrollPane);
-        return new MouseWheelEvent(
+        MouseWheelEvent parentEvent = new MouseWheelEvent(
                 parentScrollPane,
                 e.getID(),
                 e.getWhen(),
@@ -65,6 +65,9 @@ public class NestedScrollListener implements MouseWheelListener {
                 e.getWheelRotation(),
                 e.getPreciseWheelRotation()
         );
+        for (MouseWheelListener listener : parentScrollPane.getMouseWheelListeners()) {
+            listener.mouseWheelMoved(parentEvent);
+        }
     }
 
     public static void install(JScrollPane childScrollPane) {
